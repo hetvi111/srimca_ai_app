@@ -5,7 +5,48 @@ This is a Flutter mobile app with a Flask backend for AI content management, use
 
 ## Backend Deployment Guide
 
-### Prerequisites
+### Option 1: Deploy to Render (Recommended)
+
+#### Prerequisites
+- Python 3.8+
+- GitHub account
+- Render account (free tier available)
+- MongoDB Atlas account
+
+#### Steps to Deploy Backend to Render
+
+1. **Push Your Flask Project to GitHub**:
+   - Create a new GitHub repository
+   - Push all files including: `app.py`, `requirements.txt`, `Procfile`, `render.yaml`, `runtime.txt`
+
+2. **Create a New Web Service on Render**:
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New" → "Web Service"
+   - Connect your GitHub account and select your repository
+
+3. **Configure the Web Service**:
+   - Name: `srimca-ai-backend`
+   - Runtime: Python
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `python app.py`
+
+4. **Set Environment Variables**:
+   - Click "Advanced" → "Add Environment Variables`
+   - Add the following:
+     - `MONGODB_URI` = Your MongoDB Atlas connection string (e.g., `mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority`)
+     - `DB_NAME` = `srimca_ai`
+     - `PORT` = `10000` (Render will override this, but it's fine)
+
+5. **Deploy the Service**:
+   - Click "Create Web Service"
+   - Wait for the build to complete
+   - Once deployed, you'll get your API URL (e.g., `https://srimca-ai-backend.onrender.com`)
+
+---
+
+### Option 2: Deploy to Railway
+
+#### Prerequisites
 - Python 3.8+
 - Railway account (free tier available for students)
 - MongoDB Atlas account
@@ -56,14 +97,14 @@ After deployment, update the `baseUrl` in all Flutter files to the deployed URL:
 - lib/admin_dashboard.dart
 - lib/user_management.dart
 - lib/content_control_page.dart
-- lib/ai_monitaring_page.dart
+- lib/ai_monitoring_page.dart
 - lib/security_page.dart
-- lib/report_analytics_page.dart
+- lib/reports_analytics_page.dart
 - lib/login_register_screen.dart
 
 Example:
 ```dart
-const String baseUrl = 'https://your-deployed-url.up.railway.app';
+const String baseUrl = 'https://srimca-ai-backend.onrender.com';
 ```
 
 ### Testing
@@ -77,6 +118,8 @@ To run locally:
 pip install -r requirements.txt
 python app.py
 ```
+
+The backend will run on http://localhost:5000
 
 A new Flutter project.
 

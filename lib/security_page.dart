@@ -1,327 +1,281 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-// For Android Emulator: http://10.0.2.2:5000
-// For Real Phone: use your PC IP (ipconfig)
-const String baseUrl = 'http://10.27.15.181:5000';
-
-class SecurityPage extends StatefulWidget {
-  const SecurityPage({super.key});
+/// ================= SECURITY & MAINTENANCE PAGE =================
+class SecurityMaintenancePage extends StatefulWidget {
+  const SecurityMaintenancePage({super.key});
 
   @override
-  State<SecurityPage> createState() => _SecurityPageState();
+  State<SecurityMaintenancePage> createState() =>
+      _SecurityMaintenancePageState();
 }
 
-class _SecurityPageState extends State<SecurityPage> {
+class _SecurityMaintenancePageState extends State<SecurityMaintenancePage> {
+  // Dummy API keys
+  List<String> apiKeys = [
+    "12345-ABCDE",
+    "67890-FGHIJ",
+  ];
+
+  // System settings
   bool maintenanceMode = false;
-  bool emailNotifications = true;
-  bool twoFactorAuth = true;
+  bool enableLogging = true;
 
-  bool isLoading = true;
-  String? error;
-  Map<String, dynamic> securityData = {};
-
-  @override
-  void initState() {
-    super.initState();
-    fetchSecurityData();
-  }
-
-  Future<void> fetchSecurityData() async {
+  /// ================= ADD API KEY =================
+  void addApiKey() {
     setState(() {
-      isLoading = true;
-      error = null;
+      apiKeys.add("${DateTime.now().millisecondsSinceEpoch}-KEY");
     });
-
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/security'));
-
-      if (response.statusCode == 200) {
-        setState(() {
-          securityData = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed with status ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() {
-        error = e.toString();
-        isLoading = false;
-
-        // fallback (SAFE)
-        securityData = {
-          'threats': 12,
-          'blocked_ips': 5,
-          'logs': [
-            "Login attempt from unknown IP",
-            "Suspicious activity detected",
-          ],
-        };
-      });
-    }
   }
 
-  Widget _buildLoadingIndicator() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(error ?? 'Loading security data...',
-              style: const TextStyle(color: Colors.grey)),
-          if (error != null)
-            ElevatedButton(
-              onPressed: fetchSecurityData,
-              child: const Text('Retry'),
-            ),
-        ],
-      ),
+  /// ================= REMOVE API KEY =================
+  void removeApiKey(String key) {
+    setState(() {
+      apiKeys.remove(key);
+    });
+  }
+
+  /// ================= BACKUP DATABASE =================
+  void backupDatabase() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Database backup completed!")),
+    );
+  }
+
+  /// ================= RESTORE DATABASE =================
+  void restoreDatabase() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Database restored from backup!")),
+    );
+  }
+
+  /// ================= OPEN SETTINGS PAGE =================
+  void openSettingsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsPage()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final int threats = securityData['threats'] ?? 0;
-    final int blockedIps = securityData['blocked_ips'] ?? 0;
-
-    /// 🔥 FIXED PART (NO CRASH)
-    final List<String> logs =
-        (securityData['logs'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB),
       appBar: AppBar(
-        title: const Text("Security & Maintenance"),
-        centerTitle: true,
-        backgroundColor: Colors.blue.shade700,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: fetchSecurityData,
-          ),
-        ],
-      ),
-      body: isLoading && securityData.isEmpty
-          ? _buildLoadingIndicator()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _headerCard(),
-                  const SizedBox(height: 16),
-                  _searchBox(),
-                  const SizedBox(height: 20),
-                  _securityStats(threats, blockedIps),
-                  const SizedBox(height: 20),
-                  _securityLogs(logs),
-                  const SizedBox(height: 20),
-                  _apiKeyManagement(),
-                  const SizedBox(height: 20),
-                  _backupRestore(),
-                  const SizedBox(height: 20),
-                  _systemSettings(),
-                  const SizedBox(height: 30),
-                  const Center(
-                    child: Text(
-                      "© SRIMCA AI Dashboard · 2024",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                ],
-              ),
-            ),
-    );
-  }
-
-  /* ---------------- HEADER ---------------- */
-
-  Widget _headerCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient:
-            LinearGradient(colors: [Colors.blue.shade600, Colors.blue.shade800]),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.shield, color: Colors.white, size: 42),
-          ),
-          const SizedBox(width: 18),
-Expanded(
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: const [
-      Text(
-        "Manage Security Settings",
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
+        title: const Text(
+          "Security & Maintenance",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E40AF),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      SizedBox(height: 6),
-      Text(
-        "Configure system security & backups",
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.white70),
-      ),
-    ],
-  ),
-),
-
-        ],
-      ),
-    );
-  }
-
-  /* ---------------- SECURITY STATS ---------------- */
-
-  Widget _securityStats(int threats, int blockedIps) {
-    return Row(
-      children: [
-        Expanded(child: _statCard(threats, "Active Threats", Icons.warning, Colors.red)),
-        const SizedBox(width: 15),
-        Expanded(child: _statCard(blockedIps, "Blocked IPs", Icons.block, Colors.orange)),
-      ],
-    );
-  }
-
-  Widget _statCard(
-  int value,
-  String label,
-  IconData icon,
-  Color color,
-) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 160;
-
-      return _card(
-        child: isMobile
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$value',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
-              )
-            : Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 26),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$value',
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        label,
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  )
-                ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            /// ================= API Key Management =================
+            const Text("API Key Management",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...apiKeys.map((key) => Card(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              child: ListTile(
+                title: Text(key),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => removeApiKey(key),
+                ),
               ),
-      );
-    },
-  );
-}
+            )),
+            ElevatedButton.icon(
+              onPressed: addApiKey,
+              icon: const Icon(Icons.add),
+              label: const Text("Add API Key"),
+            ),
+            const SizedBox(height: 24),
 
+            /// ================= Database Backup & Restore =================
+            const Text("Database Backup & Restore",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: backupDatabase,
+                    icon: const Icon(Icons.backup),
+                    label: const Text("Backup"),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: restoreDatabase,
+                    icon: const Icon(Icons.restore),
+                    label: const Text("Restore"),
+                    style:
+                    ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
 
-  /* ---------------- SECURITY LOGS ---------------- */
+            /// ================= System Settings =================
+            const Text("System Settings",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text("Maintenance Mode"),
+              value: maintenanceMode,
+              onChanged: (val) {
+                setState(() {
+                  maintenanceMode = val;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text("Enable Logging"),
+              value: enableLogging,
+              onChanged: (val) {
+                setState(() {
+                  enableLogging = val;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
 
-  Widget _securityLogs(List<String> logs) {
-    return _card(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("Recent Security Logs",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        if (logs.isEmpty)
-          const Text("No security logs available",
-              style: TextStyle(color: Colors.grey))
-        else
-          ...logs.map((log) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text("• $log"),
-              )),
-      ]),
-    );
-  }
-
-  /* ---------------- OTHER SECTIONS ---------------- */
-
-  Widget _searchBox() => const TextField(
-        decoration: InputDecoration(
-          hintText: "Search settings...",
-          prefixIcon: Icon(Icons.search),
-          filled: true,
-          border: OutlineInputBorder(borderSide: BorderSide.none),
+            /// ================= Open Settings Page Button =================
+            ListTile(
+              leading: const Icon(Icons.settings, color: Color(0xFF1E40AF)),
+              title: const Text("Advanced Settings"),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: openSettingsPage,
+            ),
+          ],
         ),
-      );
-
-  Widget _apiKeyManagement() => _card(child: const Text("API Key Management"));
-  Widget _backupRestore() => _card(child: const Text("Backup & Restore"));
-  Widget _systemSettings() => _card(child: const Text("System Settings"));
-
-  /* ---------------- REUSABLE ---------------- */
-
-  Widget _card({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
       ),
-      child: child,
     );
   }
 }
+
+/// ================= ADVANCED SETTINGS PAGE =================
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool emailNotifications = true;
+  bool autoBackup = false;
+  bool darkMode = false; // Dark mode toggle
+
+  /// ================= LOGOUT FUNCTION =================
+  void logout() {
+    // Navigate back to login or welcome screen
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Advanced Settings",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E40AF),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            /// Email Notifications
+            SwitchListTile(
+              title: const Text("Email Notifications"),
+              value: emailNotifications,
+              onChanged: (val) {
+                setState(() {
+                  emailNotifications = val;
+                });
+              },
+            ),
+
+            /// Automatic Backups
+            SwitchListTile(
+              title: const Text("Automatic Backups"),
+              value: autoBackup,
+              onChanged: (val) {
+                setState(() {
+                  autoBackup = val;
+                });
+              },
+            ),
+
+            /// Dark Mode / Light Mode Toggle
+            SwitchListTile(
+              title: const Text("Dark Mode"),
+              value: darkMode,
+              onChanged: (val) {
+                setState(() {
+                  darkMode = val;
+                });
+                // Apply theme change app-wide using a simple solution
+                // For full app: use state management like Provider or Riverpod
+                final brightness = darkMode ? Brightness.dark : Brightness.light;
+                final theme = Theme.of(context).copyWith(brightness: brightness);
+                // Rebuild app with new theme
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Theme(
+                      data: theme,
+                      child: const SettingsPage(),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            /// Save Settings Button
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Settings saved successfully!")),
+                );
+              },
+              child: const Text("Save Settings"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E40AF),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// Logout Button
+            ElevatedButton.icon(
+              onPressed: logout,
+              icon: const Icon(Icons.logout),
+              label: const Text("Logout"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

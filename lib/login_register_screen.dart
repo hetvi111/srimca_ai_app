@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -12,18 +10,15 @@ class LoginRegisterScreen extends StatefulWidget {
 class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
-  final _enrollmentController = TextEditingController();
-  final _staffIdController = TextEditingController();
-  final _adminCodeController = TextEditingController();
+
   bool _obscurePassword = true;
   String _selectedRole = 'Student';
   final List<String> _roles = ['Student', 'Faculty', 'Admin', 'Visitor'];
-
-  final String backendurl = 'http://10.27.15.181:5000';
- // <-- Your PC's IP address
 
   @override
   void initState() {
@@ -36,10 +31,8 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     _tabController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _nameController.dispose();
-    _enrollmentController.dispose();
-    _staffIdController.dispose();
-    _adminCodeController.dispose();
     super.dispose();
   }
 
@@ -47,26 +40,24 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
+            colors: [Color(0xFF2D2A47), Color(0xFF4A3F6F), Color(0xFF6B5B95)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF6B5B95),
-              const Color(0xFF4A3F6F),
-              const Color(0xFF2D2A47),
-            ],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/first'),
-                ),
+              const SizedBox(height: 40),
+
+              // Logo
+              Image.asset(
+                'assets/images/logo.png', // replace with your logo
+                height: 80,
               ),
               const SizedBox(height: 20),
               const Text(
@@ -77,15 +68,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Sign In or Create Account',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+
+              // Tabs
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
@@ -96,8 +81,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   controller: _tabController,
                   indicator: BoxDecoration(
                     color: const Color(0xFF9D7FD8),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  indicatorSize: TabBarIndicatorSize.tab, // ⭐ VERY IMPORTANT
+                  indicatorPadding: EdgeInsets.zero,      // remove this
+                  labelPadding: const EdgeInsets.symmetric(vertical: 16), // smaller padding
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                   tabs: const [
@@ -106,16 +94,18 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+
+
+              // Tab Views
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildLoginTab(context),
-                    _buildRegisterTab(context),
+                    _buildLoginTab(),
+                    _buildRegisterTab(),
                   ],
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -123,360 +113,277 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     );
   }
 
-  // ------------------ LOGIN TAB ------------------
-  Widget _buildLoginTab(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedRole,
-            dropdownColor: const Color(0xFF2D2A47),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() {
-                if (v == 'Admin') {
-                  _emailController.text = 'srimca@gmail.com';
-                  _passwordController.text = 'srimca@123';
-                } else {
-                  if (_emailController.text == 'srimca@gmail.com') _emailController.clear();
-                  if (_passwordController.text == 'srimca@123') _passwordController.clear();
-                }
-                _selectedRole = v;
-              });
-            },
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _emailController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Email Address',
-              hintStyle: TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.email, color: Colors.white70),
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Password',
-              hintStyle: TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.lock, color: Colors.white70),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white70,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Forgot Password?',
-              style: TextStyle(
-                color: const Color(0xFF9D7FD8),
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _loginUser,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9D7FD8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Login',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  // ------------------ REGISTER TAB ------------------
-  Widget _buildRegisterTab(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedRole,
-            dropdownColor: const Color(0xFF2D2A47),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _selectedRole = v);
-            },
-          ),
-          const SizedBox(height: 16),
-          if (_selectedRole == 'Student') ...[
-            TextField(
-              controller: _enrollmentController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enrollment Number',
-                hintStyle: TextStyle(color: Colors.white60),
-                prefixIcon: const Icon(Icons.confirmation_number, color: Colors.white70),
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ] else if (_selectedRole == 'Faculty') ...[
-            TextField(
-              controller: _staffIdController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Staff ID',
-                hintStyle: TextStyle(color: Colors.white60),
-                prefixIcon: const Icon(Icons.badge, color: Colors.white70),
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _nameController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Full Name',
-              hintStyle: TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.person, color: Colors.white70),
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _emailController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Email Address',
-              hintStyle: TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.email, color: Colors.white70),
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Password',
-              hintStyle: TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.lock, color: Colors.white70),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white70,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+  // ================= LOGIN TAB =================
+  Widget _buildLoginTab() {
+    return Center(
+      child: Card(
+        color: Colors.white10,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Checkbox(
-                value: true,
-                onChanged: (value) {},
-                activeColor: const Color(0xFF9D7FD8),
+              const Text(
+                'LOGIN',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Expanded(
-                child: Text(
-                  'I agree to Terms & Conditions',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
+              const SizedBox(height: 20),
+
+              DropdownButtonFormField<String>(
+                value: _selectedRole,
+                dropdownColor: const Color(0xFF2D2A47),
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration(),
+                items: _roles
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedRole = v!),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _emailController,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration("User ID"),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration("Password").copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _staticLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE77FB4),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Sign In",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              const Text(
+                "If you forgot your password, please contact administrator.",
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+                textAlign: TextAlign.center,
+              )
             ],
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _registerUser,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9D7FD8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Register',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-        ],
+        ),
       ),
     );
   }
 
-  // ------------------ HTTP FUNCTIONS ------------------
-  void _registerUser() async {
-    final url = Uri.parse("$backendurl/register");
+  // ================= REGISTER TAB =================
+  Widget _buildRegisterTab() {
+    return Center(
+      child: Card(
+        color: Colors.white10,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: SingleChildScrollView(
+          child: Container(
+            width: 350,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'REGISTER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-    final body = jsonEncode({
-      "email": _emailController.text.trim(),
-      "password": _passwordController.text,
-      "name": _nameController.text.trim(),
-      "role": _selectedRole,
-      "enrollment": _selectedRole == 'Student' ? _enrollmentController.text.trim() : "",
-      "staffId": _selectedRole == 'Faculty' ? _staffIdController.text.trim() : "",
-    });
+                DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  dropdownColor: const Color(0xFF2D2A47),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration(),
+                  items: _roles
+                      .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedRole = v!),
+                ),
+                const SizedBox(height: 16),
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: body,
-      );
+                // Full Name
+                TextField(
+                  controller: _nameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration("Full Name"),
+                ),
+                const SizedBox(height: 16),
 
-      final data = jsonDecode(response.body);
+                // Email/UserID
+                TextField(
+                  controller: _emailController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration("Email / User ID"),
+                ),
+                const SizedBox(height: 16),
 
+                // Password
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration("Password").copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Confirm Password
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration("Confirm Password"),
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE77FB4),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Register",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                const Text(
+                  "Registration is for new users. Please fill all fields correctly.",
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  textAlign: TextAlign.center,
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ================= STATIC LOGIN LOGIC =================
+  void _staticLogin() {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    Map<String, Map<String, String>> users = {
+      "Admin": {
+        "email": "admin@srimca.com",
+        "password": "admin123",
+      },
+      "Faculty": {
+        "email": "faculty@srimca.com",
+        "password": "faculty123",
+      },
+      "Student": {
+        "email": "student@srimca.com",
+        "password": "student123",
+      },
+      "Visitor": {
+        "email": "visitor@srimca.com",
+        "password": "visitor123",
+      },
+    };
+
+    if (email == users[_selectedRole]!["email"] &&
+        password == users[_selectedRole]!["password"]) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data["message"])),
+        const SnackBar(content: Text("Login Successful")),
       );
 
-      if (response.statusCode == 201) {
-        Navigator.pushReplacementNamed(context, '/welcome', arguments: {
-          'role': _selectedRole,
-          'email': _emailController.text.trim(),
-        });
+      String route;
+      switch (_selectedRole) {
+        case "Admin":
+          route = "/admin";
+          break;
+        case "Faculty":
+          route = "/faculty";
+          break;
+        case "Student":
+          route = "/welcome";
+          break;
+        default:
+          route = "/visitor";
       }
-    } catch (e) {
-      print("Error: $e");
+
+      Navigator.pushReplacementNamed(context, route);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error connecting to server")),
+        const SnackBar(content: Text("Invalid Credentials")),
       );
     }
   }
 
-  void _loginUser() async {
-    final url = Uri.parse("$backendurl/login");
-
-    final body = jsonEncode({
-      "email": _emailController.text.trim(),
-      "password": _passwordController.text,
-      "role": _selectedRole,
-    });
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: body,
-      );
-
-      final data = jsonDecode(response.body);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data["message"])),
-      );
-
-      if (response.statusCode == 200) {
-        Navigator.pushReplacementNamed(context, '/welcome', arguments: {
-          'role': _selectedRole,
-          'email': _emailController.text.trim(),
-        });
-      }
-    } catch (e) {
-      print("Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error connecting to server")),
-      );
-    }
+  // ================= COMMON INPUT STYLE =================
+  InputDecoration _inputDecoration([String? hint]) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.white60),
+      filled: true,
+      fillColor: Colors.white10,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
   }
 }

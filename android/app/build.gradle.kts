@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.srimca_ai"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "26.1.10909125"
+    ndkVersion = "27.0.12077973"
 
 
     compileOptions {

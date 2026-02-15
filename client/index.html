@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Animation Competition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Vibe Animation Competition</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero">
+            <h2>Welcome to the Vibe Animation Competition!</h2>
+            <p>Showcase your animation skills and compete with creators worldwide.</p>
+        </section>
+
+        <section id="registration">
+            <h2>Register Your Animation</h2>
+            <form id="registrationForm">
+                <input type="text" id="name" placeholder="Your Name" required>
+                <input type="email" id="email" placeholder="Your Email" required>
+                <input type="text" id="animationTitle" placeholder="Animation Title" required>
+                <button type="submit">Register</button>
+            </form>
+        </section>
+
+        <section id="participants">
+            <h2>Registered Participants</h2>
+            <div id="participantsList"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Vibe Animation Competition. All rights reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

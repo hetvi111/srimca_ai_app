@@ -157,13 +157,25 @@ class WelcomeScreen extends StatelessWidget {
                     shadowColor: const Color(0xFF1E88E5),
                   ),
                   onPressed: () {
-                    if (role == 'Admin') {
-                      // pass along the same arguments to admin dashboard if needed
-                      final argsMap = args ?? <String, dynamic>{};
-                      Navigator.pushReplacementNamed(context, '/admin', arguments: argsMap);
+                    if (role.toLowerCase() == 'faculty') {
+                      Navigator.pushReplacementNamed(context, '/faculty');
+                    } else if (role.toLowerCase() == 'admin') {
+                      Navigator.pushReplacementNamed(context, '/admin');
+                    } else if (role.toLowerCase() == 'student') {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/student',
+                        arguments: {
+                          'studentName': 'Malav',
+                          'semester': '5th Semester',
+                        },
+                      );
+                    } else if (role.toLowerCase() == 'visitor') {
+                      Navigator.pushReplacementNamed(context, '/visitor');
                     } else {
-                      Navigator.pushReplacementNamed(context, '/home');
+                      Navigator.pushReplacementNamed(context, '/home'); // fallback
                     }
+
                   },
                   child: const Text(
                     'Start Chat with SAI',
