@@ -54,19 +54,36 @@ class _VisitorManagementPageState extends State<VisitorManagementPage> {
 
   Future<void> _loadVisitors() async {
     try {
-      // Mock data for visitors
+      // Fetch visitors from API
+      final visitorsData = await ApiService.getVisitors();
       setState(() {
-        visitors = [
-          Visitor(id: '1', name: 'John Doe', email: 'john@example.com', phone: '1234567890', visitPurpose: 'Admission Inquiry', visitDate: '2024-01-15', status: 'Approved'),
-          Visitor(id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '9876543210', visitPurpose: 'Parent Meeting', visitDate: '2024-01-16', status: 'Pending'),
-          Visitor(id: '3', name: 'Bob Wilson', email: 'bob@example.com', phone: '5555555555', visitPurpose: 'Campus Tour', visitDate: '2024-01-17', status: 'Completed'),
-        ];
+        visitors = visitorsData.map((v) => Visitor.fromMap(v)).toList();
         isLoading = false;
       });
     } catch (e) {
       setState(() {
         visitors = [];
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateVisitorStatus(String visitorId, String newStatus) async {
+    final success = await ApiService.updateVisitorStatus(visitorId, newStatus);
+    if (success) {
+      setState(() {
+        final index = visitors.indexWhere((v) => v.id == visitorId);
+        if (index != -1) {
+          visitors[index] = Visitor(
+            id: visitors[index].id,
+            name: visitors[index].name,
+            email: visitors[index].email,
+            phone: visitors[index].phone,
+            visitPurpose: visitors[index].visitPurpose,
+            visitDate: visitors[index].visitDate,
+            status: newStatus,
+          );
+        }
       });
     }
   }

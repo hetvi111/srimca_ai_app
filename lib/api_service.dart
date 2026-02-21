@@ -515,4 +515,32 @@ class ApiService {
       return [];
     }
   }
+
+  /// Get all visitors (admin only)
+  static Future<List<Map<String, dynamic>>> getVisitors() async {
+    try {
+      final response = await get('/api/admin/visitors');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final visitors = data['visitors'] as List<dynamic>? ?? [];
+        return visitors.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Get Visitors Error: $e');
+      return [];
+    }
+  }
+
+  /// Update visitor status (admin only)
+  static Future<bool> updateVisitorStatus(String visitorId, String status) async {
+    try {
+      final response = await put('/api/admin/visitors/$visitorId', body: {'status': status});
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Update Visitor Status Error: $e');
+      return false;
+    }
+  }
 }
