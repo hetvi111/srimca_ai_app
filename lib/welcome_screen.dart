@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
+  // Navy Blue Theme Colors
+  static const Color navyBlue = Color(0xFF001F3F);
+  static const Color navyBlueLight = Color(0xFF1A237E);
+  static const Color accentBlue = Color(0xFF1E88E5);
+  static const Color lightBackground = Color(0xFFF5F9FF);
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -48,7 +54,7 @@ class WelcomeScreen extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFF5F9FF),
+                lightBackground,
                 Color(0xFFE3F2FD),
               ],
             ),
@@ -65,27 +71,27 @@ class WelcomeScreen extends StatelessWidget {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back, size: 24, color: Colors.black87),
+                          icon: const Icon(Icons.arrow_back, size: 24, color: navyBlue),
                           onPressed: () {
                             Navigator.pushReplacementNamed(context, '/login');
                           },
                         ),
                         Image.asset('assets/images/SAI.png', width: 40, height: 40, fit: BoxFit.contain),
                         const SizedBox(width: 10),
-                        const Text('SAI', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1E88E5))),
+                        const Text('SAI', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: accentBlue)),
                       ],
                     ),
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chat_bubble, size: 22, color: Color(0xFF1E88E5)),
+                          icon: const Icon(Icons.chat_bubble, size: 22, color: accentBlue),
                           onPressed: () {
                             // open chat/home
                             Navigator.pushReplacementNamed(context, '/home');
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.settings, size: 22, color: Colors.black54),
+                          icon: const Icon(Icons.settings, size: 22, color: navyBlue),
                           onPressed: () {
                             // placeholder: open settings
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Open settings')));
@@ -112,86 +118,85 @@ class WelcomeScreen extends StatelessWidget {
 
                 // Welcome Text (role-specific)
                 Text(
-                '$title 👋',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 12),
-
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                details,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[500],
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const Spacer(flex: 2),
-
-              // CTA Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E88E5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 12,
-                    shadowColor: const Color(0xFF1E88E5),
+                  '$title 👋',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: navyBlue,
                   ),
-                  onPressed: () {
-                    if (role.toLowerCase() == 'faculty') {
-                      Navigator.pushReplacementNamed(context, '/faculty');
-                    } else if (role.toLowerCase() == 'admin') {
-                      Navigator.pushReplacementNamed(context, '/admin');
-                    } else if (role.toLowerCase() == 'student') {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        '/student',
-                        arguments: {
-                          'studentName': userName.isNotEmpty ? userName : 'Malav',
-                          'semester': '5th Semester',
-                          'userId': userId,
-                          'email': email,
-                        },
-                      );
-                    } else if (role.toLowerCase() == 'visitor') {
-                      Navigator.pushReplacementNamed(context, '/visitor');
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/home'); // fallback
-                    }
+                  textAlign: TextAlign.center,
+                ),
 
-                  },
-                  child: const Text(
-                    'Start Chat with SAI',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                const SizedBox(height: 12),
+
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: navyBlueLight,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  details,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const Spacer(flex: 2),
+
+                // CTA Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 12,
+                      shadowColor: accentBlue,
+                    ),
+                    onPressed: () {
+                      if (role.toLowerCase() == 'faculty') {
+                        Navigator.pushReplacementNamed(context, '/faculty');
+                      } else if (role.toLowerCase() == 'admin') {
+                        Navigator.pushReplacementNamed(context, '/admin');
+                      } else if (role.toLowerCase() == 'student') {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/student',
+                          arguments: {
+                            'studentName': userName.isNotEmpty ? userName : 'Malav',
+                            'semester': '5th Semester',
+                            'userId': userId,
+                            'email': email,
+                          },
+                        );
+                      } else if (role.toLowerCase() == 'visitor') {
+                        Navigator.pushReplacementNamed(context, '/visitor');
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/home'); // fallback
+                      }
+                    },
+                    child: const Text(
+                      'Start Chat with SAI',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
                 const SizedBox(height: 40),
               ],
             ),

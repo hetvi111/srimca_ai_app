@@ -102,6 +102,8 @@ class Collections:
     AI_QUERIES = 'ai_queries'
     SESSIONS = 'sessions'
     NOTIFICATIONS = 'notifications'
+    VISITORS = 'visitors'
+    QUERIES = 'queries'
 
 
 def close_mongodb_connection():

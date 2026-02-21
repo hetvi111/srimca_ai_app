@@ -12,6 +12,11 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
+  // Navy Blue Theme Colors
+  static const Color navyBlue = Color(0xFF001F3F);
+  static const Color navyBlueLight = Color(0xFF1A237E);
+  static const Color accentBlue = Color(0xFF1E88E5);
+  static const Color navyBlueLighter = Color(0xFF3949AB); // light indigo blue
   @override
   void initState() {
     super.initState();
@@ -39,14 +44,47 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: navyBlue,
       body: Stack(
         children: [
-          // Background Image (cover entire screen)
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg.jpeg',
-              fit: BoxFit.cover,
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF001F3F), // Dark Top
+                  Color(0xFF1A237E), // Medium
+                  Color(0xFF3949AB), // Light Bottom
+                ],
+              ),
+            ),
+          ),
+          
+          // Decorative circles
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accentBlue.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accentBlue.withOpacity(0.1),
+              ),
             ),
           ),
 
@@ -59,69 +97,82 @@ class _SplashScreenState extends State<SplashScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-              const Spacer(flex: 2),
+                    const Spacer(flex: 2),
 
-              // Animated Robot Icon
-              ScaleTransition(
-                scale: Tween<double>(begin: 0.5, end: 1.0)
-                    .animate(_animationController),
-                child: Container(
-                  width: 220,
-                  height: 280,
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                    // Animated Robot Icon
+                    ScaleTransition(
+                      scale: Tween<double>(begin: 0.5, end: 1.0)
+                          .animate(_animationController),
+                      child: Container(
+                        width: 220,
+                        height: 280,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/i1.png', // ✅ no space
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Image.asset(
-                    'assets/images/i1.png', // ✅ no space
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
+                    ),
 
-              const SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
-              // Title
-              const Text(
-                'SRIMCA AI ASSISTANT',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
+                    // Title
+                    const Text(
+                      'SRIMCA AI ASSISTANT',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-              // Subtitle
-              const Text(
-                'Artificial Intelligence with Moral Commitment and Attitude',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 0.5,
-                ),
-              ),
+                    // Subtitle
+                    const Text(
+                      'Artificial Intelligence with Moral Commitment and Attitude',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
 
-              const Spacer(flex: 3),
+                    const Spacer(flex: 3),
 
-              // Bottom Logo
-              Padding(
-                padding: const EdgeInsets.only(bottom: 40),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  height: 100,
-                  fit: BoxFit.contain,
-                ),
+                    // Loading indicator
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 20),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+
+                    // Bottom Logo
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 40),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 100,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ],
                 ),

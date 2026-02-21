@@ -25,3 +25,5 @@ python-dateutil==2.8.2
 
 # Gunicorn for production deployment
 gunicorn==21.2.0
+
+firebase-admin==6.4.0

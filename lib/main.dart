@@ -4,15 +4,28 @@ import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_register_screen.dart';
 import 'package:srimca_ai/welcome_screen.dart';
-import 'package:srimca_ai/admin_dashboard.dart';
+import 'package:srimca_ai/admin_main_dashboard.dart';
 import 'package:srimca_ai/user_management.dart';
 import 'package:srimca_ai/faculty_dashboard.dart';
-import 'package:srimca_ai/content_control_page.dart';
+import 'package:srimca_ai/content_management_page.dart';
 import 'package:srimca_ai/ai_monitoring_page.dart';
 import 'package:srimca_ai/reports_analytics_page.dart';
 import 'package:srimca_ai/security_page.dart';
 import 'package:srimca_ai/VisitorHomePage.dart';
 import 'package:srimca_ai/student_page.dart';
+import 'package:srimca_ai/student_notifications_page.dart';
+import 'package:srimca_ai/student_chat_history_page.dart';
+
+// App Theme Colors
+class AppColors {
+  static const Color appBar = Color(0xFF001F3F); // Navy Blue
+  static const Color drawer = Color(0xFF1A237E); // Navy Blue (slightly lighter)
+  static const Color background = Colors.white;
+  static const Color card = Color(0xFFF5F5F5); // Light Grey
+  static const Color button = Color(0xFF1E88E5); // Blue
+  static const Color textPrimary = Color(0xFF212121); // Black / Dark Grey
+  static const Color textSecondary = Color(0xFF757575); // Grey
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,10 +63,43 @@ class _MyAppState extends State<MyApp> {
 
       theme: ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: AppColors.background,
+        primaryColor: AppColors.appBar,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: AppColors.button,
           brightness: Brightness.light,
+          primary: AppColors.appBar,
+          secondary: AppColors.button,
+          surface: AppColors.card,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.appBar,
+          foregroundColor: Colors.white,
+          elevation: 6,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        drawerTheme: const DrawerThemeData(
+          backgroundColor: AppColors.drawer,
+        ),
+        cardTheme: CardThemeData(
+          color: AppColors.card,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.button,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
         ),
         useMaterial3: true,
       ),
@@ -61,9 +107,17 @@ class _MyAppState extends State<MyApp> {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
+        primaryColor: AppColors.appBar,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: AppColors.button,
           brightness: Brightness.dark,
+          primary: AppColors.button,
+          secondary: AppColors.appBar,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.appBar,
+          foregroundColor: Colors.white,
+          elevation: 6,
         ),
         useMaterial3: true,
       ),
@@ -94,9 +148,9 @@ class _MyAppState extends State<MyApp> {
         '/first': (context) => const FirstScreen(),
         '/login': (context) => const LoginRegisterScreen(),
         '/welcome': (context) => const WelcomeScreen(),
-        '/admin': (context) => const AdminDashboard(),
+        '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
-        '/content-knowledge': (context) => const ContentControlPage(),
+        '/content-knowledge': (context) => const ContentManagementPage(),
         '/monitoring': (context) => const AIMonitoringPage(),
         '/reports': (context) => ReportsAnalyticsPage(),
         '/security': (context) => const SecurityMaintenancePage(),
@@ -109,6 +163,20 @@ class _MyAppState extends State<MyApp> {
             semester: args?['semester'] ?? 'N/A',
             userId: args?['userId']?.toString() ?? '',
             email: args?['email']?.toString() ?? '',
+            enrollmentNumber: args?['enrollmentNumber']?.toString(),
+            course: args?['course']?.toString(),
+          );
+        },
+        '/student-notifications': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return StudentNotificationsPage(
+            userId: args?['userId']?.toString() ?? '',
+          );
+        },
+        '/student-chat-history': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return StudentChatHistoryPage(
+            userId: args?['userId']?.toString() ?? '',
           );
         },
       },

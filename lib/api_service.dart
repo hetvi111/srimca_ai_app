@@ -80,7 +80,17 @@ class AuthService {
 class ApiService {
   static final http.Client _client = http.Client();
 
-  /// Get headers with auth token
+  /// Get headers with auth token (public)
+  static Future<Map<String, String>> getHeaders() async {
+    final token = await AuthService.getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  /// Get headers with auth token (private - for internal use)
   static Future<Map<String, String>> _getHeaders() async {
     final token = await AuthService.getToken();
     return {
@@ -134,30 +144,37 @@ class ApiService {
     return _client.delete(uri, headers: headers).timeout(const Duration(seconds: 30));
   }
 
-  /// Admin Dashboard Stats
+  /// Admin Dashboard Stats - returns total counts for students, faculty, visitors, and active users
   static Future<Map<String, dynamic>> getAdminStats() async {
     try {
-      final response = await get('/api/users/stats');
+      final response = await get('/api/admin/stats');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return data;
-      } else {
-        // Return empty stats on error
+        // Backend returns stats directly from the API
+        // Return the data with default values for missing fields
         return {
-          'total_users': 0,
-          'total_uploads': 0,
-          'pending_uploads': 0,
-          'approved_uploads': 0,
+          'total_students': data['total_students'] ?? 0,
+          'total_faculty': data['total_faculty'] ?? 0,
+          'total_visitors': data['total_visitors'] ?? 0,
+          'active_users': data['active_users'] ?? 0,
         };
       }
-    } catch (e) {
-      // Return empty stats on exception
+      // Return default values on failure
       return {
-        'total_users': 0,
-        'total_uploads': 0,
-        'pending_uploads': 0,
-        'approved_uploads': 0,
+        'total_students': 0,
+        'total_faculty': 0,
+        'total_visitors': 0,
+        'active_users': 0,
+      };
+    } catch (e) {
+      debugPrint('Admin Stats Error: $e');
+      // Return default values on error
+      return {
+        'total_students': 0,
+        'total_faculty': 0,
+        'total_visitors': 0,
+        'active_users': 0,
       };
     }
   }
@@ -446,6 +463,56 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Get chat history for a specific user
+  static Future<List<Map<String, dynamic>>> getChatHistory(String userId) async {
+    try {
+      final response = await get('/api/chat/history/$userId');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final history = data['history'] as List<dynamic>? ?? [];
+        return history.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Save chat message to history
+  static Future<bool> saveChatMessage({
+    required String userId,
+    required String question,
+    required String answer,
+  }) async {
+    try {
+      final response = await post('/api/chat/save', body: {
+        'user_id': userId,
+        'question': question,
+        'answer': answer,
+      });
+      return response.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get notifications for a specific user
+  static Future<List<Map<String, dynamic>>> getUserNotifications(String userId) async {
+    try {
+      final response = await get('/api/notifications/user/$userId');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final notifications = data['notifications'] as List<dynamic>? ?? [];
+        return notifications.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 }

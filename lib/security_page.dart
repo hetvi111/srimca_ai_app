@@ -177,10 +177,9 @@ class _SettingsPageState extends State<SettingsPage> {
   /// ================= LOGOUT FUNCTION =================
   void logout() async {
     // Clear auth data and navigate to login
-    await AuthService.clearAuth();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Logout functionality")),
+    );
   }
 
   @override
@@ -231,20 +230,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 setState(() {
                   darkMode = val;
                 });
-                // Apply theme change app-wide using a simple solution
-                // For full app: use state management like Provider or Riverpod
-                final brightness = darkMode ? Brightness.dark : Brightness.light;
-                final theme = Theme.of(context).copyWith(brightness: brightness);
-                // Rebuild app with new theme
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Theme(
-                      data: theme,
-                      child: const SettingsPage(),
-                    ),
-                  ),
-                );
               },
             ),
 
@@ -282,4 +267,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-

@@ -24,6 +24,7 @@ try:
     from routes.faqs import faqs_bp
     from routes.users import users_bp
     from routes.notifications import notifications_bp
+    from routes.admin import admin_bp
     ROUTES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some routes could not be imported: {e}")
@@ -61,6 +62,7 @@ def create_app(config_name=None):
             app.register_blueprint(faqs_bp)
             app.register_blueprint(users_bp)
             app.register_blueprint(notifications_bp)
+            app.register_blueprint(admin_bp)
         except Exception as e:
             print(f"Warning: Could not register some blueprints: {e}")
     

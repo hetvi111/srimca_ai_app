@@ -227,86 +227,86 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
  /// ================= UI =================
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text(
-        "User Management",
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      backgroundColor: const Color(0xFF1E40AF),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [IconButton(onPressed: showAddUserDialog, icon: const Icon(Icons.add))],
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          /// ================= SEARCH + FILTER ROW =================
-          Row(
-            children: [
-              /// Search Field
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Search by name or email",
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              /// Role Filter
-              Expanded(
-                flex: 1,
-                child: DropdownButtonFormField(
-                  value: selectedRole,
-                  items: ["All", "Admin", "Faculty", "Student"]
-                      .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedRole = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: "Role",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  ),
-                ),
-              ),
-            ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "User Management",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
+        ),
+        backgroundColor: const Color(0xFF1E40AF),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [IconButton(onPressed: showAddUserDialog, icon: const Icon(Icons.add))],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            /// ================= SEARCH + FILTER ROW =================
+            Row(
+              children: [
+                /// Search Field
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "Search by name or email",
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                  ),
+                ),
 
-          const SizedBox(height: 16),
+                const SizedBox(width: 12),
 
-          /// ================= USER LIST =================
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Scrollbar(
+                /// Role Filter
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField(
+                    value: selectedRole,
+                    items: ["All", "Admin", "Faculty", "Student"]
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedRole = value!;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Role",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            /// ================= USER LIST =================
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Scrollbar(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: filteredUsers.length,
@@ -359,12 +359,11 @@ Widget build(BuildContext context) {
                   );
                 },
               ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }
