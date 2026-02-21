@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= SECURITY & MAINTENANCE PAGE =================
 class SecurityMaintenancePage extends StatefulWidget {
@@ -174,9 +175,12 @@ class _SettingsPageState extends State<SettingsPage> {
   bool darkMode = false; // Dark mode toggle
 
   /// ================= LOGOUT FUNCTION =================
-  void logout() {
-    // Navigate back to login or welcome screen
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  void logout() async {
+    // Clear auth data and navigate to login
+    await AuthService.clearAuth();
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
   }
 
   @override

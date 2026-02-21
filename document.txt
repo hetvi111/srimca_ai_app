@@ -1,0 +1,107 @@
+========================================
+Application: SRIMCA AI Assistant (srimca_ai)
+========================================
+
+==============================
+User: Admin
+==============================
+Functional Requirements:
+Admin Login : Can log in using an Admin account via the Login screen.
+Admin Dashboard Access : Can access the Admin Dashboard with bottom navigation (Home, Users, Content, Monitoring, Reports, Security).
+System Overview : Can view system overview statistics (total users, total uploads, pending uploads, approved uploads).
+Profile Management : Can view and edit profiles of all Students and Faculty (name, email, semester, staff ID, etc.) from the User Management section.
+User Management : Can manage users (create new users, activate/deactivate accounts, reset passwords).
+Content Management : Can manage AI knowledge content (view, approve, reject, and organize faculty uploads) from the Content Control section.
+AI Monitoring : Can monitor AI activity (queries, low-confidence responses, flags) from the AI Monitoring section.
+Reports & Analytics : Can view reports and analytics on usage, uploads, and AI performance from the Reports & Analytics section.
+Security & Maintenance : Can configure security and maintenance settings (e.g., backup checks, access policies, audit views) from the Security section.
+Notifications : Can view and clear system notifications (e.g., pending uploads, backups completed, maintenance schedule).
+Admin Logout : Can log out/end session securely.
+
+Non-Functional Requirements:
+Admin Auditability : Admin actions (user/profile changes, content approvals, security changes) must be auditable with timestamp and Admin identity.
+Admin Access Control : Only authenticated Admins can access admin-specific routes and pages.
+Admin Performance : Admin interface should load dashboard and stats within 3 seconds on a normal campus network.
+Admin Responsiveness : Admin pages must be responsive and usable on both desktop and tablet devices.
+Admin Communication Security : All admin communication with the server must use secure channels (e.g., HTTPS / secure APIs).
+Admin Safety : The system must prevent accidental destructive actions with confirmations where appropriate (e.g., delete user or content).
+Admin Visibility : Admin UI should clearly display system health and warnings (e.g., pending approvals, low-confidence AI responses).
+
+==============================
+User: Faculty
+==============================
+Functional Requirements:
+Faculty Login : Can register and log in as Faculty using the Login/Register screen.
+Faculty Home Navigation : After login, is redirected to the Faculty Home page.
+Faculty Profile View : Can view their own profile details (name, email, staff ID, etc.).
+Faculty Profile Edit Restriction : Cannot edit their own profile; all Faculty profile changes are done by Admin via User Management.
+Content Upload : Can upload academic content / knowledge (notes, questions, materials) for SAI to use.
+Upload Status View : Can view the status of uploads (pending approval, approved, rejected).
+Content Resubmission : Can update or resubmit content that has been rejected or needs revision.
+Content Analytics : Can see basic analytics of how their content is being used (if implemented).
+Faculty-SAI Chat : Can start a chat with SAI and query academic content.
+
+Non-Functional Requirements:
+Faculty Usability : Faculty login and content upload flows should be simple and require minimal training.
+Upload Feedback : Upload operations should provide clear feedback (success/failure and reason for rejection if any).
+Faculty Data Security : File and text uploads must be stored securely and associated with the correct Faculty identity.
+Content Approval Timeliness : Content approval status should be updated within a short time window once Admin takes action.
+Faculty Performance : Faculty pages must respond within 3 seconds for main actions (open dashboard, view uploads list).
+Faculty Error Clarity : Error messages should be descriptive enough to allow Faculty to correct issues themselves (e.g., invalid format, missing fields).
+
+==============================
+User: Student
+==============================
+Functional Requirements:
+Student Login : Can register and log in as Student via the Login/Register screen.
+Student Home Navigation : After login, is redirected to the Welcome Screen and then to the Student Home page with personalized data (name, semester, enrollment/user ID, email).
+Student Profile View : Can view their own profile information (name, semester, enrollment/user ID, email).
+Student Profile Edit Restriction : Cannot edit their own profile; any Student profile changes must be done by Admin.
+Student-SAI Chat Access : Can start a chat with SAI using the “Start Chat with SAI” button.
+Academic Query Handling : Can ask academic questions related to their courses/semester and receive answers from SAI.
+Student Logout : Can log out/end the session securely.
+
+Non-Functional Requirements:
+Chat Response Time : Chat responses from SAI should be generated within an acceptable time (e.g., under 3–5 seconds for normal queries).
+Student Data Security : Student data (name, email, enrollment, semester) must be stored and transmitted securely.
+Student UI Experience : The UI must be mobile-friendly and attractive for daily Student use.
+Student Data Protection : The system should prevent unauthorized access to other Students’ data.
+Answer Quality : The assistant should aim for high answer accuracy and indicate uncertainty when not confident.
+Student Error Handling : Error states (e.g., network issues) should be clearly communicated with retry options.
+
+==============================
+User: Visitor
+==============================
+Functional Requirements:
+Visitor Onboarding : Can register or be onboarded as Visitor (e.g., via QR or limited registration) using the Login/Register flow.
+Visitor Home Navigation : After login, is redirected to the Visitor Home page with limited access.
+Limited SAI Chat : Can start a limited chat with SAI (restricted topics or number of queries, as defined by policy).
+Visitor Data Restriction : Cannot access internal academic details or privileged data.
+Access Upgrade Request : Can request to upgrade access (e.g., become a Student/Faculty user) if needed.
+
+Non-Functional Requirements:
+Visitor Access Indication : Visitor sessions should be clearly marked as limited access in the UI.
+Visitor Data Visibility : No sensitive data (student records, internal reports, admin panels) should be visible to Visitors.
+Visitor Rate Limiting : Visitor interactions should have strict rate limits or scope limits to protect resources.
+Visitor Performance : Visitor pages should load quickly (within about 2 seconds) to provide a smooth first impression.
+Visitor Data Minimization : Minimal personal data should be collected from Visitors, only what is strictly required.
+
+==============================
+System / SAI (Cross-Cutting)
+==============================
+Functional Requirements:
+Role Support : Must support multiple roles (Student, Faculty, Admin, Visitor) with appropriate routing from login to dashboards (`/student`, `/faculty`, `/admin`, `/visitor`).
+Role-Based Access Control : Must enforce role-based navigation and access control (only route users to allowed pages).
+SAI Chat Interface : Must provide an AI chat interface (SAI) accessible from the Welcome Screen and from role dashboards where applicable.
+Knowledge Base Integration : Must allow Faculty content to be incorporated into SAI’s knowledge base after Admin approval.
+SAI Monitoring & Reporting : Must provide basic monitoring and reporting of SAI usage (queries, flags, low-confidence answers).
+Theme Management : Must support theme switching (light/dark mode) across the app.
+
+Non-Functional Requirements:
+System Availability : The system should be available at least 99% during academic hours.
+System Performance : Core screens (login, dashboards, chat) should load in under 3 seconds in typical campus conditions.
+System Security : All API calls and data at rest should follow institutional security standards (encryption, access control, secure storage).
+Data Privacy : User data should be handled according to institutional privacy policies; no unnecessary exposure in logs or analytics.
+System Scalability : The system should handle concurrent usage by many Students and Faculty without significant degradation.
+System Maintainability : Codebase (Flutter app + backend) should be modular, with separate modules for auth, dashboards, AI integration, content management, and monitoring.
+System Auditability : Key actions (logins, content approvals, profile edits, role changes, security changes) must be logged for later review.

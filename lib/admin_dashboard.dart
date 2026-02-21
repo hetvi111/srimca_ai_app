@@ -1,10 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:srimca_ai/api_service.dart';
 import 'user_management.dart';
 import 'content_control_page.dart';
 import 'ai_monitoring_page.dart';
 import 'reports_analytics_page.dart';
 import 'security_page.dart';
+
+// Helper function to get notification icon based on type
+IconData _getNotificationIcon(String type) {
+  switch (type) {
+    case 'user_register':
+      return Icons.person_add;
+    case 'user_login':
+      return Icons.login;
+    case 'upload':
+      return Icons.upload_file;
+    case 'system':
+      return Icons.computer;
+    default:
+      return Icons.notifications;
+  }
+}
+
+// Helper function to get notification color based on type
+Color _getNotificationColor(String type) {
+  switch (type) {
+    case 'user_register':
+      return Colors.green;
+    case 'user_login':
+      return Colors.blue;
+    case 'upload':
+      return Colors.orange;
+    case 'system':
+      return Colors.purple;
+    default:
+      return Colors.grey;
+  }
+}
 
 /// ================== MAIN DASHBOARD ==================
 class AdminDashboard extends StatefulWidget {
@@ -56,27 +89,74 @@ class _AdminDashboardState extends State<AdminDashboard> {
 }
 
 /// ================== HOME PAGE ==================
-class AdminHomePage extends StatelessWidget {
+class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
 
-  // Sample notifications
-  final List<String> notifications = const [
-    "New faculty upload pending approval",
-    "Low-confidence AI response detected",
-    "Database backup completed",
-    "System maintenance scheduled at 10 PM"
-  ];
+  @override
+  State<AdminHomePage> createState() => _AdminHomePageState();
+}
+
+class _AdminHomePageState extends State<AdminHomePage> {
+  Map<String, dynamic> stats = {
+    'total_users': 0,
+    'total_uploads': 0,
+    'pending_uploads': 0,
+    'approved_uploads': 0,
+  };
+  bool isLoading = true;
+  
+  // Real notifications from database
+  List<Map<String, dynamic>> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Fetch stats from backend API
+    try {
+      final statsData = await ApiService.getAdminStats();
+      final notificationsData = await ApiService.getNotifications();
+      setState(() {
+        stats = {
+          'total_users': statsData['total_users'] ?? 0,
+          'total_uploads': statsData['total_uploads'] ?? 0,
+          'pending_uploads': statsData['pending_uploads'] ?? 0,
+          'approved_uploads': statsData['approved_uploads'] ?? 0,
+        };
+        notifications = notificationsData;
+        isLoading = false;
+      });
+    } catch (e) {
+      // If API call fails, show zeros
+      setState(() {
+        stats = {
+          'total_users': 0,
+          'total_uploads': 0,
+          'pending_uploads': 0,
+          'approved_uploads': 0,
+        };
+        isLoading = false;
+      });
+    }
+  }
 
   // Function to show notifications with swipe-to-dismiss
 void _showNotifications(BuildContext context) {
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     builder: (_) {
       // Use a stateful builder to manage dynamic removal
       return StatefulBuilder(
         builder: (context, setState) {
           return Container(
             padding: const EdgeInsets.all(16),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,15 +170,23 @@ void _showNotifications(BuildContext context) {
                 ...notifications.map(
                   (note) {
                     final index = notifications.indexOf(note);
+                    final title = note['title'] ?? '';
+                    final message = note['message'] ?? '';
+                    final type = note['type'] ?? 'info';
+                    
                     return Dismissible(
-                      key: Key(note + index.toString()),
+                      key: Key(note['_id'] ?? index.toString()),
                       direction: DismissDirection.endToStart,
                       onDismissed: (_) {
                         setState(() {
                           notifications.removeAt(index);
                         });
+                        // Call API to mark as read
+                        if (note['_id'] != null) {
+                          ApiService.markNotificationAsRead(note['_id']);
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Notification removed")),
+                          const SnackBar(content: Text("Notification removed")),
                         );
                       },
                       background: Container(
@@ -108,8 +196,13 @@ void _showNotifications(BuildContext context) {
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
                       child: ListTile(
-                        leading: const Icon(Icons.notifications, color: Colors.blue),
-                        title: Text(note),
+                        leading: Icon(
+                          _getNotificationIcon(type),
+                          color: _getNotificationColor(type),
+                        ),
+                        title: Text(title),
+                        subtitle: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        isThreeLine: true,
                       ),
                     );
                   },
@@ -243,7 +336,9 @@ void _showNotifications(BuildContext context) {
             const SizedBox(height: 20),
 
             /// Stats Grid
-            GridView.builder(
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 4,
@@ -255,10 +350,10 @@ void _showNotifications(BuildContext context) {
               ),
               itemBuilder: (context, index) {
                 final items = [
-                  {"title": "Total Users", "value": "885", "icon": Icons.people},
-                  {"title": "Total Subjects", "value": "42", "icon": Icons.menu_book},
-                  {"title": "Queries Today", "value": "45", "icon": Icons.question_answer},
-                  {"title": "Knowledge Base", "value": "320 MB", "icon": Icons.storage},
+                  {"title": "Total Users", "value": stats['total_users'].toString(), "icon": Icons.people},
+                  {"title": "Total Uploads", "value": stats['total_uploads'].toString(), "icon": Icons.menu_book},
+                  {"title": "Pending", "value": stats['pending_uploads'].toString(), "icon": Icons.question_answer},
+                  {"title": "Approved", "value": stats['approved_uploads'].toString(), "icon": Icons.storage},
                 ];
 
                 return StatCard(

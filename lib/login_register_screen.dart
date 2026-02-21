@@ -4,16 +4,7 @@ import 'dart:convert';
 
 import 'package:srimca_ai/static_data.dart';
 import 'package:srimca_ai/api_service.dart';
-
-// TODO: Replace with your deployed Python backend URL (Flask + MongoDB Atlas)
-// For local development: 'http://172.31.229.182:5000' or 'http://10.0.2.2:5000' (Android emulator)
-// For production: Use your Render.com URL (e.g., 'https://srimca-ai-backend.onrender.com')
-// Set to false for production, true for local development
-const bool kUseLocalDev = false;
-
-String get kApiBaseUrl => kUseLocalDev 
-  ? 'http://172.31.229.182:5000' 
-  : 'https://srimca-ai-backend.onrender.com';
+import 'package:srimca_ai/firebase_service.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -349,15 +340,12 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   Future<void> _apiLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter email and password")),
       );
       return;
     }
-
-    // Show loading dialog
     if (!mounted) return;
     final navigator = Navigator.of(context);
     showDialog(
@@ -365,107 +353,62 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       barrierDismissible: false,
       builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
     );
-
     try {
       final uri = Uri.parse('$kApiBaseUrl/api/login');
-      
-      // Add timeout to prevent hanging
-      final client = http.Client();
-      http.Response res;
-      try {
-        res = await client.post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'email': email,
-            'password': password,
-          }),
-        ).timeout(const Duration(seconds: 10));
-      } finally {
-        client.close();
-      }
-
+      final res = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'role': _selectedRole.toLowerCase(),
+        }),
+      );
       if (!mounted) return;
-      // Close dialog before navigation - use stored navigator
       if (navigator.canPop()) {
         navigator.pop();
-        // Small delay to ensure dialog is fully closed
-        await Future.delayed(const Duration(milliseconds: 100));
       }
-
       if (res.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(res.body);
-        
-        // Check if user data exists in response
-        if (body['user'] == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Invalid response from server")),
-          );
-          return;
-        }
-        
-        final Map<String, dynamic> user = body['user'] as Map<String, dynamic>;
-        
-        // Save token and user data for API calls
-        if (body['token'] != null) {
-          await AuthService.saveToken(body['token'] as String);
+        final Map<String, dynamic> data = jsonDecode(res.body) as Map<String, dynamic>;
+        final Map<String, dynamic> user = (data['user'] as Map<String, dynamic>?) ?? {};
+        final String? token = data['token'] as String?;
+        if (token != null && token.isNotEmpty) {
+          await AuthService.saveToken(token);
         }
         await AuthService.saveUser(user);
-        
-        // Check if role exists
-        if (user['role'] == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User role not found")),
-          );
-          return;
-        }
-        
-        final String role = (user['role'] as String).toLowerCase();
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login Successful!")),
         );
-
-        // Small delay to allow snackbar to show before navigation
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        if (!mounted) return;
-        
+        await Future.delayed(const Duration(milliseconds: 300));
+        final String role = (user['role'] as String? ?? '').toLowerCase();
         switch (role) {
           case 'admin':
-            print('DEBUG: Navigating to /admin');
             Navigator.pushReplacementNamed(context, '/admin');
             break;
           case 'faculty':
-            print('DEBUG: Navigating to /faculty');
             Navigator.pushReplacementNamed(context, '/faculty');
             break;
           case 'student':
-            print('DEBUG: Navigating to /student with args: ${user['name']}');
-            // Navigate directly to student page with correct arguments
             Navigator.pushReplacementNamed(
               context,
               '/student',
               arguments: {
                 'studentName': user['name'] ?? 'student',
-                'semester': '5th Semester', // Default semester, can be updated from user data
+                'semester': '5th Semester',
                 'userId': user['_id'] ?? '',
                 'email': user['email'] ?? '',
               },
             );
             break;
           case 'visitor':
-            print('DEBUG: Navigating to /visitor');
             Navigator.pushReplacementNamed(context, '/visitor');
             break;
           default:
-            print('DEBUG: Unknown role "$role", navigating to /welcome');
-            // fallback - navigate to welcome screen
             Navigator.pushReplacementNamed(
               context,
               '/welcome',
               arguments: {
-                'role': role.isNotEmpty ? role[0].toUpperCase() + role.substring(1) : 'student',
+                'role': role.isNotEmpty ? role[0].toUpperCase() + role.substring(1) : 'Student',
                 'userId': user['_id'] ?? '',
                 'userName': user['name'] ?? 'User',
                 'email': user['email'] ?? '',
@@ -473,15 +416,17 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
             );
         }
       } else {
-        final Map<String, dynamic> body = jsonDecode(res.body);
+        final Map<String, dynamic> body = jsonDecode(res.body) as Map<String, dynamic>;
         final msg = body['message']?.toString() ?? 'Login failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
       }
     } catch (e) {
+      if (navigator.canPop()) {
+        navigator.pop();
+      }
       if (!mounted) return;
-      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );

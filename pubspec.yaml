@@ -31,11 +31,21 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Firebase
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.1
+
+  # HTTP client for calling Python + MongoDB backend
+  http: ^1.2.0
+
+  # For storing auth token
+  shared_preferences: ^2.3.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   fl_chart: ^0.66.2
-  http: ^1.1.0
   intl: ^0.19.0
   file_picker: ^10.3.10
 
@@ -50,14 +60,14 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+# For information on the generic Dart part of this file, see
+# following page: https://dart.dev/tools/pub/pubspec
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
   flutter:
     sdk: flutter
-
-  # Add this line
-  http: ^1.1.0
 
 # The following section is specific to Flutter packages.
 flutter:

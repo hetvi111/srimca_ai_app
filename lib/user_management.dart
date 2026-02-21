@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= USER MODEL =================
 class User {
@@ -15,6 +16,16 @@ class User {
     required this.role,
     required this.status,
   });
+
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
+      id: map['_id'] ?? '',
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      role: map['role'] ?? 'student',
+      status: map['is_active'] == true ? 'Active' : 'Inactive',
+    );
+  }
 }
 
 /// ================= USER MANAGEMENT PAGE =================
@@ -26,26 +37,30 @@ class UserManagementPage extends StatefulWidget {
 }
 
 class _UserManagementPageState extends State<UserManagementPage> {
-  List<User> users = [
-    User(
-        id: "1",
-        name: "Admin User",
-        email: "admin@gmail.com",
-        role: "Admin",
-        status: "Active"),
-    User(
-        id: "2",
-        name: "Faculty Member",
-        email: "faculty@gmail.com",
-        role: "Faculty",
-        status: "Active"),
-    User(
-        id: "3",
-        name: "Student One",
-        email: "student@gmail.com",
-        role: "Student",
-        status: "Inactive"),
-  ];
+  List<User> users = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    // Fetch users from backend API
+    try {
+      final usersData = await ApiService.getUsers();
+      setState(() {
+        users = usersData.map((u) => User.fromMap(u)).toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        users = [];
+        isLoading = false;
+      });
+    }
+  }
 
   String selectedRole = "All";
   String searchQuery = "";
@@ -67,30 +82,50 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   /// ================= ADD USER =================
-  void addUser(String name, String email, String role) {
-    setState(() {
-      users.add(User(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        email: email,
-        role: role,
-        status: "Active",
-      ));
-    });
+  Future<void> addUser(String name, String email, String role) async {
+    // TODO: Implement API call to add user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Add user functionality requires backend')),
+    );
   }
 
   /// ================= DELETE USER =================
-  void deleteUser(String id) {
-    setState(() {
-      users.removeWhere((u) => u.id == id);
-    });
+  Future<void> deleteUser(String id) async {
+    // Call API to deactivate user
+    final success = await ApiService.deactivateUser(id);
+    if (success) {
+      await _loadUsers();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User deactivated')),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to deactivate user')),
+        );
+      }
+    }
   }
 
   /// ================= TOGGLE STATUS =================
-  void toggleStatus(User user) {
-    setState(() {
-      user.status = user.status == "Active" ? "Inactive" : "Active";
-    });
+  Future<void> toggleStatus(User user) async {
+    if (user.status == 'Active') {
+      final success = await ApiService.deactivateUser(user.id);
+      if (success) {
+        setState(() {
+          user.status = 'Inactive';
+        });
+      }
+    } else {
+      final success = await ApiService.activateUser(user.id);
+      if (success) {
+        setState(() {
+          user.status = 'Active';
+        });
+      }
+    }
   }
 
   /// ================= EDIT USER =================
@@ -269,7 +304,9 @@ Widget build(BuildContext context) {
 
           /// ================= USER LIST =================
           Expanded(
-            child: Scrollbar(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Scrollbar(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: filteredUsers.length,

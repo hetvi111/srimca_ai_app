@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_register_screen.dart';
@@ -13,8 +14,9 @@ import 'package:srimca_ai/security_page.dart';
 import 'package:srimca_ai/VisitorHomePage.dart';
 import 'package:srimca_ai/student_page.dart';
 
-void main() {
-  print('App started');
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -66,9 +68,29 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
 
-      initialRoute: '/',
+      home: const SplashScreen(),
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Page not found: ${settings.name}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                    child: const Text('Go to Login'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
       routes: {
-        '/': (context) => const SplashScreen(),
         '/first': (context) => const FirstScreen(),
         '/login': (context) => const LoginRegisterScreen(),
         '/welcome': (context) => const WelcomeScreen(),
@@ -80,7 +102,15 @@ class _MyAppState extends State<MyApp> {
         '/security': (context) => const SecurityMaintenancePage(),
         '/faculty': (context) => const FacultyHomePage(),
         '/visitor': (context) => VisitorHomePage(),
-        '/student': (context) => StudentHomePage(),
+        '/student': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return StudentHomePage(
+            studentName: args?['studentName'] ?? 'Student',
+            semester: args?['semester'] ?? 'N/A',
+            userId: args?['userId']?.toString() ?? '',
+            email: args?['email']?.toString() ?? '',
+          );
+        },
       },
     );
   }

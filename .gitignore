@@ -153,3 +153,7 @@ flutter_*.png
 android/.gradle/
 android/app/build/
 build/app/outputs/
+
+# Firebase credentials ( secrets - do not commit)
+backend/*-firebase-adminsdk*.json
+android/app/google-services.json

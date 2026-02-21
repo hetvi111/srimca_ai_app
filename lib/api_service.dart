@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,18 +17,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 //
 // ============================================
 
-// TODO: Replace with your deployed backend URL after deploying to Render.com
-// Example production URL: 'https://your-app-name.onrender.com'
-const String kProductionUrl = 'https://srimca-ai-backend.onrender.com';
+const String kProductionUrl = String.fromEnvironment(
+  'API_PROD_URL',
+  defaultValue: 'https://srimca-ai-backend.onrender.com',
+);
 
-// Local development URL - change to your laptop's local IP
-const String kLocalDevUrl = 'http://172.31.229.182:5000';
+const String kLocalDevUrl = String.fromEnvironment(
+  'API_DEV_URL',
+  defaultValue: 'http://172.31.229.182:5000',
+);
 
-// Set to false for production, true for local development
-const bool kUseLocalDev = false; // Set to true only when developing with local backend
-
-// Combined API Base URL - automatically selects based on environment
-String get kApiBaseUrl => kUseLocalDev ? kLocalDevUrl : kProductionUrl;
+String get kApiBaseUrl => kReleaseMode ? kProductionUrl : kLocalDevUrl;
 
 /// Auth Service - handles token storage and retrieval
 class AuthService {
@@ -137,7 +137,7 @@ class ApiService {
   /// Admin Dashboard Stats
   static Future<Map<String, dynamic>> getAdminStats() async {
     try {
-      final response = await get('/api/users/stats/');
+      final response = await get('/api/users/stats');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -382,6 +382,57 @@ class ApiService {
   static Future<bool> deleteNotice(String noticeId) async {
     try {
       final response = await delete('/api/notices/$noticeId/');
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get notifications for admin dashboard
+  static Future<List<Map<String, dynamic>>> getNotifications({int limit = 50}) async {
+    try {
+      final response = await get('/api/notifications?limit=$limit');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final notifications = data['notifications'] as List<dynamic>? ?? [];
+        return notifications.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Get unread notifications count
+  static Future<int> getUnreadNotificationsCount() async {
+    try {
+      final response = await get('/api/notifications/unread-count');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['unread_count'] as int? ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Mark notification as read
+  static Future<bool> markNotificationAsRead(String notificationId) async {
+    try {
+      final response = await post('/api/notifications/$notificationId/read');
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Mark all notifications as read
+  static Future<bool> markAllNotificationsAsRead() async {
+    try {
+      final response = await post('/api/notifications/read-all');
       return response.statusCode == 200;
     } catch (e) {
       return false;

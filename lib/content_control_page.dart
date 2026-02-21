@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= CONTENT ITEM MODEL =================
 class ContentItem {
   String id;
   String title;
   String uploader;
-  String status; // Pending / Approved / Outdated
+  String status;
+  String type; // notice, material
 
   ContentItem({
     required this.id,
     required this.title,
     required this.uploader,
     required this.status,
+    required this.type,
   });
+
+  factory ContentItem.fromMap(Map<String, dynamic> map, String itemType) {
+    return ContentItem(
+      id: map['_id'] ?? '',
+      title: map['title'] ?? '',
+      uploader: map['faculty_id'] ?? 'Unknown',
+      status: map['is_active'] == false ? 'Outdated' : (map['status'] ?? 'Approved'),
+      type: itemType,
+    );
+  }
 }
 
 /// ================= CONTENT CONTROL PAGE =================
@@ -23,44 +36,69 @@ class ContentControlPage extends StatefulWidget {
   State<ContentControlPage> createState() => _ContentControlPageState();
 }
 
-class _ContentControlPageState extends State<ContentControlPage> {
-  List<ContentItem> contentList = [
-    ContentItem(
-        id: "1",
-        title: "Flutter Basics Notes",
-        uploader: "Faculty A",
-        status: "Pending"),
-    ContentItem(
-        id: "2",
-        title: "AI Knowledge: NLP",
-        uploader: "Faculty B",
-        status: "Approved"),
-    ContentItem(
-        id: "3",
-        title: "Outdated ML Example",
-        uploader: "Faculty C",
-        status: "Outdated"),
-  ];
+class _ContentControlPageState extends State<ContentControlPage> with SingleTickerProviderStateMixin {
+  List<ContentItem> contentList = [];
+  bool isLoading = true;
+  late TabController _tabController;
 
-  /// ================= APPROVE CONTENT =================
-  void approveContent(ContentItem item) {
-    setState(() {
-      item.status = "Approved";
-    });
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadContent();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadContent() async {
+    // Fetch materials and notices from backend API
+    try {
+      final materialsData = await ApiService.getMaterials();
+      final noticesData = await ApiService.getNotices();
+      
+      setState(() {
+        // Combine materials and notices
+        contentList = [
+          ...materialsData.map((m) => ContentItem.fromMap(m, 'material')),
+          ...noticesData.map((n) => ContentItem.fromMap(n, 'notice')),
+        ];
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        contentList = [];
+        isLoading = false;
+      });
+    }
   }
 
   /// ================= REMOVE CONTENT =================
-  void removeContent(ContentItem item) {
-    setState(() {
-      contentList.removeWhere((c) => c.id == item.id);
-    });
-  }
-
-  /// ================= MARK OUTDATED =================
-  void markOutdated(ContentItem item) {
-    setState(() {
-      item.status = "Outdated";
-    });
+  Future<void> removeContent(ContentItem item) async {
+    bool success;
+    if (item.type == 'notice') {
+      success = await ApiService.deleteNotice(item.id);
+    } else {
+      success = await ApiService.deleteMaterial(item.id);
+    }
+    
+    if (success) {
+      await _loadContent();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Content removed')),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to remove content')),
+        );
+      }
+    }
   }
 
   @override
@@ -78,99 +116,105 @@ class _ContentControlPageState extends State<ContentControlPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: contentList.isEmpty
-            ? const Center(
-          child: Text(
-            "No content available.",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        )
-            : ListView.builder(
-          itemCount: contentList.length,
-          itemBuilder: (context, index) {
-            final item = contentList[index];
-
-            /// Status color coding
-            Color statusColor;
-            switch (item.status) {
-              case "Approved":
-                statusColor = Colors.green;
-                break;
-              case "Pending":
-                statusColor = Colors.orange;
-                break;
-              case "Outdated":
-              default:
-                statusColor = Colors.red;
-            }
-
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                title: Text(item.title),
-                subtitle: Text("Uploader: ${item.uploader}"),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    /// Status Text
-                    Text(
-                      item.status,
-                      style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-
-                    /// Action Buttons Row
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Approve button only for Pending
-                        if (item.status == "Pending")
-                          IconButton(
-                            icon: const Icon(
-                              Icons.check,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                            tooltip: "Approve",
-                            onPressed: () => approveContent(item),
-                          ),
-
-                        // Mark as Outdated button for Pending or Approved
-                        if (item.status != "Outdated")
-                          IconButton(
-                            icon: const Icon(
-                              Icons.warning,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                            tooltip: "Mark as Outdated",
-                            onPressed: () => markOutdated(item),
-                          ),
-
-                        // Remove button always visible
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                          tooltip: "Remove",
-                          onPressed: () => removeContent(item),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: "Materials"),
+            Tab(text: "Notices"),
+          ],
         ),
       ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildMaterialsList(),
+          _buildNoticesList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaterialsList() {
+    final materials = contentList.where((c) => c.type == 'material').toList();
+    return _buildContentList(materials, "No materials uploaded yet.");
+  }
+
+  Widget _buildNoticesList() {
+    final notices = contentList.where((c) => c.type == 'notice').toList();
+    return _buildContentList(notices, "No notices uploaded yet.");
+  }
+
+  Widget _buildContentList(List<ContentItem> items, String emptyMessage) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          emptyMessage,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        /// Status color coding
+        Color statusColor;
+        switch (item.status) {
+          case "Approved":
+            statusColor = Colors.green;
+            break;
+          case "Pending":
+            statusColor = Colors.orange;
+            break;
+          case "Outdated":
+          default:
+            statusColor = Colors.red;
+        }
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            title: Text(item.title),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Type: ${item.type}"),
+                Text("Uploader: ${item.uploader}"),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                /// Status Text
+                Text(
+                  item.status,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+
+                /// Remove button
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                    size: 20,
+                  ),
+                  tooltip: "Remove",
+                  onPressed: () => removeContent(item),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

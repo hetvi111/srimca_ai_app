@@ -9,6 +9,9 @@ class WelcomeScreen extends StatelessWidget {
     final role = (args != null && args['role'] != null) ? args['role'] as String : 'Student';
     final enrollment = args != null ? (args['enrollment'] as String? ?? '') : '';
     final staffId = args != null ? (args['staffId'] as String? ?? '') : '';
+    final userId = args != null ? (args['userId'] as String? ?? '') : '';
+    final userName = args != null ? (args['userName'] as String? ?? 'Student') : 'Student';
+    final email = args != null ? (args['email'] as String? ?? '') : '';
 
     String title = 'Welcome!';
     String subtitle = "Let's Have Fun with SAI";
@@ -166,8 +169,10 @@ class WelcomeScreen extends StatelessWidget {
                         context,
                         '/student',
                         arguments: {
-                          'studentName': 'Malav',
+                          'studentName': userName.isNotEmpty ? userName : 'Malav',
                           'semester': '5th Semester',
+                          'userId': userId,
+                          'email': email,
                         },
                       );
                     } else if (role.toLowerCase() == 'visitor') {
