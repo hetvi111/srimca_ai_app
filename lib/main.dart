@@ -15,6 +15,7 @@ import 'package:srimca_ai/VisitorHomePage.dart';
 import 'package:srimca_ai/student_page.dart';
 import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
+import 'package:srimca_ai/push_notification_service.dart';
 
 // App Theme Colors
 class AppColors {
@@ -30,6 +31,10 @@ class AppColors {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  
+  // Initialize push notifications
+  await PushNotificationService.initialize();
+  
   runApp(const MyApp());
 }
 
