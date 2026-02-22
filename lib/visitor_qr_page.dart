@@ -26,38 +26,43 @@ class VisitorQRPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // QR Code Icon
+              // QR Code Image
               Container(
-                padding: const EdgeInsets.all(30),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: accentBlue.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentBlue.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentBlue.withOpacity(0.2),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+                child: Image.asset(
+                  'assets/images/visitor_qr.png',
+                  width: 200,
+                  height: 200,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 200,
+                      height: 200,
+                      color: lightGrey,
+                      child: const Icon(
+                        Icons.qr_code,
+                        size: 80,
+                        color: accentBlue,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.qr_code_scanner,
-                    size: 80,
-                    color: accentBlue,
-                  ),
+                    );
+                  },
                 ),
               ),
 
               const SizedBox(height: 32),
 
               const Text(
-                "QR-Based Visitor Registration",
+                "Scan QR to Register",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -69,7 +74,7 @@ class VisitorQRPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               Text(
-                "Scan the QR code provided by the college to register your visit digitally. This will redirect you to the registration form.",
+                "Scan this QR code with your phone camera to open the visitor registration page.",
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -131,7 +136,7 @@ class VisitorQRPage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Demo QR Button
+              // Open Link Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -142,15 +147,11 @@ class VisitorQRPage extends StatelessWidget {
                   ),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Demo: QR Code scanned successfully!")),
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const VisitorRegistrationPage()),
+                      const SnackBar(content: Text("QR Code links to: https://srimca-ai-app.onrender.com/register")),
                     );
                   },
-                  icon: const Icon(Icons.qr_code, color: Colors.white),
-                  label: const Text("Try Demo QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.link, color: Colors.white),
+                  label: const Text("View Registration Link", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
