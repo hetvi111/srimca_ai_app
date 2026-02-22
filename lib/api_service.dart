@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 //   - iOS Simulator: Use 'http://localhost:5000'
 //
 // For PRODUCTION (deployed backend):
-//   - Use your Render.com URL (e.g., 'https://srimca-ai-backend.onrender.com')
+//   - Use your Render.com URL (e.g., 'https://srimca-ai-app.onrender.com')
 //
 // ============================================
 
@@ -22,9 +22,8 @@ const String kProductionUrl = String.fromEnvironment(
   defaultValue: 'https://srimca-ai-app.onrender.com',
 );
 
-
-
-String get kApiBaseUrl => kReleaseMode ? kProductionUrl : kLocalDevUrl;
+/// API base URL that returns production URL in release mode and local URL in debug mode
+String get kApiBaseUrl => kReleaseMode ? kProductionUrl : 'http://10.0.2.2:5000';
 
 /// Auth Service - handles token storage and retrieval
 class AuthService {
@@ -100,7 +99,7 @@ class ApiService {
   /// GET request
   static Future<http.Response> get(String endpoint, {Map<String, String>? queryParams}) async {
     final headers = await _getHeaders();
-    var uri = Uri.parse('$kApiBaseUrl$endpoint');
+    var uri = Uri.parse('$kProductionUrl$endpoint');
     
     if (queryParams != null && queryParams.isNotEmpty) {
       uri = uri.replace(queryParameters: queryParams);
@@ -112,7 +111,7 @@ class ApiService {
   /// POST request
   static Future<http.Response> post(String endpoint, {Map<String, dynamic>? body}) async {
     final headers = await _getHeaders();
-    final uri = Uri.parse('$kApiBaseUrl$endpoint');
+    final uri = Uri.parse('$kProductionUrl$endpoint');
     
     return _client.post(
       uri,
@@ -124,7 +123,7 @@ class ApiService {
   /// PUT request
   static Future<http.Response> put(String endpoint, {Map<String, dynamic>? body}) async {
     final headers = await _getHeaders();
-    final uri = Uri.parse('$kApiBaseUrl$endpoint');
+    final uri = Uri.parse('$kProductionUrl$endpoint');
     
     return _client.put(
       uri,
@@ -136,7 +135,7 @@ class ApiService {
   /// DELETE request
   static Future<http.Response> delete(String endpoint) async {
     final headers = await _getHeaders();
-    final uri = Uri.parse('$kApiBaseUrl$endpoint');
+    final uri = Uri.parse('$kProductionUrl$endpoint');
     
     return _client.delete(uri, headers: headers).timeout(const Duration(seconds: 30));
   }
