@@ -226,3 +226,118 @@ def get_user_by_email(email: str):
 def is_firebase_enabled():
     """Check if Firebase is properly initialized"""
     return _firebase_app is not None
+
+
+# ================= FCM PUSH NOTIFICATIONS =================
+
+def send_push_notification(
+    title: str,
+    body: str,
+    target_role: str = 'all',
+    data: dict = None
+):
+    """
+    Send push notification to users based on role
+    
+    Parameters:
+    - title: Notification title
+    - body: Notification body
+    - target_role: 'all', 'student', 'faculty', 'admin'
+    - data: Optional data payload
+    """
+    try:
+        from firebase_admin import messaging
+        
+        # Create message based on target
+        if target_role == 'all':
+            # Send to all users via topic
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                topic='all',
+            )
+        elif target_role == 'student':
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                topic='student',
+            )
+        elif target_role == 'faculty':
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                topic='faculty',
+            )
+        elif target_role == 'admin':
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                topic='admin',
+            )
+        else:
+            # Default to all
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                topic='all',
+            )
+        
+        # Send message
+        response = messaging.send(message)
+        print(f'✅ Push notification sent: {response}')
+        return True
+        
+    except Exception as e:
+        print(f'❌ Error sending push notification: {e}')
+        return False
+
+
+def send_notification_to_user(
+    token: str,
+    title: str,
+    body: str,
+    data: dict = None
+):
+    """
+    Send push notification to a specific device token
+    
+    Parameters:
+    - token: FCM device token
+    - title: Notification title
+    - body: Notification body
+    - data: Optional data payload
+    """
+    try:
+        from firebase_admin import messaging
+        
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            data=data or {},
+            token=token,
+        )
+        
+        response = messaging.send(message)
+        print(f'✅ Push notification sent to device: {response}')
+        return True
+        
+    except Exception as e:
+        print(f'❌ Error sending push notification to device: {e}')
+        return False

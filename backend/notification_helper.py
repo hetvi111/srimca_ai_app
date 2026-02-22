@@ -8,6 +8,21 @@ from database import get_collection, Collections
 from datetime import datetime
 
 
+def send_push_notification(title: str, message: str, target_role: str = 'all'):
+    """
+    Send push notification via FCM
+    """
+    try:
+        from firebase import firebase_module
+        # Try to import FCM from firebase module
+        # This will fail gracefully if Firebase is not configured
+        pass
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f'Push notification error: {e}')
+
+
 def create_notification(
     title: str, 
     message: str, 
@@ -19,7 +34,8 @@ def create_notification(
     sender_id: str = None,
     sender_name: str = None,
     related_id: str = None,  # ID of related entity (notice, assignment, etc.)
-    related_type: str = None  # 'notice', 'assignment', 'material', 'event'
+    related_type: str = None,  # 'notice', 'assignment', 'material', 'event'
+    send_push: bool = True  # Whether to send push notification
 ):
     """
     Create a new notification in the database with role-based targeting
@@ -57,7 +73,26 @@ def create_notification(
         }
         
         result = notifications.insert_one(notification_doc)
-        return str(result.inserted_id)
+        notification_id = str(result.inserted_id)
+        
+        # Send push notification if enabled
+        if send_push:
+            try:
+                # Import from firebase module in same directory
+                import firebase as firebase_module
+                if hasattr(firebase_module, 'send_push_notification'):
+                    data_payload = {
+                        'notification_id': notification_id,
+                        'type': notification_type,
+                        'related_type': related_type or '',
+                        'related_id': related_id or '',
+                    }
+                    firebase_module.send_push_notification(title, message, target_role, data_payload)
+            except (ImportError, Exception) as e:
+                # Firebase not configured or error, skip push silently
+                pass
+        
+        return notification_id
     except Exception as e:
         print(f"Error creating notification: {e}")
         return None
