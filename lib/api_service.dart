@@ -19,7 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
-  defaultValue: 'https://srimca-ai-backend.onrender.com',
+  defaultValue: 'https://srimca-ai.onrender.com',
 );
 
 const String kLocalDevUrl = String.fromEnvironment(
