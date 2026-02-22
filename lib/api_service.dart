@@ -477,6 +477,66 @@ class ApiService {
     }
   }
 
+  /// Get notifications for current user (role-based)
+  static Future<List<Map<String, dynamic>>> getMyNotifications({int limit = 50}) async {
+    try {
+      final response = await get('/api/notifications/my?limit=$limit');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final notifications = data['notifications'] as List<dynamic>? ?? [];
+        return notifications.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      print('Error getting my notifications: $e');
+      return [];
+    }
+  }
+
+  /// Get unread notifications count for current user
+  static Future<int> getMyUnreadNotificationsCount() async {
+    try {
+      final response = await get('/api/notifications/unread-count/my');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['unread_count'] as int? ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Create notification with specific target
+  static Future<bool> createNotification({
+    required String title,
+    required String message,
+    required String type,
+    String targetRole = 'all',
+    List<String> targetCourses = const [],
+    List<String> targetSemesters = const [],
+    String? relatedId,
+    String? relatedType,
+  }) async {
+    try {
+      final response = await post('/api/notifications', body: {
+        'title': title,
+        'message': message,
+        'type': type,
+        'target_role': targetRole,
+        'target_courses': targetCourses,
+        'target_semesters': targetSemesters,
+        'related_id': relatedId,
+        'related_type': relatedType,
+      });
+      return response.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Update material (admin only)
   static Future<bool> updateMaterialStatus(String materialId, String status) async {
     try {

@@ -31,8 +31,8 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
 
   Future<void> _loadNotifications() async {
     try {
-      // Fetch notifications from backend
-      final notifs = await ApiService.getUserNotifications(widget.userId);
+      // Fetch role-based notifications from backend
+      final notifs = await ApiService.getMyNotifications();
       if (mounted) {
         setState(() {
           notifications = notifs;

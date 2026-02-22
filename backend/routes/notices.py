@@ -109,6 +109,15 @@ def create_notice():
     """
     Create a new notice
     Requires authentication
+    
+    Request body:
+    - title: Notice title
+    - content: Notice content
+    - priority: normal, important, urgent
+    - target_role: all, student, faculty, admin (default: all)
+    - target_courses: List of courses (for student targeting)
+    - target_semesters: List of semesters (for student targeting)
+    - is_event: Boolean - if true, this is an event notification (visible to all)
     """
     try:
         data = request.get_json()
@@ -116,6 +125,27 @@ def create_notice():
         # Validate required fields
         if not data.get('title') or not data.get('content'):
             return jsonify({'error': 'Title and content are required'}), 400
+        
+        # Get sender info
+        sender_id = request.user.get('user_id')
+        sender_role = request.user.get('role', 'faculty')
+        
+        # Get sender name
+        users_collection = get_collection(Collections.USERS)
+        user_doc = users_collection.find_one({'_id': ObjectId(sender_id)})
+        sender_name = user_doc.get('name', 'Faculty') if user_doc else 'Faculty'
+        
+        # Determine target role
+        is_event = data.get('is_event', False)
+        if is_event:
+            # Events are visible to all
+            target_role = 'all'
+        else:
+            target_role = data.get('target_role', 'all')
+        
+        # Get target courses and semesters
+        target_courses = data.get('target_courses', [])
+        target_semesters = data.get('target_semesters', [])
         
         # Create notice document
         notice_doc = NoticeModel.create_notice(
@@ -125,18 +155,83 @@ def create_notice():
             priority=data.get('priority', 'normal')
         )
         
+        # Add targeting fields to notice
+        notice_doc['target_role'] = target_role
+        notice_doc['target_courses'] = target_courses
+        notice_doc['target_semesters'] = target_semesters
+        notice_doc['is_event'] = is_event
+        
         # Insert into database
         notices_collection = get_collection(Collections.NOTICES)
         result = notices_collection.insert_one(notice_doc)
         
         notice_doc['_id'] = result.inserted_id
         
-        # Create notification for new notice
-        create_notification(
-            title='New Notice Posted',
-            message=f'A new notice "{data.get("title", "")}" has been posted',
-            notification_type='upload'
-        )
+        # Create notification with targeting
+        if is_event:
+            # Event notifications go to everyone
+            create_notification(
+                title=f'New Event: {data.get("title", "")}',
+                message=f'{data.get("title", "")} - {data.get("content", "")[:100]}',
+                notification_type='event',
+                target_role='all',
+                sender_role=sender_role,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                related_id=str(result.inserted_id),
+                related_type='notice'
+            )
+        elif target_role == 'all':
+            create_notification(
+                title='New Notice Posted',
+                message=f'A new notice "{data.get("title", "")}" has been posted',
+                notification_type='notice',
+                target_role='all',
+                sender_role=sender_role,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                related_id=str(result.inserted_id),
+                related_type='notice'
+            )
+        elif target_role == 'student':
+            create_notification(
+                title='New Notice for Students',
+                message=f'A new notice "{data.get("title", "")}" has been posted for students',
+                notification_type='notice',
+                target_role='student',
+                target_courses=target_courses,
+                target_semesters=target_semesters,
+                sender_role=sender_role,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                related_id=str(result.inserted_id),
+                related_type='notice'
+            )
+        elif target_role == 'faculty':
+            create_notification(
+                title='New Notice for Faculty',
+                message=f'A new notice "{data.get("title", "")}" has been posted for faculty',
+                notification_type='notice',
+                target_role='faculty',
+                sender_role=sender_role,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                related_id=str(result.inserted_id),
+                related_type='notice'
+            )
+        else:
+            # Default notification
+            create_notification(
+                title='New Notice Posted',
+                message=f'A new notice "{data.get("title", "")}" has been posted',
+                notification_type='notice',
+                target_role=target_role,
+                sender_role=sender_role,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                related_id=str(result.inserted_id),
+                related_type='notice'
+            )
         
         return jsonify({
             'message': 'Notice created successfully',

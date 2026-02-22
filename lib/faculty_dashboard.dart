@@ -4,6 +4,7 @@ import 'ai_monitor_page.dart';
 import 'faculty_notice_management_page.dart';
 import 'faculty_visitor_inquiry_page.dart';
 import 'faculty_event_management_page.dart';
+import 'faculty_notifications_page.dart';
 import 'package:srimca_ai/faculty_profile_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
@@ -96,6 +97,7 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
       FacultyNoticeManagementPage(facultyId: widget.staffId, facultyName: widget.name),
       FacultyVisitorInquiryPage(facultyId: widget.staffId, facultyName: widget.name, department: widget.department),
       FacultyEventManagementPage(facultyId: widget.staffId, facultyName: widget.name),
+      const FacultyNotificationsPage(),
       const AIAssistantPage(),
       FacultyProfilePage(userId: widget.staffId, staffId: widget.staffId),
     ];
@@ -125,6 +127,7 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
             BottomNavigationBarItem(icon: Icon(Icons.campaign), label: "Notices"),
             BottomNavigationBarItem(icon: Icon(Icons.people), label: "Visitors"),
             BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
+            BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notifications"),
             BottomNavigationBarItem(icon: Icon(Icons.psychology), label: "AI Monitor"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
