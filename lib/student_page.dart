@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_screen.dart';
-import 'profile_screen.dart';
+import 'student_profile_page.dart';
 import 'student_notice_page.dart';
 import 'student_notifications_page.dart';
 import 'student_chat_history_page.dart';
@@ -506,8 +506,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
         children: [
           _homePageContent(),
           ChatScreen(userId: widget.userId),
-          ProfileScreen(
-            role: 'student',
+          StudentProfilePage(
             userId: widget.userId,
             enrollmentNumber: widget.enrollmentNumber,
             course: widget.course,

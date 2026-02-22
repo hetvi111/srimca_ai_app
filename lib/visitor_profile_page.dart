@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/api_service.dart' show AuthService;
 import 'dart:convert';
 
 // Navy Blue Theme Colors
@@ -33,7 +33,7 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
   Future<void> _loadVisitorData() async {
     try {
       // Get stored user data
-      final userData = await ApiService.getUser();
+      final userData = await AuthService.getUser();
       
       if (userData != null && userData.isNotEmpty) {
         if (mounted) {
@@ -71,6 +71,39 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
       return dateStr.toString();
     } catch (e) {
       return 'N/A';
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // Clear stored data using AuthService
+      await AuthService.clearAuth();
+      
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -178,6 +211,23 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
                 },
                 icon: const Icon(Icons.edit, color: accentBlue),
                 label: const Text("Update Profile", style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Logout Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _logout,
+                icon: const Icon(Icons.logout, color: Colors.red),
+                label: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
               ),
             ),
 

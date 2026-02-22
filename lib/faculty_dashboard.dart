@@ -4,7 +4,7 @@ import 'ai_monitor_page.dart';
 import 'faculty_notice_management_page.dart';
 import 'faculty_visitor_inquiry_page.dart';
 import 'faculty_event_management_page.dart';
-import 'package:srimca_ai/profile_screen.dart';
+import 'package:srimca_ai/faculty_profile_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
 // Navy Blue Theme Colors
@@ -97,7 +97,7 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
       FacultyVisitorInquiryPage(facultyId: widget.staffId, facultyName: widget.name, department: widget.department),
       FacultyEventManagementPage(facultyId: widget.staffId, facultyName: widget.name),
       const AIAssistantPage(),
-      ProfileScreen(role: 'faculty', userId: widget.staffId),
+      FacultyProfilePage(userId: widget.staffId, staffId: widget.staffId),
     ];
 
     return Scaffold(
