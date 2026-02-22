@@ -23,7 +23,7 @@ const String kProductionUrl = String.fromEnvironment(
 );
 
 /// API base URL that returns production URL in release mode and local URL in debug mode
-String get kApiBaseUrl => kReleaseMode ? kProductionUrl : 'http://172.31.229.182:5000';
+String get kApiBaseUrl => kProductionUrl;
 
 /// Auth Service - handles token storage and retrieval
 class AuthService {
