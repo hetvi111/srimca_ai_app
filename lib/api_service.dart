@@ -70,6 +70,30 @@ class AuthService {
     final token = await getToken();
     return token != null && token.isNotEmpty;
   }
+
+  /// Get user profile from backend
+  static Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$kApiBaseUrl/api/users/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        print('Failed to get profile: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error getting profile: $e');
+      return null;
+    }
+  }
 }
 
 /// API Service - handles HTTP requests with auth

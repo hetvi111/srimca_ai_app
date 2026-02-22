@@ -43,17 +43,43 @@ class _FacultyProfilePageState extends State<FacultyProfilePage> {
   }
 
   Future<void> _loadProfile() async {
-    final userId = widget.userId.isNotEmpty ? widget.userId : 'default_user_id';
     try {
-      // Mock load profile - in production, fetch from backend
+      // First try to get stored local user data
+      final localUser = await AuthService.getUser();
+      
+      // Try to get profile from backend
+      final backendProfile = await AuthService.getUserProfile();
+      
       setState(() {
-        profileData = {
-          'name': 'Faculty Name',
-          'email': 'faculty@srimca.com',
-          'department': 'Computer Science',
-          'designation': 'Professor',
-          'phone': '+91-9876543210',
-        };
+        if (backendProfile != null && backendProfile.isNotEmpty) {
+          // Use backend profile data
+          final profile = backendProfile['profile'] ?? {};
+          profileData = {
+            'name': backendProfile['name'] ?? localUser?['name'] ?? 'Faculty Name',
+            'email': backendProfile['email'] ?? localUser?['email'] ?? 'faculty@srimca.com',
+            'department': profile['department'] ?? localUser?['department'] ?? 'Computer Science',
+            'designation': profile['designation'] ?? localUser?['designation'] ?? 'Professor',
+            'phone': profile['phone'] ?? localUser?['phone'] ?? localUser?['mobile'] ?? '',
+          };
+        } else if (localUser != null && localUser.isNotEmpty) {
+          // Fall back to local user data
+          profileData = {
+            'name': localUser['name'] ?? 'Faculty Name',
+            'email': localUser['email'] ?? 'faculty@srimca.com',
+            'department': localUser['department'] ?? 'Computer Science',
+            'designation': localUser['designation'] ?? 'Professor',
+            'phone': localUser['phone'] ?? localUser['mobile'] ?? '',
+          };
+        } else {
+          // Use defaults
+          profileData = {
+            'name': localUser?['name'] ?? 'Faculty Name',
+            'email': localUser?['email'] ?? 'faculty@srimca.com',
+            'department': 'Computer Science',
+            'designation': 'Professor',
+            'phone': localUser?['phone'] ?? localUser?['mobile'] ?? '',
+          };
+        }
         isLoading = false;
       });
     } catch (e) {

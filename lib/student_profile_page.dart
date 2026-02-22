@@ -47,18 +47,46 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   }
 
   Future<void> _loadProfile() async {
-    final userId = widget.userId.isNotEmpty ? widget.userId : 'default_user_id';
     try {
-      // Mock load profile - in production, fetch from backend
+      // First try to get stored local user data
+      final localUser = await AuthService.getUser();
+      
+      // Try to get profile from backend
+      final backendProfile = await AuthService.getUserProfile();
+      
       setState(() {
-        profileData = {
-          'name': 'Student Name',
-          'email': 'student@srimca.com',
-          'enrollmentNumber': widget.enrollmentNumber ?? 'ENR2024001',
-          'course': widget.course ?? 'BCA',
-          'semester': widget.semester ?? '5th Semester',
-          'phone': '+91-9876543210',
-        };
+        if (backendProfile != null && backendProfile.isNotEmpty) {
+          // Use backend profile data
+          final profile = backendProfile['profile'] ?? {};
+          profileData = {
+            'name': backendProfile['name'] ?? localUser?['name'] ?? 'Student Name',
+            'email': backendProfile['email'] ?? localUser?['email'] ?? 'student@srimca.com',
+            'enrollmentNumber': profile['enrollment_number'] ?? widget.enrollmentNumber ?? 'N/A',
+            'course': widget.course ?? 'BCA',
+            'semester': profile['semester'] ?? widget.semester ?? 'N/A',
+            'phone': profile['phone'] ?? localUser?['phone'] ?? localUser?['mobile'] ?? '',
+          };
+        } else if (localUser != null && localUser.isNotEmpty) {
+          // Fall back to local user data
+          profileData = {
+            'name': localUser['name'] ?? 'Student Name',
+            'email': localUser['email'] ?? 'student@srimca.com',
+            'enrollmentNumber': widget.enrollmentNumber ?? localUser['enrollmentNumber'] ?? 'N/A',
+            'course': widget.course ?? localUser['course'] ?? 'BCA',
+            'semester': widget.semester ?? localUser['semester'] ?? 'N/A',
+            'phone': localUser['phone'] ?? localUser['mobile'] ?? '',
+          };
+        } else {
+          // Use widget parameters as fallback
+          profileData = {
+            'name': localUser?['name'] ?? 'Student Name',
+            'email': localUser?['email'] ?? 'student@srimca.com',
+            'enrollmentNumber': widget.enrollmentNumber ?? 'N/A',
+            'course': widget.course ?? 'BCA',
+            'semester': widget.semester ?? 'N/A',
+            'phone': localUser?['phone'] ?? localUser?['mobile'] ?? '',
+          };
+        }
         isLoading = false;
       });
     } catch (e) {
