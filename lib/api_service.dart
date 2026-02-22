@@ -22,10 +22,7 @@ const String kProductionUrl = String.fromEnvironment(
   defaultValue: 'https://srimca-ai-app.onrender.com',
 );
 
-const String kLocalDevUrl = String.fromEnvironment(
-  'API_DEV_URL',
-  defaultValue: 'http://172.31.229.182:5000',
-);
+
 
 String get kApiBaseUrl => kReleaseMode ? kProductionUrl : kLocalDevUrl;
 
