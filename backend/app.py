@@ -104,6 +104,44 @@ def create_app(config_name=None):
             }
         }), 200
     
+    # SRIMCA AI Chat endpoint
+    @app.route('/api/ai/chat', methods=['POST'])
+    def ai_chat():
+        """SRIMCA AI Chat endpoint - uses RAG-based AI for answering questions"""
+        try:
+            data = request.get_json()
+            if not data or 'question' not in data:
+                return jsonify({'error': 'Question is required'}), 400
+            
+            question = data['question'].strip()
+            if not question:
+                return jsonify({'error': 'Question cannot be empty'}), 400
+            
+            # Import and use the srimca AI
+            try:
+                from srimca.srimca_rag import ask as srimca_ask
+                print(f"Processing question: {question}")
+                answer = srimca_ask(question)
+                print(f"Got answer: {answer}")
+            except Exception as e:
+                print(f"SRIMCA AI Error: {e}")
+                import traceback
+                traceback.print_exc()
+                # Fallback response if AI fails
+                answer = "I apologize, but I'm having trouble processing your question right now. Please try again later."
+            
+            return jsonify({
+                'question': question,
+                'answer': answer,
+                'status': 'success'
+            }), 200
+            
+        except Exception as e:
+            print(f"AI Chat Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
+    
     # QR Code generation endpoint
     @app.route('/generate-qr', methods=['GET'])
     def generate_qr():

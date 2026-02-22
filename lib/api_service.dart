@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 // ============================================
 // API Configuration
@@ -17,13 +18,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 //
 // ============================================
 
+// Change this to your local URL when developing locally
+const String _localUrl = 'http://10.0.2.2:5000'; // Android Emulator
+// const String _localUrl = 'http://localhost:5000'; // iOS Simulator
+// const String _localUrl = 'http://192.168.1.x:5000'; // Physical device
+
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
   defaultValue: 'https://srimca-ai-app.onrender.com',
 );
 
-/// API base URL that returns production URL in release mode and local URL in debug mode
-String get kApiBaseUrl => kProductionUrl;
+/// API base URL - uses local URL in debug mode, production URL in release mode
+String get kApiBaseUrl {
+  if (kDebugMode) {
+    return _localUrl; // Change this to your local backend URL
+  }
+  return kProductionUrl;
+}
 
 /// Auth Service - handles token storage and retrieval
 class AuthService {
@@ -578,6 +589,32 @@ class ApiService {
       return response.statusCode == 201;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Ask SRIMCA AI a question and get response
+  static Future<String> askAI(String question) async {
+    try {
+      debugPrint('Sending question to AI: $question');
+      final response = await post('/api/ai/chat', body: {
+        'question': question,
+      });
+      
+      debugPrint('AI Response status: ${response.statusCode}');
+      debugPrint('AI Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['status'] == 'success') {
+          return data['answer'] as String? ?? "I apologize, but I couldn't generate a response.";
+        }
+      }
+      
+      // Return fallback message on error
+      return "I apologize, but I'm having trouble processing your request right now. Please try again later.";
+    } catch (e) {
+      debugPrint('Ask AI Error: $e');
+      return "I apologize, but I'm having trouble connecting to the AI service. Please check your internet connection and try again.";
     }
   }
 

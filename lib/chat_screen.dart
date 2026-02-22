@@ -94,7 +94,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<String> _getAIResponse(String question) async {
-    // Simulated AI responses based on keywords
+    // Use the real SRIMCA AI backend
+    try {
+      final response = await ApiService.askAI(question);
+      return response;
+    } catch (e) {
+      // Fallback to simulated responses if API fails
+      return _getFallbackResponse(question);
+    }
+  }
+
+  /// Fallback responses when API is unavailable
+  String _getFallbackResponse(String question) {
     final lowerQuestion = question.toLowerCase();
     
     if (lowerQuestion.contains('exam') || lowerQuestion.contains('schedule')) {
