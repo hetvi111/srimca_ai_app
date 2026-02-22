@@ -31,7 +31,7 @@ const String kProductionUrl = String.fromEnvironment(
 /// API base URL - uses local URL in debug mode, production URL in release mode
 String get kApiBaseUrl {
   if (kDebugMode) {
-    return _localUrl; // Change this to your local backend URL
+    return kProductionUrl; // Change this to your local backend URL
   }
   return kProductionUrl;
 }
