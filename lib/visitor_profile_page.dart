@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:srimca_ai/api_service.dart';
+import 'dart:convert';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -16,42 +19,75 @@ class VisitorProfilePage extends StatefulWidget {
 }
 
 class _VisitorProfilePageState extends State<VisitorProfilePage> {
-  // Demo visitor data
-  Map<String, dynamic> visitorData = {
-    'name': 'John Smith',
-    'email': 'john.smith@example.com',
-    'phone': '+91 9876543210',
-    'purpose': 'Parent Meeting',
-    'status': 'approved',
-    'registrationDate': '2024-02-20',
-  };
+  // Visitor data from database
+  Map<String, dynamic> visitorData = {};
+  List<Map<String, dynamic>> visitHistory = [];
+  bool _isLoading = true;
 
-  List<Map<String, dynamic>> visitHistory = [
-    {
-      'id': '1',
-      'purpose': 'Parent Meeting',
-      'date': '2024-02-20',
-      'status': 'completed',
-      'department': 'Computer Science',
-    },
-    {
-      'id': '2',
-      'purpose': 'Admission Inquiry',
-      'date': '2024-01-15',
-      'status': 'completed',
-      'department': 'Administration',
-    },
-    {
-      'id': '3',
-      'purpose': 'Guest Lecture',
-      'date': '2023-12-10',
-      'status': 'completed',
-      'department': 'AI/ML',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadVisitorData();
+  }
+
+  Future<void> _loadVisitorData() async {
+    try {
+      // Get stored user data
+      final userData = await ApiService.getUser();
+      
+      if (userData != null && userData.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            visitorData = {
+              'name': userData['name'] ?? 'Visitor',
+              'email': userData['email'] ?? '',
+              'phone': userData['mobile'] ?? userData['phone'] ?? '',
+              'purpose': userData['purpose'] ?? 'Not specified',
+              'status': userData['status'] ?? 'pending',
+              'registrationDate': _formatDate(userData['created_at'] ?? userData['registrationDate']),
+            };
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading visitor data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _formatDate(dynamic dateStr) {
+    if (dateStr == null) return 'N/A';
+    try {
+      if (dateStr is String) {
+        return dateStr.substring(0, 10);
+      }
+      return dateStr.toString();
+    } catch (e) {
+      return 'N/A';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text("My Profile"),
+          backgroundColor: navyBlue,
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -59,6 +95,12 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
         backgroundColor: navyBlue,
         foregroundColor: Colors.white,
         elevation: 6,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadVisitorData,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -113,6 +155,7 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
             _sectionTitle("Contact Information"),
             const SizedBox(height: 12),
             _infoCard([
+              _infoRow(Icons.person, "Name", visitorData['name'] ?? 'N/A'),
               _infoRow(Icons.phone, "Phone", visitorData['phone'] ?? 'N/A'),
               _infoRow(Icons.email, "Email", visitorData['email'] ?? 'N/A'),
               _infoRow(Icons.flag, "Purpose", visitorData['purpose'] ?? 'N/A'),
@@ -258,6 +301,10 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
   }
 
   void _showUpdateDialog() {
+    final nameController = TextEditingController(text: visitorData['name'] ?? '');
+    final phoneController = TextEditingController(text: visitorData['phone'] ?? '');
+    final emailController = TextEditingController(text: visitorData['email'] ?? '');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -272,6 +319,7 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
               const Text("Update Profile", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: navyBlue)),
               const SizedBox(height: 20),
               TextField(
+                controller: nameController,
                 decoration: InputDecoration(
                   labelText: "Name",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -279,6 +327,7 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
               ),
               const SizedBox(height: 12),
               TextField(
+                controller: phoneController,
                 decoration: InputDecoration(
                   labelText: "Phone",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -286,6 +335,7 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
               ),
               const SizedBox(height: 12),
               TextField(
+                controller: emailController,
                 decoration: InputDecoration(
                   labelText: "Email",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -296,7 +346,13 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: accentBlue, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  onPressed: () {
+                  onPressed: () async {
+                    // Update local data (in production, call API to update)
+                    setState(() {
+                      visitorData['name'] = nameController.text;
+                      visitorData['phone'] = phoneController.text;
+                      visitorData['email'] = emailController.text;
+                    });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully!")));
                   },

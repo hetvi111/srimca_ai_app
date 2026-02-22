@@ -71,12 +71,6 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const VisitorQRPage()));
-                    },
-                  ),
                 ],
               ),
             ),
@@ -123,28 +117,13 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                     // Quick Info
                     Row(
                       children: [
-                        _quickInfo(Icons.school, "Courses", "BCA, B.Sc"),
-                        _quickInfo(Icons.access_time, "Timing", "9AM-5PM"),
-                        _quickInfo(Icons.location_on, "Location", "Kalol"),
+                        _quickInfo(Icons.school, "Courses", "BCA, MCA, MBA"),
+                        _quickInfo(Icons.access_time, "Timing", "8:30AM-3:30PM"),
+                        _quickInfo(Icons.location_on, "Location", "Tarsadi"),
                       ],
                     ),
 
                     const SizedBox(height: 24),
-
-                    // QR Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: accentBlue),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        ),
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VisitorQRPage())),
-                        icon: const Icon(Icons.qr_code_scanner, color: accentBlue),
-                        label: const Text("Scan QR Code", style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
 
                     const SizedBox(height: 24),
 
