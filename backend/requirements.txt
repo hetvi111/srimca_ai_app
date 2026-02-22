@@ -29,5 +29,8 @@ firebase-admin==6.3.0
 # Gunicorn for production deployment
 gunicorn==21.2.0
 
+# QR Code Generation
+qrcode[pil]==7.4.2
+
 # Python-dotenv for loading .env files
 python-dotenv==1.0.0

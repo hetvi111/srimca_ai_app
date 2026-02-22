@@ -21,6 +21,43 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _enrollmentController = TextEditingController();
+  final _dobController = TextEditingController();
+
+  String _selectedSemester = '';
+  String _selectedDepartment = '';
+  String _selectedPurpose = '';
+
+  final List<String> _semesters = ['1', '2', '3', '4', '5', '6'];
+  final List<String> _departments = [
+  'bca',
+  'mca',
+];
+  final List<String> _purposes = [
+    'admission',
+    'placement',
+    'meeting',
+    'event',
+    'tour',
+    'other',
+  ];
+
+  final Map<String, String> _departmentLabels = {
+  'bca': 'Bachelor of Computer Applications (BCA)',
+  'mca': 'Master of Computer Applications (MCA)',
+};
+  final Map<String, String> _purposeLabels = {
+    'admission': 'Admission Inquiry',
+    'placement': 'Placement/Recruitment',
+    'meeting': 'Meeting with Faculty',
+    'event': 'College Event',
+    'tour': 'Campus Tour',
+    'other': 'Other',
+  };
+
+  bool get _isStudent => _selectedRole.toLowerCase() == 'student';
+  bool get _isVisitor => _selectedRole.toLowerCase() == 'visitor';
 
   bool _obscurePassword = true;
   String _selectedRole = 'student';
@@ -39,6 +76,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _nameController.dispose();
+    _mobileController.dispose();
+    _enrollmentController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 
@@ -274,6 +314,85 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 16),
 
+                // Mobile Number (for all roles)
+                TextField(
+                  controller: _mobileController,
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration("Mobile Number"),
+                ),
+                const SizedBox(height: 16),
+
+                // Student-specific fields
+                if (_isStudent) ...[
+                  // Enrollment Number
+                  TextField(
+                    controller: _enrollmentController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Enrollment Number"),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Date of Birth
+                  TextField(
+                    controller: _dobController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Date of Birth (YYYY-MM-DD)"),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Semester
+                  DropdownButtonFormField<String>(
+                    value: _selectedSemester.isEmpty ? null : _selectedSemester,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Semester"),
+                    items: _semesters
+                        .map((s) => DropdownMenuItem(
+                              value: s,
+                              child: Text("Semester $s"),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedSemester = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Department
+                  DropdownButtonFormField<String>(
+                    value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Department / Course"),
+                    items: _departments
+                        .map((d) => DropdownMenuItem(
+                              value: d,
+                              child: Text(_departmentLabels[d] ?? d),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedDepartment = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Visitor-specific fields
+                if (_isVisitor) ...[
+                  // Purpose of Visit
+                  DropdownButtonFormField<String>(
+                    value: _selectedPurpose.isEmpty ? null : _selectedPurpose,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Purpose of Visit"),
+                    items: _purposes
+                        .map((p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(_purposeLabels[p] ?? p),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedPurpose = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Password
                 TextField(
                   controller: _passwordController,
@@ -433,18 +552,98 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
   }
 
+  // ================= MCA ENROLLMENT VALIDATION =================
+  bool isValidMCAEnrollment(String enrollment) {
+    // Must be 15 digits
+    if (enrollment.length != 15) return false;
+
+    // Must start with fixed prefix
+    if (!enrollment.startsWith("202504104610")) return false;
+
+    // Extract last 3 digits
+    String serialPart = enrollment.substring(12);
+    int? serial = int.tryParse(serialPart);
+
+    if (serial == null) return false;
+
+    // Check range 001 to 174
+    if (serial >= 1 && serial <= 174) {
+      return true;
+    }
+
+    return false;
+  }
+
   // ================= API REGISTER (PYTHON + MONGODB) =================
   Future<void> _apiRegister() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+    final mobile = _mobileController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
+        const SnackBar(content: Text("Please fill all required fields")),
       );
       return;
+    }
+
+    // Role-specific validation
+    if (_isStudent) {
+      final enrollment = _enrollmentController.text.trim();
+      final dob = _dobController.text.trim();
+      
+      if (enrollment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter enrollment number")),
+        );
+        return;
+      }
+
+      // Validate MCA enrollment numbers
+      if (_selectedDepartment == 'mca') {
+        if (!isValidMCAEnrollment(enrollment)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Invalid MCA Enrollment Number. Must be between 202504104610006 and 202504104610174")),
+          );
+          return;
+        }
+      }
+
+      if (dob.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter date of birth")),
+        );
+        return;
+      }
+      if (_selectedSemester.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select semester")),
+        );
+        return;
+      }
+      if (_selectedDepartment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select department")),
+        );
+        return;
+      }
+    }
+
+    if (_isVisitor) {
+      if (mobile.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter mobile number")),
+        );
+        return;
+      }
+      if (_selectedPurpose.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select purpose of visit")),
+        );
+        return;
+      }
     }
 
     if (password != confirmPassword) {
@@ -470,17 +669,34 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
     );
 
+    // Build request body based on role
+    final Map<String, dynamic> requestBody = {
+      'name': name,
+      'email': email,
+      'password': password,
+      'role': _selectedRole.toLowerCase(),
+      'mobile': mobile,
+    };
+
+    // Add student-specific fields
+    if (_isStudent) {
+      requestBody['enrollment'] = _enrollmentController.text.trim();
+      requestBody['dob'] = _dobController.text.trim();
+      requestBody['semester'] = _selectedSemester;
+      requestBody['department'] = _selectedDepartment;
+    }
+
+    // Add visitor-specific fields
+    if (_isVisitor) {
+      requestBody['purpose'] = _selectedPurpose;
+    }
+
     try {
       final uri = Uri.parse('$kApiBaseUrl/api/register');
       final res = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-          'role': _selectedRole.toLowerCase(), // student/faculty/admin/visitor
-        }),
+        body: jsonEncode(requestBody),
       );
 
       if (!mounted) return;

@@ -13,21 +13,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 //   - iOS Simulator: Use 'http://localhost:5000'
 //
 // For PRODUCTION (deployed backend):
-//   - Use your Render.com URL (e.g., 'https://srimca-ai-backend.onrender.com')
+//   - Use your Render.com URL (e.g., 'https://srimca-ai-app.onrender.com')
 //
 // ============================================
 
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
-  defaultValue: 'https://srimca-ai-backend.onrender.com',
+  defaultValue: 'https://srimca-ai-app.onrender.com',
 );
 
-const String kLocalDevUrl = String.fromEnvironment(
-  'API_DEV_URL',
-  defaultValue: 'http://172.31.229.182:5000',
-);
-
-String get kApiBaseUrl => kReleaseMode ? kProductionUrl : kLocalDevUrl;
+/// API base URL that returns production URL in release mode and local URL in debug mode
+String get kApiBaseUrl => kProductionUrl;
 
 /// Auth Service - handles token storage and retrieval
 class AuthService {
@@ -151,13 +147,14 @@ class ApiService {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        // Backend returns stats directly from the API
+        // Backend returns stats inside 'stats' key
+        final stats = data['stats'] as Map<String, dynamic>? ?? data;
         // Return the data with default values for missing fields
         return {
-          'total_students': data['total_students'] ?? 0,
-          'total_faculty': data['total_faculty'] ?? 0,
-          'total_visitors': data['total_visitors'] ?? 0,
-          'active_users': data['active_users'] ?? 0,
+          'total_students': stats['total_students'] ?? 0,
+          'total_faculty': stats['total_faculty'] ?? 0,
+          'total_visitors': stats['total_visitors'] ?? 0,
+          'active_users': stats['active_users'] ?? 0,
         };
       }
       // Return default values on failure

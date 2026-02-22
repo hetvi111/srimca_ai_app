@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:srimca_ai/login_register_screen.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'student_management_page.dart';
 import 'faculty_management_page.dart';
 import 'visitor_management_page.dart';

@@ -1,0 +1,680 @@
+================================================================================
+                        STUDENT FUNCTIONALITY ACTIVITY DIAGRAMS
+                              SRIMCA AI Application
+================================================================================
+
+================================================================================
+                    1. AUTHENTICATION ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Opens App            |
+                    |  (LoginRegisterScreen)     |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Selects Tab:          |
+                    |  Login OR Register         |
+                    +-------------+--------------+
+                                 |
+              +------------------+------------------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |   LOGIN FLOW    |               |  REGISTER FLOW   |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Enter Email/    |               |  Enter Name,     |
+    |  Enrollment No. |               |  Email, Password, |
+    |  & Password     |               |  Confirm Password |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Select Role     |               |  Select Role     |
+    |  (Student)       |               |  (Student)       |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Click "Sign In"|               |  Click "Register"|
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  API Call to     |               |  API Call to     |
+    |  /api/login      |               |  /api/register   |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Backend Verifies |              |  Backend Validates|
+    |  Credentials      |              |  & Creates User  |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Success?         |               |  Success?        |
+    +--------+---------+               +--------+---------+
+              |                                     |
+       +------+------+                      +------+------+
+       |             |                      |             |
+       v             v                      v             v
+ +---------+  +---------+            +---------+  +---------+
+ |   YES   |  |   NO   |            |   YES   |  |   NO   |
+ +----+----+  +----+----+            +----+----+  +----+----+
+      |            |                      |            |
+      v            v                      v            v
+ +---------+  +---------+           +---------+  +---------+
+ | Save    |  | Show    |           | Show    |  | Show    |
+ | Token & |  | Error   |           | Success |  | Error   |
+ | User    |  | Message |           | Message |  | Message |
+ +----+----+  +----+----+           +----+----+  +----+----+
+      |            |                      |            |
+      v            v                      v            v
+ +---------+  +---------+           +---------+  +---------+
+ | Navigate|  | Stay on |           | Switch  |  | Stay on |
+ | to      |  | Login   |           | to     |  | Register|
+ | Student |  | Screen  |           | Login  |  | Screen  |
+ | Dashboard|  |         |           | Tab    |  |         |
+ +---------+  +---------+           +---------+  +---------+
+      |
+      v
+ +---------+
+ |  Logout |
+ | (Student|
+ | Page)   |
+ +----+----+
+      |
+      v
+ +---------+
+ | Navigate|
+ | to Login|
+ | Screen  |
+ +---------+
+      |
+      v
+ +------------------+
+ |      END         |
+ +------------------+
+
+
+================================================================================
+                  2. VIEW PROFILE ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Logs In as Student   |
+                    |  (StudentHomePage)         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Clicks Profile Tab   |
+                    |  or Drawer Menu            |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Load Profile Data         |
+                    |  (ProfileScreen)          |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Student Info:    |
+                    |  - Name                    |
+                    |  - Enrollment Number       |
+                    |  - Email                   |
+                    |  - Course                  |
+                    |  - Semester                |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can:                  |
+                    |  - Edit Profile            |
+                    |  - Change Security         |
+                    |  - View Preferences        |
+                    |  - Logout                  |
+                    +-------------+--------------+
+                                 |
+              +------------------+------------------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Click Edit Profile              |  Click Logout    |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  Navigate to                       |  Navigate to    |
+    |  EditProfilePage                   |  Login Screen   |
+    +--------+---------+               +--------+---------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+---------+
+    |  User Updates                      |  END            |
+    |  Information                       |                 |
+    +--------+---------+               +--------+---------+
+              |
+              v
+    +---------+---------+
+    |  Save Changes   |
+    |  (API Call)     |
+    +--------+---------+
+              |
+              v
+    +---------+---------+
+    |  Profile Updated |
+    |  Successfully    |
+    +--------+---------+
+              |
+              v
+    +---------+
+    |   END   |
+    +---------+
+
+
+================================================================================
+                    3. SRIMCA AI CHAT ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User on Student Dashboard  |
+                    |  (StudentHomePage)         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Clicks AI Chat Tab  |
+                    |  or Menu Option            |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Navigate to ChatScreen    |
+                    |  (SAI - Smart AI)         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Welcome Message  |
+                    |  "Hello! I'm SAI, your    |
+                    |   SRIMCA AI Assistant..." |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Types Question      |
+                    |  in Input Field           |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Clicks Send Button  |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Add User Message to      |
+                    |  Chat List (isUser=true)  |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  API Call: _getAIResponse|
+                    |  (Question Processing)   |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  AI Analyzes Question     |
+                    |  Keywords & Context       |
+                    +-------------+--------------+
+                                 |
+                                 v
+    +------------------------------------------------------------------+
+    |              AI Response Logic:                                  |
+    |  - If question contains "exam" → Exam schedule info             |
+    |  - If question contains "assignment" → Submission info          |
+    |  - If question contains "syllabus" → Course content              |
+    |  - If question contains "fee" → Payment information              |
+    |  - If question contains "library" → Library hours/info          |
+    |  - If question contains "hostel" → Accommodation info            |
+    |  - If question contains "result" → Grades info                  |
+    |  - Otherwise → General guidance response                         |
+    +------------------------------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  AI Response Generated    |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display AI Response      |
+                    |  (isUser=false)           |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Save Chat to History    |
+                    |  (ApiService.saveChatMsg)|
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can Continue       |
+                    |  Asking Questions        |
+                    +-------------+--------------+
+                                 |
+              +------------------+------------------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+
+    |  Ask Another    |               |  Click  |
+    |  Question      |               |  History|
+    +--------+--------+               +----+----+
+              |                            |
+              +----------------------------+
+                           |
+                           v
+                    +-------------+--------------+
+                    |  Navigate to              |
+                    |  StudentChatHistoryPage    |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +------------------+
+                    |      END         |
+                    +------------------+
+
+
+================================================================================
+                    4. VIEW NOTICES ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User on Student Dashboard  |
+                    |  or Menu                      |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Selects "Notices"    |
+                    |  from Menu or Card         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Navigate to              |
+                    |  StudentNoticePage        |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Load Notices from API    |
+                    |  (ApiService.getNotices)  |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Loading          |
+                    |  Indicator                |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Notices Loaded?          |
+                    +-------------+--------------+
+                                 |
+              +------------------+------------------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+
+    |   YES         |               |   NO   |
+    +----+----+     |               +----+----+
+         |          |                    |
+         v          v                    v
+   +---------+  +---------+        +---------+
+   | Display |  | Show    |        | Show    |
+   | Notices |  | Demo    |        | Empty   |
+   | List    |  | Data    |        | State   |
+   +----+-----+  +----+-----+        +----+----+
+         |            |                    |
+         v            v                    v
+   +------------------------------------------+
+   |  For Each Notice Display:                |
+   |  - Title                                 |
+   |  - Content/Description                   |
+   |  - Date (created_at)                     |
+   |  - Priority (High/Medium/Low)             |
+   +------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can Tap Notice     |
+                    |  for Details              |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Full Notice     |
+                    |  Details in Card         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can Pull to       |
+                    |  Refresh Notices        |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +------------------+
+                    |      END         |
+                    +------------------+
+
+
+================================================================================
+                5. ANNOUNCEMENT NOTIFICATIONS ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Logged In as Student  |
+                    +-------------+--------------+
+                                 |
+                                 v
+    +------------------------------------------------------------------+
+    |  NOTIFICATION RECEIVED (Background):                            |
+    |  - New Notice Posted                                             |
+    |  - Exam Schedule Update                                          |
+    |  - Event Announcement                                            |
+    |  - Assignment Deadline                                           |
+    |  - System Update                                                  |
+    +------------------------------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Push Notification       |
+                    |  Sent to Student         |
+                    |  (Real-time)             |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Student Receives       |
+                    |  Notification Badge     |
+                    |  on App Bar              |
+                    +-------------+--------------+
+                                 |
+                                 v
+    +------------------------------------------------------------------+
+    |  Notification Types:                                            |
+    |  - type: 'exam' → Quiz Icon, Red Color                         |
+    |  - type: 'event' → Event Icon, Purple Color                    |
+    |  - type: 'deadline' → Time Icon, Orange Color                  |
+    |  - type: 'update' → Update Icon, Blue Color                    |
+    +------------------------------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Clicks Notification  |
+                    |  Icon OR Menu Option      |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Navigate to              |
+                    |  StudentNotificationsPage|
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Load Notifications      |
+                    |  (ApiService.getUserNotif)|
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Notifications   |
+                    |  with Type Icons         |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Show Unread Count      |
+                    |  (Red Badge)             |
+                    +-------------+--------------+
+                                 |
+                                 v
+    +------------------------------------------------------------------+
+    |  For Each Notification Display:                                 |
+    |  - Type Icon & Color                                            |
+    |  - Title                                                        |
+    |  - Message (truncated)                                           |
+    |  - Timestamp                                                    |
+    |  - Read/Unread Status                                           |
+    +------------------------------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Taps Notification   |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Show Full Details      |
+                    |  in Bottom Sheet        |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Mark as Read           |
+                    |  (Update isRead=true)   |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can View          |
+                    |  Notification History  |
+                    |  (All Past Notifs)      |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +------------------+
+                    |      END         |
+                    +------------------+
+
+
+================================================================================
+                    6. VIEW CHAT HISTORY ACTIVITY DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   START          |
+                        +--------+---------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User on Student Dashboard  |
+                    |  or Chat Screen             |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Clicks "History"    |
+                    |  from Drawer Menu          |
+                    |  or Chat Screen Header     |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Navigate to              |
+                    |  StudentChatHistoryPage  |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Load Chat History       |
+                    |  (ApiService.getChatHist)|
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Display Loading         |
+                    |  Indicator               |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  History Loaded?         |
+                    +-------------+--------------+
+                                 |
+              +------------------+------------------+
+              |                                     |
+              v                                     v
+    +---------+---------+               +---------+
+    |   YES         |               |   NO   |
+    +----+----+     |               +----+----+
+         |          |                    |
+         v          v                    v
+   +---------+  +---------+        +---------+
+   | Display |  | Show    |        | Show    |
+   | History |  | Demo    |        | Empty   |
+   | Cards   |  | Data    |        | State   |
+   +----+-----+  +----+-----+        +----+----+
+         |            |                    |
+         v            v                    v
+   +------------------------------------------+
+   |  For Each Chat Display:                 |
+   |  - Question (User's Query)               |
+   |  - Answer (AI Response)                  |
+   |  - Date & Time                           |
+   +------------------------------------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  Chat Cards Show:          |
+                    |  - Question Header (Blue) |
+                    |  - Question Text          |
+                    |  - Answer Header (AI)     |
+                    |  - Answer Text            |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can Scroll        |
+                    |  Through All Chats      |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +-------------+--------------+
+                    |  User Can Pull to       |
+                    |  Refresh History        |
+                    +-------------+--------------+
+                                 |
+                                 v
+                    +------------------+
+                    |      END         |
+                    +------------------+
+
+
+================================================================================
+                        ACTIVITY DIAGRAM LEGEND
+================================================================================
+
+SYMBOLS USED:
+-------------
++----------+   -->   Start/End Point (Rounded Rectangle)
+    |
+    v
++----------+   -->   Process/Action (Rectangle)
+    |
+    v
++----------+   -->   Decision Point (Diamond)
+    |
+    v
++----------+   -->   Data Display (Rectangle with wavy bottom)
+
+ARROWS:
+-------
+    |          -->   Vertical Flow
+    v          -->   Downward Flow
+    <          -->   Left Flow
+    >          -->   Right Flow
+
+COLORS IN IMPLEMENTATION:
+-------------------------
+- Blue (accentBlue #1E88E5)   --> User Actions
+- Navy Blue (#001F3F)         --> Navigation/Headers
+- Green                       --> Success Paths
+- Red                         --> Error/Alternative Paths
+- Orange                      --> API Calls/Data Loading
+
+
+================================================================================
+                         FUNCTIONALITY SUMMARY
+================================================================================
+
+1. AUTHENTICATION:
+   - Registration: Name, Email, Enrollment, Password, Role
+   - Login: Email/Enrollment + Password + Role
+   - Logout: Secure session termination
+
+2. VIEW PROFILE:
+   - Display: Name, Enrollment Number, Email, Course, Semester
+   - Actions: Edit Profile, Security Settings, Preferences
+
+3. SRIMCA AI CHAT:
+   - 24x7 AI Assistant (SAI)
+   - Academic & College-related queries
+   - Instant responses
+   - Saves conversation history
+
+4. VIEW NOTICES:
+   - Notice Title, Description, Date
+   - Priority levels (High/Medium/Low)
+   - Pull-to-refresh functionality
+
+5. ANNOUNCEMENT NOTIFICATIONS:
+   - Real-time push notifications
+   - Types: Exam, Event, Deadline, Update
+   - Notification history access
+
+6. VIEW CHAT HISTORY:
+   - Previous questions and AI responses
+   - Date and time stamps
+   - Full conversation reference
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

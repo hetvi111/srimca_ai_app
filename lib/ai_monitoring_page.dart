@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/api_service.dart';
 
 /// ================= AI MONITORING PAGE =================
 class AIMonitoringPage extends StatefulWidget {
@@ -25,10 +24,10 @@ class _AIMonitoringPageState extends State<AIMonitoringPage> {
       // Mock data
       setState(() {
         queries = [
-          {"student": "John Doe", "question": "What is Python?", "answer": "Python is a high-level programming language...", "timestamp": "2024-01-15 10:30"},
-          {"student": "Jane Smith", "question": "How to implement recursion?", "answer": "Recursion is a method where...", "timestamp": "2024-01-15 11:45"},
-          {"student": "Bob Wilson", "question": "What is OOP?", "answer": "Object-Oriented Programming is...", "timestamp": "2024-01-15 14:20"},
-          {"student": "Alice Brown", "question": "Explain database normalization", "answer": "Database normalization is...", "timestamp": "2024-01-16 09:15"},
+          {"student": "Malaviya Hetvi", "question": "What is Python?", "answer": "Python is a high-level programming language...", "timestamp": "2024-01-15 10:30"},
+          {"student": "Patel Smith", "question": "How to implement recursion?", "answer": "Recursion is a method where...", "timestamp": "2024-01-15 11:45"},
+          {"student": "Malaviya Vishv", "question": "What is OOP?", "answer": "Object-Oriented Programming is...", "timestamp": "2024-01-15 14:20"},
+          {"student": "Malaviya Hasti", "question": "Explain database normalization", "answer": "Database normalization is...", "timestamp": "2024-01-16 09:15"},
         ];
         isLoading = false;
       });

@@ -57,13 +57,14 @@ def verify_jwt_token(token: str) -> dict:
 def register():
     """
     Register a new user
-    Expected JSON: { "name": "", "email": "", "password": "", "role": "" }
+    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
+    Visitor fields: name, email, password, role, mobile, purpose
     """
     try:
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['name', 'email', 'password']
+        required_fields = ['name', 'email', 'password', 'role']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({'error': f'{field} is required'}), 400
@@ -72,6 +73,33 @@ def register():
         email = data['email'].strip().lower()
         password = data['password']
         role = data.get('role', 'student').lower()
+        mobile = data.get('mobile', '').strip()
+        
+        # For students, validate academic fields
+        enrollment = data.get('enrollment', '').strip()
+        dob = data.get('dob', '').strip()
+        semester = data.get('semester', '').strip()
+        department = data.get('department', '').strip()
+        
+        # For visitors, validate purpose
+        purpose = data.get('purpose', '').strip()
+        
+        if role == 'student':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for students'}), 400
+            if not enrollment:
+                return jsonify({'error': 'Enrollment number is required for students'}), 400
+            if not dob:
+                return jsonify({'error': 'Date of birth is required for students'}), 400
+            if not semester:
+                return jsonify({'error': 'Semester is required for students'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for students'}), 400
+        elif role == 'visitor':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for visitors'}), 400
+            if not purpose:
+                return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
         
         # Validate role
         valid_roles = ['student', 'faculty', 'admin', 'visitor']
@@ -90,16 +118,38 @@ def register():
         if existing_user:
             return jsonify({'error': 'Email already registered'}), 409
         
+        # Check enrollment number for students
+        if role == 'student' and enrollment:
+            existing_enrollment = users.find_one({'enrollment': enrollment})
+            if existing_enrollment:
+                return jsonify({'error': 'Enrollment number already registered'}), 409
+        
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Create user document
+        # Create user document with basic fields
         user_doc = UserModel.create_user(
             name=name,
             email=email,
             password=hashed_password.decode('utf-8'),
             role=role
         )
+        
+        # Add common fields
+        user_doc['mobile'] = mobile
+        
+        # Add student-specific fields
+        if role == 'student':
+            user_doc['enrollment'] = enrollment
+            user_doc['dob'] = dob
+            user_doc['semester'] = semester
+            user_doc['department'] = department
+        
+        # Add visitor-specific fields
+        if role == 'visitor':
+            user_doc['purpose'] = purpose
+            user_doc['visit_date'] = datetime.utcnow().isoformat()
+            user_doc['approval_status'] = 'pending'
         
         # Insert user into database
         result = users.insert_one(user_doc)

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'chat_screen.dart';
 import 'visitor_qr_page.dart';
 import 'visitor_profile_page.dart';
-import 'visitor_profile_page.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);

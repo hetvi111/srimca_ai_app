@@ -1,0 +1,29 @@
+SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.
+SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.
+SRIMCA is a constituent college of Uka Tarsadia University.
+SRIMCA offers MCA and MBA programmes approved by AICTE.
+MCA programme started in the year 2002.
+MBA programme started in the year 2004.
+MCA 2nd Semester commenced from Thursday, 30 January 2025.
+MCA 4th Semester commenced from Monday, 16 December 2024.
+BCA 4th and 6th Semester commenced from Monday, 16 December 2024.
+SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.
+SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.
+SRIMCA has more than 250 computers with Wi-Fi connectivity.
+SRIMCA provides 200 MBps dedicated internet leased line.
+SRIMCA library contains national and international books and journals.
+SRIMCA has an auditorium, seminar hall and modern classrooms.
+
+MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.
+MCA 2nd semester Monday 10:30-11:30 has iOS theory.
+MCA 2nd semester Monday 11:30-12:15 is BREAK.
+MCA 2nd semester Monday 12:15-01:15 has ELECTIVE theory.
+MCA 2nd semester Monday 01:30-02:30 has ASP.NET theory.
+MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory.
+
+MCA 2nd semester Tuesday 08:30-10:30 has LARAVEL Theory.
+MCA 2nd semester Tuesday 10:30-11:30 has iOS theory.
+MCA 2nd semester Tuesday 11:30-12:15 is BREAK.
+MCA 2nd semester Tuesday 12:15-01:15 has Python  theory.
+MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.
+MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory.

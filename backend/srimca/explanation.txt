@@ -1,0 +1,441 @@
+================================================================================
+                    SRIMCA AI - RAG BASED QUESTION ANSWERING SYSTEM
+                           Project Documentation & Explanation
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. Project Overview
+2. RAG Architecture
+3. File Structure
+4. Component Details
+5. Technologies Used
+6. How RAG Works
+7. Usage Instructions
+8. Viva Questions & Answers
+
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+SRIMCA AI is a Retrieval-Augmented Generation (RAG) based question answering
+system that provides accurate answers about Shrimad Rajchandra Institute of
+Management and Computer Application (SRIMCA).
+
+Key Features:
+- Answers questions about SRIMCA (location, programs, vision, mission, etc.)
+- Provides MCA 2nd Semester timetable information
+- Uses MongoDB for data storage
+- Uses local embeddings (no API cost)
+- Fallback system ensures answers even without internet
+
+
+================================================================================
+2. RAG ARCHITECTURE
+================================================================================
+
+This system implements a HYBRID RAG approach combining:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         RAG PIPELINE FLOW                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────┐
+    │ User Query  │
+    └──────┬──────┘
+           │
+           ▼
+    ┌─────────────┐     ┌───────────────────────────────────────────┐
+    │   Router    │────►│ Step 1: Exact Match (Timetable)           │
+    └─────────────┘     │ - Pattern matching for day/time           │
+                        │ - Returns exact timetable entries         │
+                        └───────────────────┬───────────────────────┘
+                                            │ No match
+                                            ▼
+                        ┌───────────────────────────────────────────┐
+                        │ Step 2: Vector Retrieval                  │
+                        │ - Create query embedding (local)          │
+                        │ - Cosine similarity search in MongoDB     │
+                        │ - Retrieve top-k relevant chunks          │
+                        └───────────────────┬───────────────────────┘
+                                            │ No results
+                                            ▼
+                        ┌───────────────────────────────────────────┐
+                        │ Step 3: Answer Generation                 │
+                        │ - Use retrieved context                   │
+                        │ - Generate natural answer (or direct)     │
+                        └───────────────────┬───────────────────────┘
+                                            │
+                                            ▼
+                        ┌───────────────────────────────────────────┐
+                        │ Step 4: Fallback                          │
+                        │ - Keyword-based search                    │
+                        │ - Direct text extraction                  │
+                        └───────────────────────────────────────────┘
+
+
+RAG VERSION: Naive RAG (Basic Retrieval + Generation)
+
+Components of RAG used:
+1. RETRIEVAL: Vector similarity search + Exact pattern matching
+2. AUGMENTATION: Context injection into prompts
+3. GENERATION: GPT (if available) or direct answer extraction
+
+
+================================================================================
+3. FILE STRUCTURE
+================================================================================
+
+srimca_ai/
+├── app.py              # Main entry point (chat loop)
+├── config.py           # Configuration (MongoDB, OpenAI, Embeddings)
+├── loader.py           # Load text files from data directory
+├── build_db.py         # Build vector database with embeddings
+├── retriever.py        # Vector similarity search
+├── gpt_answer.py       # Generate answers using RAG
+├── exact_match.py      # Rule-based timetable matching
+├── fallback.py         # Keyword-based fallback
+├── data/
+│   └── sample_srimca_info.txt  # Knowledge base
+├── .env                # Environment variables
+└── requirements.txt    # Python dependencies
+
+
+================================================================================
+4. COMPONENT DETAILS
+================================================================================
+
+--------------------------
+FILE: config.py 
+--------------------------
+Purpose: Central configuration file
+What it does:
+  - Loads environment variables from .env
+  - Connects to MongoDB database
+  - Loads local embedding model (SentenceTransformer)
+  - Initializes OpenAI client (optional)
+
+Key Variables:
+  - DATA_DIR: Path to data folder
+  - MONGO_URI: MongoDB connection string
+  - DB_NAME: Database name (srimca_ai)
+  - knowledge_col: MongoDB collection for embeddings
+  - embedding_model: all-MiniLM-L6-v2 (free local model)
+  - openai_client: For GPT answers (optional)
+
+Version/Tech: MongoDB, SentenceTransformers, OpenAI SDK
+
+
+--------------------------
+FILE: loader.py 
+--------------------------
+Purpose: Load text files from data directory
+What it does:
+  - Reads all .txt files from data/ folder
+  - Returns combined content or individual lines
+
+Functions:
+  - load_content(): Returns all text combined
+  - load_lines(): Returns list of individual lines
+
+Version/Tech: Python glob module
+
+
+--------------------------
+FILE: build_db.py
+--------------------------
+Purpose: Build vector database with embeddings
+What it does:
+  1. Clears existing MongoDB collection
+  2. Loads text files using loader.py
+  3. Creates embeddings using local model (all-MiniLM-L6-v2)
+  4. Stores text + embeddings in MongoDB
+
+Key Function:
+  - build_db(): Creates vector database
+
+Why embeddings? Enables semantic search (finds similar meanings, not just keywords)
+
+Version/Tech: SentenceTransformer, PyMongo, NumPy
+
+
+--------------------------
+FILE: retriever.py 
+--------------------------
+Purpose: Retrieve relevant context using vector similarity
+What it does:
+  1. Creates embedding for user query (local model)
+  2. Calculates cosine similarity with all stored embeddings
+  3. Returns top-k most similar chunks
+
+Key Function:
+  - retrieve_context(question, top_k=5): Returns relevant context
+
+Cosine Similarity Formula:
+  cos(θ) = (A · B) / (||A|| × ||B||)
+  
+  Where A = query embedding, B = document embedding
+
+Version/Tech: SentenceTransformer, NumPy
+
+
+--------------------------
+FILE: exact_match.py
+--------------------------
+Purpose: Rule-based matching for timetable queries
+What it does:
+  1. Extracts day from question (monday, tuesday, etc.)
+  2. Extracts time from question (02:30-03:30)
+  3. Finds exact timetable entries using pattern matching
+
+Key Function:
+  - get_exact_answer(question): Returns exact timetable info
+
+Example:
+  Input: "monday 02:30 to 03:30 subject"
+  Output: "MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory."
+
+Version/Tech: Python re (regex) module
+
+
+--------------------------
+FILE: gpt_answer.py 
+--------------------------
+Purpose: Generate natural answers using RAG
+What it does:
+  1. Retrieves relevant context using retriever.py
+  2. Creates prompt with context + question
+  3. Sends to GPT-3.5-turbo (if API key available)
+  4. Falls back to direct context if GPT fails
+
+Key Function:
+  - get_gpt_answer(question): Returns conversational answer
+
+System Prompt:
+  "You are SRIMCA AI, a helpful assistant for SRIMCA.
+   Answer based on the context provided."
+
+Version/Tech: OpenAI GPT-3.5-turbo, RAG pattern
+
+
+--------------------------
+FILE: fallback.py 
+--------------------------
+Purpose: Keyword-based fallback when other methods fail
+What it does:
+  1. Checks for direct patterns (full name, location, etc.)
+  2. Calculates keyword overlap scores
+  3. Returns best matching line
+
+Key Function:
+  - get_fallback_answer(question): Returns keyword-matched answer
+
+Stop Words Filtered:
+  what, is, are, the, a, an, of, for, in, on, at, to, do, does, etc.
+
+Version/Tech: Python string operations
+
+
+--------------------------
+FILE: app.py
+--------------------------
+Purpose: Main chat loop and orchestrator
+What it does:
+  1. Builds database if empty
+  2. Starts interactive chat loop
+  3. Routes questions through RAG pipeline
+
+Pipeline Order:
+  1. Exact Match (Timetable)
+  2. GPT Answer (RAG)
+  3. Fallback (Keywords)
+
+Key Function:
+  - ask(question): Orchestrates answer retrieval
+
+Version/Tech: Python while loop, console I/O
+
+
+================================================================================
+5. TECHNOLOGIES USED
+================================================================================
+
+┌──────────────────────┬────────────────────────────────────────────────────┐
+│ Technology           │ Version/Purpose                                    │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ Python               │ 3.x - Programming language                         │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ MongoDB              │ 4.x+ - Vector storage database                     │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ SentenceTransformer  │ 2.6.0 - Local embedding model                      │
+│ (all-MiniLM-L6-v2)   │ - 384-dimensional embeddings                       │
+│                      │ - Free, no API cost                                │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ OpenAI GPT-3.5-turbo │ Optional - For conversational answers              │
+│                      │ - Requires API key and credits                     │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ PyMongo              │ 4.6.0 - MongoDB driver for Python                  │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ NumPy                │ 1.24.0 - Vector operations for similarity          │
+├──────────────────────┼────────────────────────────────────────────────────┤
+│ python-dotenv        │ 1.0.0 - Environment variable management            │
+└──────────────────────┴────────────────────────────────────────────────────┘
+
+
+================================================================================
+6. HOW RAG WORKS
+================================================================================
+
+RAG = Retrieval-Augmented Generation
+
+STEP 1: RETRIEVAL (Offline - build_db.py)
+--------------------------------------------
+Text: "SRIMCA is located at Bardoli, Surat."
+    │
+    ▼
+Split into chunks/lines
+    │
+    ▼
+Encode with SentenceTransformer
+    │
+    ▼
+Store in MongoDB:
+{
+  "text": "SRIMCA is located at Bardoli, Surat.",
+  "embedding": [0.123, 0.456, ...]  // 384 dimensions
+}
+
+
+STEP 2: RETRIEVAL (Online - retriever.py)
+--------------------------------------------
+User Query: "Where is SRIMCA?"
+    │
+    ▼
+Encode query to vector
+    │
+    ▼
+Calculate cosine similarity with all documents
+    │
+    ▼
+Return top-k most similar chunks
+    │
+    ▼
+Context: "SRIMCA is located at Maliba Campus, Gopal Vidyanagar,
+          Bardoli, Surat, Gujarat."
+
+
+STEP 3: GENERATION (gpt_answer.py)
+--------------------------------------------
+Context + Question → GPT
+    │
+    ▼
+Prompt:
+"You are SRIMCA AI. Answer based on this context:
+ 
+Context: SRIMCA is located at Maliba Campus...
+ 
+Question: Where is SRIMCA?"
+    │
+    ▼
+GPT Response:
+"SRIMCA is located at Maliba Campus, Gopal Vidyanagar,
+Bardoli, Surat, Gujarat."
+
+
+================================================================================
+7. USAGE INSTRUCTIONS
+================================================================================
+
+INSTALLATION:
+-------------
+1. Install Python 3.8+
+2. Install dependencies:
+   pip install -r requirements.txt
+
+3. Start MongoDB locally (or use MongoDB Atlas)
+
+RUNNING THE APP:
+----------------
+1. Build the knowledge database (first time only):
+   python build_db.py
+
+2. Start the chat application:
+   python app.py
+
+3. Type questions like:
+   - "What is SRIMCA?"
+   - "Where is SRIMCA located?"
+   - "Monday 02:30 to 03:30 subject?"
+   - "What is SRIMCA's vision?"
+
+4. Type "exit" to quit
+
+
+================================================================================
+8. VIVA QUESTIONS & ANSWERS
+================================================================================
+
+Q1: What is RAG?
+A: RAG (Retrieval-Augmented Generation) is a technique that combines:
+   - RETRIEVAL: Finding relevant information from a knowledge base
+   - GENERATION: Using an LLM to generate answers based on retrieved context
+   This ensures answers are accurate and grounded in real data.
+
+
+Q2: What is the difference between your system and ChatGPT?
+A: ChatGPT is trained on internet data and may hallucinate.
+   Our system:
+   - Uses a specific knowledge base (SRIMCA data)
+   - Provides factually correct answers about SRIMCA
+   - Can answer timetable questions precisely
+   - Can work offline (no API dependency)
+
+
+Q3: Why use MongoDB instead of a simple file?
+A: MongoDB provides:
+   - Vector storage for embeddings
+   - Fast similarity search
+   - Scalability for large datasets
+   - Persistent storage across sessions
+
+
+Q4: What is cosine similarity and why is it used?
+A: Cosine similarity measures similarity between two vectors:
+   - Range: -1 to 1 (1 = identical, 0 = unrelated)
+   - Formula: cos(θ) = (A · B) / (||A|| × ||B||)
+   - Used to find documents most similar to the query
+
+
+Q5: What is the embedding model used?
+A: SentenceTransformer (all-MiniLM-L6-v2):
+   - Generates 384-dimensional vectors
+   - Free, runs locally
+   - Captures semantic meaning (not just keywords)
+
+
+Q6: What is the RAG pipeline in your system?
+A: 1. Exact Match → Timetable queries
+   2. Vector Retrieval → Semantic search
+   3. GPT Generation → Conversational answer
+   4. Fallback → Keyword search
+
+
+Q7: What are the limitations of this system?
+A: - Requires MongoDB to be running
+   - Embedding model requires ~90MB disk space
+   - GPT answers require OpenAI API credits (optional)
+   - Limited to information in text files
+
+
+Q8: How can this be improved?
+A: - Add more data files (different categories)
+   - Use conversation history for context
+   - Add re-ranking for better retrieval
+   - Use a larger embedding model
+   - Deploy to cloud (AWS/GCP/Azure)
+
+
+================================================================================
+                              END OF DOCUMENTATION
+================================================================================

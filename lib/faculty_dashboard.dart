@@ -126,7 +126,6 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
             BottomNavigationBarItem(icon: Icon(Icons.people), label: "Visitors"),
             BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
             BottomNavigationBarItem(icon: Icon(Icons.psychology), label: "AI Monitor"),
-            BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Assignments"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
         ),

@@ -11,6 +11,7 @@ class Visitor {
   String visitDate;
   String status;
 
+
   Visitor({
     required this.id,
     required this.name,
