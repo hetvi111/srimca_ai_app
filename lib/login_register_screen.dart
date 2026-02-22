@@ -93,7 +93,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           height: double.infinity,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF2D2A47), Color(0xFF4A3F6F), Color(0xFF6B5B95)],
+              colors: [
+                Color(0xFF22365E), // navyBlue (darkest)
+                Color(0xFF3949AB), // navyBlueLighter (medium)
+                Color(0xFF1E88E5), // accentBlue (lightest)
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -130,14 +134,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
-                        color: const Color(0xFF9D7FD8),
+                        color: const Color(0xFF1E88E5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab, // ⭐ VERY IMPORTANT
                       indicatorPadding: EdgeInsets.zero,      // remove this
                       labelPadding: const EdgeInsets.symmetric(vertical: 16), // smaller padding
                       labelColor: Colors.white,
-                      unselectedLabelColor: Colors.white70,
+                      unselectedLabelColor: Colors.white60,
                       tabs: const [
                         Tab(text: 'Login'),
                         Tab(text: 'Register'),
@@ -235,7 +239,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   child: ElevatedButton(
                     onPressed: _apiLogin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE77FB4),
+                      backgroundColor: const Color(0xFF1E88E5),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -428,7 +432,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   child: ElevatedButton(
                     onPressed: _apiRegister,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE77FB4),
+                      backgroundColor: const Color(0xFF1E88E5),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

@@ -26,8 +26,9 @@ class FirstScreen extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFB388FF),
-                  Color(0xFF7C4DFF),
+                  Color(0xFF001F3F), // navyBlue
+                  Color(0xFF3949AB), // navyBlueLighter
+                  Color(0xFF1E88E5), // accentBlue
                 ],
               ),
             ),
@@ -117,7 +118,8 @@ Align(
               Navigator.pushReplacementNamed(context, '/login');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C4DFF),
+              backgroundColor: const Color(0xFF3949AB
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),

@@ -106,15 +106,6 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Container(
                         width: 220,
                         height: 280,
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
                         child: Image.asset(
                           'assets/images/i1.png', // ✅ no space
                           fit: BoxFit.contain,
