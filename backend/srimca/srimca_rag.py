@@ -18,9 +18,6 @@ MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://n8n:n8nconnection@cluster0.gup
 DB_NAME = os.getenv("DB_NAME", "srimca_ai")
 COLLECTION_KNOWLEDGE = os.getenv("COLLECTION_KNOWLEDGE", "knowledge")
 
-# OpenAI
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
-
 
 # ---------- LOAD ----------
 def load_content() -> str:
