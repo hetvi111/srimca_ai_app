@@ -19,7 +19,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 // ============================================
 
 // Change this to your local URL when developing locally
-//const String _localUrl = 'http://10.0.2.2:5000'; // Android Emulator
+// const String _localUrl = 'http://10.0.2.2:5000'; // Android Emulator
 // const String _localUrl = 'http://localhost:5000'; // iOS Simulator
 // const String _localUrl = 'http://192.168.1.x:5000'; // Physical device
 
