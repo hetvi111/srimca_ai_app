@@ -5,21 +5,18 @@ from typing import Optional
 from pymongo import MongoClient
 from openai import OpenAI
 from dotenv import load_dotenv
+from config import DATA_DIR, knowledge_col
 
 load_dotenv()
 
-# ---------------- CONFIG ----------------
-DATA_DIR = "data"
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+# OpenAI client (optional)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# MongoDB (direct connection if needed)
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://n8n:n8nconnection@cluster0.guplsjx.mongodb.net")
 DB_NAME = os.getenv("DB_NAME", "srimca_ai")
 COLLECTION_KNOWLEDGE = os.getenv("COLLECTION_KNOWLEDGE", "knowledge")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# ---------------------------------------
-
-# MongoDB
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-knowledge_col = db[COLLECTION_KNOWLEDGE]
 
 # OpenAI
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None

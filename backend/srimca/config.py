@@ -4,10 +4,13 @@ from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 load_dotenv()
 
 # Configuration
-DATA_DIR = "data"
+DATA_DIR = os.path.join(SCRIPT_DIR, "data")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://n8n:n8nconnection@cluster0.guplsjx.mongodb.net")
 DB_NAME = os.getenv("DB_NAME", "srimca_ai")
 COLLECTION = os.getenv("COLLECTION_KNOWLEDGE", "knowledge")
