@@ -10,7 +10,7 @@ load_dotenv()
 
 # ---------------- CONFIG ----------------
 DATA_DIR = "data"
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://n8n:n8nconnection@cluster0.guplsjx.mongodb.net")
 DB_NAME = os.getenv("DB_NAME", "srimca_ai")
 COLLECTION_KNOWLEDGE = os.getenv("COLLECTION_KNOWLEDGE", "knowledge")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
