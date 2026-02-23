@@ -196,27 +196,6 @@ def create_app(config_name=None):
                     color: #666;
                     margin-bottom: 30px;
                 }
-                .role-selector {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 25px;
-                }
-                .role-btn {
-                    flex: 1;
-                    padding: 12px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 10px;
-                    background: white;
-                    cursor: pointer;
-                    font-size: 16px;
-                    font-weight: 600;
-                    transition: all 0.3s;
-                }
-                .role-btn.active {
-                    border-color: #667eea;
-                    background: #667eea;
-                    color: white;
-                }
                 .form-group {
                     margin-bottom: 18px;
                 }
@@ -317,19 +296,13 @@ def create_app(config_name=None):
                 <div class="logo">
                     <h2>🎓 SRIMCA</h2>
                 </div>
-                <h1>Registration</h1>
+                <h1>Visitor Registration</h1>
                 <p class="subtitle">Welcome to SRIMCA College</p>
                 
                 <div id="message" class="message"></div>
                 
                 <form id="registrationForm">
-                    <!-- Role Selection -->
-                    <div class="role-selector">
-                        <button type="button" class="role-btn active" id="btnStudent" onclick="selectRole('student')">Student</button>
-                        <button type="button" class="role-btn" id="btnVisitor" onclick="selectRole('visitor')">Visitor</button>
-                    </div>
-                    
-                    <input type="hidden" id="role" name="role" value="student">
+                    <input type="hidden" id="role" name="role" value="visitor">
                     
                     <!-- Common Fields -->
                     <div class="form-group">
@@ -347,57 +320,11 @@ def create_app(config_name=None):
                         <input type="tel" id="mobile" name="mobile" required placeholder="Enter your mobile number" pattern="[0-9]{10,}">
                     </div>
                     
-                    <!-- Student-specific Fields -->
-                    <div id="studentFields">
-                        <div class="form-group">
-                            <label for="enrollment">Enrollment Number *</label>
-                            <input type="text" id="enrollment" name="enrollment" placeholder="Enter your enrollment number">
-                            <div class="info-text">Unique student identification</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="dob">Date of Birth *</label>
-                            <input type="date" id="dob" name="dob" placeholder="Select your date of birth">
-                        </div>
-                        
-                        <div class="row">
-                            <div class="form-group">
-                                <label for="semester">Semester *</label>
-                                <select id="semester" name="semester">
-                                    <option value="">Select Semester</option>
-                                    <option value="1">Semester 1</option>
-                                    <option value="2">Semester 2</option>
-                                    <option value="3">Semester 3</option>
-                                    <option value="4">Semester 4</option>
-                                    <option value="5">Semester 5</option>
-                                    <option value="6">Semester 6</option>
-                                    <option value="7">Semester 7</option>
-                                    <option value="8">Semester 8</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="department">Department / Course *</label>
-                                <select id="department" name="department">
-                                    <option value="">Select Department</option>
-                                    <option value="computer_science">Computer Science Engineering</option>
-                                    <option value="information_tech">Information Technology</option>
-                                    <option value="mechanical_eng">Mechanical Engineering</option>
-                                    <option value="civil_eng">Civil Engineering</option>
-                                    <option value="electrical_eng">Electrical Engineering</option>
-                                    <option value="electronics">Electronics & Communication</option>
-                                    <option value="mba">MBA</option>
-                                    <option value="mca">MCA</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Visitor-specific Fields -->
-                    <div id="visitorFields" class="hidden">
+                    <!-- Visitor-specific Fields (always visible) -->
+                    <div id="visitorFields">
                         <div class="form-group">
                             <label for="purpose">Purpose of Visit *</label>
-                            <select id="purpose" name="purpose">
+                            <select id="purpose" name="purpose" required>
                                 <option value="">Select purpose</option>
                                 <option value="admission">Admission Inquiry</option>
                                 <option value="placement">Placement/Recruitment</option>
@@ -431,38 +358,7 @@ def create_app(config_name=None):
             </div>
             
             <script>
-                let currentRole = 'student';
-                
-                function selectRole(role) {
-                    currentRole = role;
-                    document.getElementById('role').value = role;
-                    
-                    document.getElementById('btnStudent').classList.toggle('active', role === 'student');
-                    document.getElementById('btnVisitor').classList.toggle('active', role === 'visitor');
-                    
-                    if (role === 'student') {
-                        document.getElementById('studentFields').classList.remove('hidden');
-                        document.getElementById('visitorFields').classList.add('hidden');
-                        
-                        document.getElementById('enrollment').required = true;
-                        document.getElementById('dob').required = true;
-                        document.getElementById('semester').required = true;
-                        document.getElementById('department').required = true;
-                        
-                        document.getElementById('purpose').required = false;
-                    } else {
-                        document.getElementById('studentFields').classList.add('hidden');
-                        document.getElementById('visitorFields').classList.remove('hidden');
-                        
-                        document.getElementById('enrollment').required = false;
-                        document.getElementById('dob').required = false;
-                        document.getElementById('semester').required = false;
-                        document.getElementById('department').required = false;
-                        
-                        document.getElementById('purpose').required = true;
-                    }
-                }
-                
+                // Simplified for visitor-only registration
                 document.getElementById('registrationForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     

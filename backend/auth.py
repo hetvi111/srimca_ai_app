@@ -56,7 +56,7 @@ def verify_jwt_token(token: str) -> dict:
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Register a new user
+    Register a new user (student or visitor)
     Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
     Visitor fields: name, email, password, role, mobile, purpose
     """
@@ -75,15 +75,16 @@ def register():
         role = data.get('role', 'student').lower()
         mobile = data.get('mobile', '').strip()
         
-        # For students, validate academic fields
+        # For students, get academic fields
         enrollment = data.get('enrollment', '').strip()
         dob = data.get('dob', '').strip()
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
         
-        # For visitors, validate purpose
+        # For visitors, get purpose
         purpose = data.get('purpose', '').strip()
         
+        # Validate based on role
         if role == 'student':
             if not mobile:
                 return jsonify({'error': 'Mobile number is required for students'}), 400
@@ -102,7 +103,7 @@ def register():
                 return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
         
         # Validate role
-        valid_roles = ['student', 'faculty', 'admin', 'visitor']
+        valid_roles = ['student', 'visitor']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
         
@@ -123,6 +124,9 @@ def register():
             existing_enrollment = users.find_one({'enrollment': enrollment})
             if existing_enrollment:
                 return jsonify({'error': 'Enrollment number already registered'}), 409
+        
+        # Hash password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
