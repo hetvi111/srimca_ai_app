@@ -21,11 +21,25 @@ COLLECTION_KNOWLEDGE = os.getenv("COLLECTION_KNOWLEDGE", "knowledge")
 
 # ---------- LOAD ----------
 def load_content() -> str:
+    """Load all content from text files in data directory."""
     all_parts = []
-    for f in glob.glob(f"{DATA_DIR}/*.txt"):
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    print(f"Loading content from: {data_dir}")
+    
+    if not os.path.exists(data_dir):
+        print(f"Data directory does not exist: {data_dir}")
+        return ""
+    
+    for f in glob.glob(f"{data_dir}/*.txt"):
+        print(f"Reading file: {f}")
         with open(f, "r", encoding="utf-8") as file:
-            all_parts.append(file.read())
-    return "\n".join(all_parts)
+            content = file.read()
+            print(f"Loaded {len(content)} chars from {os.path.basename(f)}")
+            all_parts.append(content)
+    
+    result = "\n".join(all_parts)
+    print(f"Total content loaded: {len(result)} chars")
+    return result
 
 
 # ---------- BUILD ----------
@@ -131,7 +145,7 @@ def get_fallback_answer(question: str) -> str:
     content = load_content()
     all_lines = content.split('\n')
     
-    # Quick patterns
+    # Quick patterns - check for key college info
     if 'full name' in q:
         for line in all_lines:
             if 'full name' in line.lower():
@@ -142,9 +156,11 @@ def get_fallback_answer(question: str) -> str:
             if 'located' in line.lower():
                 return line.strip()
     
-    if 'university' in q:
+    if 'university' in q or 'affiliated' in q:
         for line in all_lines:
             if 'uka tarsadia' in line.lower():
+                return line.strip()
+            if 'constituent college' in line.lower():
                 return line.strip()
     
     if 'vision' in q:
@@ -157,28 +173,52 @@ def get_fallback_answer(question: str) -> str:
             if 'mission' in line.lower():
                 return line.strip()
     
+    if 'courses' in q or 'programme' in q or 'programs' in q or 'offer' in q:
+        for line in all_lines:
+            if 'offers' in line.lower() or 'programme' in line.lower():
+                return line.strip()
+    
+    if 'computer' in q or 'wifi' in q or 'internet' in q:
+        for line in all_lines:
+            if 'computer' in line.lower() or 'wi-fi' in line.lower():
+                return line.strip()
+    
+    if 'library' in q or 'book' in q:
+        for line in all_lines:
+            if 'library' in line.lower():
+                return line.strip()
+    
+    if 'contact' in q or 'email' in q:
+        for line in all_lines:
+            if 'contact' in line.lower():
+                return line.strip()
+    
     # Try exact timetable match
     exact = get_exact_answer(question)
     if exact:
         return exact
     
-    # Keyword search
-    stop = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba'}
+    # Keyword search - find best matching line
+    stop = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba', 'my', 'me', 'about', 'tell', 'show', 'get'}
     keywords = [w for w in q.split() if w not in stop and len(w) > 2]
     
     best = None
     best_score = 0
     
     for line in all_lines:
+        line = line.strip()
+        if not line:
+            continue
         score = sum(1 for k in keywords if k in line.lower())
         if score > best_score:
             best_score = score
             best = line
     
     if best and best_score >= 1:
-        return best.strip()
+        return best
     
-    return "I don't have that information."
+    # Default response with suggestions
+    return "I don't have specific information about that. You can ask me about:\n- College name and location\n- Courses offered (MCA, MBA)\n- University affiliation\n- Vision and mission\n- Timetable/schedule\n- Facilities (library, computers, internet)"
 
 
 # ---------- MAIN ASK ----------
