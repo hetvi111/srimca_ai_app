@@ -104,31 +104,120 @@ def create_app(config_name=None):
             }
         }), 200
     
-    # SRIMCA AI Chat endpoint
+    # Simple AI Chat endpoint - direct text file based
     @app.route('/api/ai/chat', methods=['POST'])
     def ai_chat():
-        """SRIMCA AI Chat endpoint - uses RAG-based AI for answering questions"""
+        """Simple AI Chat endpoint using text file knowledge base"""
         try:
             data = request.get_json()
             if not data or 'question' not in data:
                 return jsonify({'error': 'Question is required'}), 400
             
-            question = data['question'].strip()
+            question = data['question'].strip().lower()
             if not question:
                 return jsonify({'error': 'Question cannot be empty'}), 400
             
-            # Import and use the srimca AI
-            try:
-                from srimca.srimca_rag import ask as srimca_ask
-                print(f"Processing question: {question}")
-                answer = srimca_ask(question)
-                print(f"Got answer: {answer}")
-            except Exception as e:
-                print(f"SRIMCA AI Error: {e}")
-                import traceback
-                traceback.print_exc()
-                # Fallback response if AI fails
-                answer = "I apologize, but I'm having trouble processing your question right now. Please try again later."
+            # Load knowledge base directly
+            import glob
+            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'srimca', 'data')
+            all_lines = []
+            
+            for f in glob.glob(f"{data_dir}/*.txt"):
+                with open(f, "r", encoding="utf-8") as file:
+                    all_lines.extend([l.strip() for l in file.read().split('\n') if l.strip()])
+            
+            # Search for matching answer
+            answer = None
+            
+            # Keywords to look for
+            keywords_map = {
+                'full name': ['full name'],
+                'located': ['located', 'where'],
+                'university': ['university', 'uka tarsadia', 'affiliated'],
+                'vision': ['vision'],
+                'mission': ['mission'],
+                'courses': ['courses', 'programme', 'programs', 'offers'],
+                'computer': ['computer', 'computers'],
+                'wifi': ['wi-fi', 'wifi', 'internet'],
+                'library': ['library', 'books', 'journals'],
+                'mca': ['mca', 'master'],
+                'mba': ['mba', 'management'],
+                'started': ['started', 'year'],
+            }
+            
+            # Check for exact question matches
+            if 'full name' in question:
+                for line in all_lines:
+                    if 'full name' in line.lower():
+                        answer = line
+                        break
+            elif 'name' in question:
+                for line in all_lines:
+                    if line.lower().startswith('srimca'):
+                        answer = line
+                        break
+            elif 'located' in question or 'where' in question or 'address' in question:
+                for line in all_lines:
+                    if 'located' in line.lower():
+                        answer = line
+                        break
+            elif 'university' in question or 'affiliated' in question:
+                for line in all_lines:
+                    if 'university' in line.lower() or 'uka tarsadia' in line.lower():
+                        answer = line
+                        break
+            elif 'vision' in question:
+                for line in all_lines:
+                    if 'vision' in line.lower():
+                        answer = line
+                        break
+            elif 'mission' in question:
+                for line in all_lines:
+                    if 'mission' in line.lower():
+                        answer = line
+                        break
+            elif 'course' in question or 'program' in question:
+                for line in all_lines:
+                    if 'offers' in line.lower():
+                        answer = line
+                        break
+            elif 'computer' in question or 'wifi' in question or 'internet' in question:
+                for line in all_lines:
+                    if 'computer' in line.lower() or 'wi-fi' in line.lower():
+                        answer = line
+                        break
+            elif 'library' in question or 'book' in question:
+                for line in all_lines:
+                    if 'library' in line.lower():
+                        answer = line
+                        break
+            elif 'timetable' in question or 'schedule' in question or 'monday' in question or 'tuesday' in question:
+                # Look for timetable entries
+                for line in all_lines:
+                    if 'monday' in line.lower() or 'tuesday' in line.lower():
+                        if 'semester' in line.lower():
+                            answer = line
+                            break
+            
+            # If no specific match, try keyword scoring
+            if not answer:
+                stop_words = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba', 'my', 'me', 'about', 'tell', 'show', 'get', 'your'}
+                keywords = [w for w in question.split() if w not in stop_words and len(w) > 2]
+                
+                best_line = None
+                best_score = 0
+                
+                for line in all_lines:
+                    score = sum(1 for k in keywords if k in line.lower())
+                    if score > best_score:
+                        best_score = score
+                        best_line = line
+                
+                if best_score >= 1:
+                    answer = best_line
+            
+            if not answer:
+                answer = "I don't have specific information about that. You can ask me about:\n- College name and location\n- Courses offered (MCA, MBA)\n- University affiliation\n- Vision and mission\n- Timetable/schedule\n- Facilities (library, computers)"
             
             return jsonify({
                 'question': question,
