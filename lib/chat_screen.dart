@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/student_chat_history_page.dart';
+import 'package:srimca_ai/visitor_history_page.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -9,8 +11,9 @@ const Color lightGrey = Color(0xFFF5F5F5);
 
 class ChatScreen extends StatefulWidget {
   final String? userId;
+  final String userType; // 'student' or 'visitor'
   
-  const ChatScreen({super.key, this.userId});
+  const ChatScreen({super.key, this.userId, this.userType = 'student'});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -193,6 +196,27 @@ class _ChatScreenState extends State<ChatScreen> {
                           icon: const Icon(Icons.history, color: Colors.white),
                           onPressed: () {
                             // Navigate to chat history
+                            if (widget.userId != null) {
+                              if (widget.userType == 'visitor') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => VisitorHistoryPage(
+                                      visitorId: widget.userId!,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => StudentChatHistoryPage(
+                                      userId: widget.userId!,
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           },
                         ),
                         IconButton(

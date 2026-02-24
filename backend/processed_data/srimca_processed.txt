@@ -1,0 +1,82 @@
+SRIMCA AI - COMPREHENSIVE APPLICATION OVERVIEW
+PROJECT: SRIMCA AI Assistant (Flutter Mobile App + Flask Backend)
+PURPOSE: A college management system with AI-powered assistant for
+SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)
+DATA SOURCE: SRIMCA Official Website
+The AI assistant uses data scraped/preprocessed from SRIMCA's official website
+1. DATA COLLECTION (backend/srimca/data/sample_srimca_info.txt)
+Manual extraction from SRIMCA official website
+College full name: "Shrimad Rajchandra Institute of Management and Computer Application"
+* Location: Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat
+* University: Constituent college of Uka Tarsadia University
+* Programs: MCA (started 2002), MBA (started 2004) approved by AICTE
+* Academic calendar with semester dates
+* Daily timetable for MCA 2nd semester
+* Infrastructure details (computers, Wi-Fi, internet, library, auditorium)
+2. DATA LOADING (backend/srimca/loader.py)
+3. TEXT CHUNKING (backend/srimca/build_db.py)
+4. EMBEDDING GENERATION (backend/srimca/config.py)
+5. VECTOR STORAGE (backend/srimca/build_db.py)
+6. RAG PIPELINE (backend/srimca/retriever.py)
+7. ANSWER GENERATION (backend/srimca/gpt_answer.py)
+✅ Notice Management (Create, View, Delete notices)
+✅ Study Materials Management (Upload, View, Download)
+✅ Assignment Management
+✅ User Profile Management
+✅ Knowledge Base Management
+✓ Student Management (View, Add, Edit, Delete)
+✓ Faculty Management (View, Add, Edit, Delete)
+✓ Visitor Management (View, Approve/Reject)
+✓ Content/Materials Management (Upload, View, Delete)
+✓ Notifications Management
+✓ User Management (All users)
+✓ Notice Management (Create, Edit, Delete)
+✓ Event Management
+✓ Profile Management
+or integrated into the main application flow:
+1. ASSIGNMENT SUBMISSION SYSTEM:
+- Faculty can grade/review submissions
+3. EXAM MANAGEMENT:
+- Exam schedule management
+5. LIBRARY MANAGEMENT:
+- Digital library
+6. FEE MANAGEMENT:
+7. HOSTEL MANAGEMENT:
+3. StudentManagementPage - Manage students (CRUD)
+4. FacultyManagementPage - Manage faculty (CRUD)
+5. VisitorManagementPage - Manage visitors
+6. ContentManagementPage - Manage study materials
+10. DatabaseManagementPage - Database operations
+11. UserManagementPage - Manage all users
+2. FacultyNoticeManagementPage - Manage notices
+4. FacultyEventManagementPage - Manage events
+7. ContentManagementPage - Materials management
+- Flask app.py - Main application
+- srimca/ - RAG AI implementation
+SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.
+SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.
+SRIMCA is a constituent college of Uka Tarsadia University.
+SRIMCA offers MCA and MBA programmes approved by AICTE.
+MCA programme started in the year 2002.
+MBA programme started in the year 2004.
+MCA 2nd Semester commenced from Thursday, 30 January 2025.
+MCA 4th Semester commenced from Monday, 16 December 2024.
+BCA 4th and 6th Semester commenced from Monday, 16 December 2024.
+SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.
+SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.
+SRIMCA has more than 250 computers with Wi-Fi connectivity.
+SRIMCA provides 200 MBps dedicated internet leased line.
+SRIMCA library contains national and international books and journals.
+SRIMCA has an auditorium, seminar hall and modern classrooms.
+MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.
+MCA 2nd semester Monday 10:30-11:30 has iOS theory.
+MCA 2nd semester Monday 11:30-12:15 is BREAK.
+MCA 2nd semester Monday 12:15-01:15 has ELECTIVE theory.
+MCA 2nd semester Monday 01:30-02:30 has ASP.NET theory.
+MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory.
+MCA 2nd semester Tuesday 08:30-10:30 has LARAVEL Theory.
+MCA 2nd semester Tuesday 10:30-11:30 has iOS theory.
+MCA 2nd semester Tuesday 11:30-12:15 is BREAK.
+MCA 2nd semester Tuesday 12:15-01:15 has Python theory.
+MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.
+MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory.

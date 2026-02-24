@@ -1,0 +1,897 @@
+{
+  "metadata": {
+    "source": "SRIMCA Official Website / table.txt",
+    "processed_date": "2025-02-24",
+    "total_entries": 82,
+    "categories": [
+      "BASIC_INFO",
+      "COURSES",
+      "INFRASTRUCTURE",
+      "ACADEMIC",
+      "TIMETABLE",
+      "MISSION_VISION",
+      "CONTACT"
+    ]
+  },
+  "categories": {
+    "BASIC_INFO": "Basic Information",
+    "COURSES": "Courses & Programs",
+    "INFRASTRUCTURE": "Infrastructure & Facilities",
+    "ACADEMIC": "Academic Calendar",
+    "TIMETABLE": "Class Timetable",
+    "MISSION_VISION": "Mission & Vision",
+    "CONTACT": "Contact & Location"
+  },
+  "by_category": {
+    "Courses & Programs": [
+      "SRIMCA AI - COMPREHENSIVE APPLICATION OVERVIEW",
+      "PROJECT: SRIMCA AI Assistant (Flutter Mobile App + Flask Backend)",
+      "PURPOSE: A college management system with AI-powered assistant for",
+      "SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)",
+      "DATA SOURCE: SRIMCA Official Website",
+      "The AI assistant uses data scraped/preprocessed from SRIMCA's official website",
+      "1. DATA COLLECTION (backend/srimca/data/sample_srimca_info.txt)",
+      "Manual extraction from SRIMCA official website",
+      "2. DATA LOADING (backend/srimca/loader.py)",
+      "3. TEXT CHUNKING (backend/srimca/build_db.py)",
+      "4. EMBEDDING GENERATION (backend/srimca/config.py)",
+      "5. VECTOR STORAGE (backend/srimca/build_db.py)",
+      "6. RAG PIPELINE (backend/srimca/retriever.py)",
+      "7. ANSWER GENERATION (backend/srimca/gpt_answer.py)",
+      "✅ Notice Management (Create, View, Delete notices)",
+      "✅ Study Materials Management (Upload, View, Download)",
+      "✅ Assignment Management",
+      "✅ User Profile Management",
+      "✅ Knowledge Base Management",
+      "✓ Student Management (View, Add, Edit, Delete)",
+      "✓ Faculty Management (View, Add, Edit, Delete)",
+      "✓ Visitor Management (View, Approve/Reject)",
+      "✓ Content/Materials Management (Upload, View, Delete)",
+      "✓ Notifications Management",
+      "✓ User Management (All users)",
+      "✓ Notice Management (Create, Edit, Delete)",
+      "✓ Event Management",
+      "✓ Profile Management",
+      "or integrated into the main application flow:",
+      "- srimca/ - RAG AI implementation",
+      "SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.",
+      "SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.",
+      "SRIMCA is a constituent college of Uka Tarsadia University.",
+      "SRIMCA offers MCA and MBA programmes approved by AICTE.",
+      "SRIMCA has more than 250 computers with Wi-Fi connectivity.",
+      "SRIMCA provides 200 MBps dedicated internet leased line.",
+      "SRIMCA library contains national and international books and journals.",
+      "SRIMCA has an auditorium, seminar hall and modern classrooms."
+    ],
+    "Infrastructure & Facilities": [
+      "College full name: \"Shrimad Rajchandra Institute of Management and Computer Application\"",
+      "* Infrastructure details (computers, Wi-Fi, internet, library, auditorium)",
+      "5. LIBRARY MANAGEMENT:",
+      "- Digital library",
+      "6. FEE MANAGEMENT:",
+      "7. HOSTEL MANAGEMENT:",
+      "3. StudentManagementPage - Manage students (CRUD)",
+      "4. FacultyManagementPage - Manage faculty (CRUD)",
+      "5. VisitorManagementPage - Manage visitors",
+      "6. ContentManagementPage - Manage study materials",
+      "10. DatabaseManagementPage - Database operations",
+      "11. UserManagementPage - Manage all users",
+      "2. FacultyNoticeManagementPage - Manage notices",
+      "4. FacultyEventManagementPage - Manage events",
+      "7. ContentManagementPage - Materials management",
+      "- Flask app.py - Main application"
+    ],
+    "Academic Calendar": [
+      "* Programs: MCA (started 2002), MBA (started 2004) approved by AICTE",
+      "* Academic calendar with semester dates",
+      "* Daily timetable for MCA 2nd semester",
+      "MCA programme started in the year 2002.",
+      "MBA programme started in the year 2004."
+    ],
+    "Class Timetable": [
+      "MCA 2nd Semester commenced from Thursday, 30 January 2025.",
+      "MCA 4th Semester commenced from Monday, 16 December 2024.",
+      "BCA 4th and 6th Semester commenced from Monday, 16 December 2024.",
+      "MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.",
+      "MCA 2nd semester Monday 10:30-11:30 has iOS theory.",
+      "MCA 2nd semester Monday 11:30-12:15 is BREAK.",
+      "MCA 2nd semester Monday 12:15-01:15 has ELECTIVE theory.",
+      "MCA 2nd semester Monday 01:30-02:30 has ASP.NET theory.",
+      "MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory.",
+      "MCA 2nd semester Tuesday 08:30-10:30 has LARAVEL Theory.",
+      "MCA 2nd semester Tuesday 10:30-11:30 has iOS theory.",
+      "MCA 2nd semester Tuesday 11:30-12:15 is BREAK.",
+      "MCA 2nd semester Tuesday 12:15-01:15 has Python theory.",
+      "MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.",
+      "MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory."
+    ],
+    "Mission & Vision": [
+      "1. ASSIGNMENT SUBMISSION SYSTEM:",
+      "- Faculty can grade/review submissions",
+      "3. EXAM MANAGEMENT:",
+      "- Exam schedule management",
+      "SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.",
+      "SRIMCA vision is to become a globally recognized premier educational institute for academic excellence."
+    ],
+    "Contact & Location": [
+      "* Location: Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat",
+      "* University: Constituent college of Uka Tarsadia University"
+    ]
+  },
+  "flat_entries": [
+    {
+      "index": 0,
+      "text": "SRIMCA AI - COMPREHENSIVE APPLICATION OVERVIEW",
+      "text_lower": "srimca ai - comprehensive application overview",
+      "category": "COURSES"
+    },
+    {
+      "index": 1,
+      "text": "PROJECT: SRIMCA AI Assistant (Flutter Mobile App + Flask Backend)",
+      "text_lower": "project: srimca ai assistant (flutter mobile app + flask backend)",
+      "category": "COURSES"
+    },
+    {
+      "index": 2,
+      "text": "PURPOSE: A college management system with AI-powered assistant for",
+      "text_lower": "purpose: a college management system with ai-powered assistant for",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 3,
+      "text": "SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)",
+      "text_lower": "srimca (shrimad rajchandra institute of management & computer applications)",
+      "category": "COURSES"
+    },
+    {
+      "index": 4,
+      "text": "DATA SOURCE: SRIMCA Official Website",
+      "text_lower": "data source: srimca official website",
+      "category": "COURSES"
+    },
+    {
+      "index": 5,
+      "text": "The AI assistant uses data scraped/preprocessed from SRIMCA's official website",
+      "text_lower": "the ai assistant uses data scraped/preprocessed from srimca's official website",
+      "category": "COURSES"
+    },
+    {
+      "index": 6,
+      "text": "1. DATA COLLECTION (backend/srimca/data/sample_srimca_info.txt)",
+      "text_lower": "1. data collection (backend/srimca/data/sample_srimca_info.txt)",
+      "category": "COURSES"
+    },
+    {
+      "index": 7,
+      "text": "Manual extraction from SRIMCA official website",
+      "text_lower": "manual extraction from srimca official website",
+      "category": "COURSES"
+    },
+    {
+      "index": 8,
+      "text": "College full name: \"Shrimad Rajchandra Institute of Management and Computer Application\"",
+      "text_lower": "college full name: \"shrimad rajchandra institute of management and computer application\"",
+      "category": "INFRASTRUCTURE"
+    },
+    {
+      "index": 9,
+      "text": "* Location: Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat",
+      "text_lower": "* location: maliba campus, gopal vidyanagar, bardoli, surat, gujarat",
+      "category": "CONTACT"
+    },
+    {
+      "index": 10,
+      "text": "* University: Constituent college of Uka Tarsadia University",
+      "text_lower": "* university: constituent college of uka tarsadia university",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 11,
+      "text": "* Programs: MCA (started 2002), MBA (started 2004) approved by AICTE",
+      "text_lower": "* programs: mca (started 2002), mba (started 2004) approved by aicte",
+      "category": "ACADEMIC"
+    },
+    {
+      "index": 12,
+      "text": "* Academic calendar with semester dates",
+      "text_lower": "* academic calendar with semester dates",
+      "category": "ACADEMIC"
+    },
+    {
+      "index": 13,
+      "text": "* Daily timetable for MCA 2nd semester",
+      "text_lower": "* daily timetable for mca 2nd semester",
+      "category": "ACADEMIC"
+    },
+    {
+      "index": 14,
+      "text": "* Infrastructure details (computers, Wi-Fi, internet, library, auditorium)",
+      "text_lower": "* infrastructure details (computers, wi-fi, internet, library, auditorium)",
+      "category": "INFRASTRUCTURE"
+    },
+    {
+      "index": 15,
+      "text": "2. DATA LOADING (backend/srimca/loader.py)",
+      "text_lower": "2. data loading (backend/srimca/loader.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 16,
+      "text": "3. TEXT CHUNKING (backend/srimca/build_db.py)",
+      "text_lower": "3. text chunking (backend/srimca/build_db.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 17,
+      "text": "4. EMBEDDING GENERATION (backend/srimca/config.py)",
+      "text_lower": "4. embedding generation (backend/srimca/config.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 18,
+      "text": "5. VECTOR STORAGE (backend/srimca/build_db.py)",
+      "text_lower": "5. vector storage (backend/srimca/build_db.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 19,
+      "text": "6. RAG PIPELINE (backend/srimca/retriever.py)",
+      "text_lower": "6. rag pipeline (backend/srimca/retriever.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 20,
+      "text": "7. ANSWER GENERATION (backend/srimca/gpt_answer.py)",
+      "text_lower": "7. answer generation (backend/srimca/gpt_answer.py)",
+      "category": "COURSES"
+    },
+    {
+      "index": 21,
+      "text": "✅ Notice Management (Create, View, Delete notices)",
+      "text_lower": "✅ notice management (create, view, delete notices)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 22,
+      "text": "✅ Study Materials Management (Upload, View, Download)",
+      "text_lower": "✅ study materials management (upload, view, download)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 23,
+      "text": "✅ Assignment Management",
+      "text_lower": "✅ assignment management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 24,
+      "text": "✅ User Profile Management",
+      "text_lower": "✅ user profile management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 25,
+      "text": "✅ Knowledge Base Management",
+      "text_lower": "✅ knowledge base management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 26,
+      "text": "✓ Student Management (View, Add, Edit, Delete)",
+      "text_lower": "✓ student management (view, add, edit, delete)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 27,
+      "text": "✓ Faculty Management (View, Add, Edit, Delete)",
+      "text_lower": "✓ faculty management (view, add, edit, delete)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 28,
+      "text": "✓ Visitor Management (View, Approve/Reject)",
+      "text_lower": "✓ visitor management (view, approve/reject)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 29,
+      "text": "✓ Content/Materials Management (Upload, View, Delete)",
+      "text_lower": "✓ content/materials management (upload, view, delete)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 30,
+      "text": "✓ Notifications Management",
+      "text_lower": "✓ notifications management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 31,
+      "text": "✓ User Management (All users)",
+      "text_lower": "✓ user management (all users)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 32,
+      "text": "✓ Notice Management (Create, Edit, Delete)",
+      "text_lower": "✓ notice management (create, edit, delete)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 33,
+      "text": "✓ Event Management",
+      "text_lower": "✓ event management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 34,
+      "text": "✓ Profile Management",
+      "text_lower": "✓ profile management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 35,
+      "text": "or integrated into the main application flow:",
+      "text_lower": "or integrated into the main application flow:",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 36,
+      "text": "1. ASSIGNMENT SUBMISSION SYSTEM:",
+      "text_lower": "1. assignment submission system:",
+      "category": "MISSION_VISION"
+    },
+    {
+      "index": 37,
+      "text": "- Faculty can grade/review submissions",
+      "text_lower": "- faculty can grade/review submissions",
+      "category": "MISSION_VISION"
+    },
+    {
+      "index": 38,
+      "text": "3. EXAM MANAGEMENT:",
+      "text_lower": "3. exam management:",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 39,
+      "text": "- Exam schedule management",
+      "text_lower": "- exam schedule management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 40,
+      "text": "5. LIBRARY MANAGEMENT:",
+      "text_lower": "5. library management:",
+      "category": "INFRASTRUCTURE"
+    },
+    {
+      "index": 41,
+      "text": "- Digital library",
+      "text_lower": "- digital library",
+      "category": "INFRASTRUCTURE"
+    },
+    {
+      "index": 42,
+      "text": "6. FEE MANAGEMENT:",
+      "text_lower": "6. fee management:",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 43,
+      "text": "7. HOSTEL MANAGEMENT:",
+      "text_lower": "7. hostel management:",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 44,
+      "text": "3. StudentManagementPage - Manage students (CRUD)",
+      "text_lower": "3. studentmanagementpage - manage students (crud)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 45,
+      "text": "4. FacultyManagementPage - Manage faculty (CRUD)",
+      "text_lower": "4. facultymanagementpage - manage faculty (crud)",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 46,
+      "text": "5. VisitorManagementPage - Manage visitors",
+      "text_lower": "5. visitormanagementpage - manage visitors",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 47,
+      "text": "6. ContentManagementPage - Manage study materials",
+      "text_lower": "6. contentmanagementpage - manage study materials",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 48,
+      "text": "10. DatabaseManagementPage - Database operations",
+      "text_lower": "10. databasemanagementpage - database operations",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 49,
+      "text": "11. UserManagementPage - Manage all users",
+      "text_lower": "11. usermanagementpage - manage all users",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 50,
+      "text": "2. FacultyNoticeManagementPage - Manage notices",
+      "text_lower": "2. facultynoticemanagementpage - manage notices",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 51,
+      "text": "4. FacultyEventManagementPage - Manage events",
+      "text_lower": "4. facultyeventmanagementpage - manage events",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 52,
+      "text": "7. ContentManagementPage - Materials management",
+      "text_lower": "7. contentmanagementpage - materials management",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 53,
+      "text": "- Flask app.py - Main application",
+      "text_lower": "- flask app.py - main application",
+      "category": "BASIC_INFO"
+    },
+    {
+      "index": 54,
+      "text": "- srimca/ - RAG AI implementation",
+      "text_lower": "- srimca/ - rag ai implementation",
+      "category": "COURSES"
+    },
+    {
+      "index": 55,
+      "text": "SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.",
+      "text_lower": "srimca full name is shrimad rajchandra institute of management and computer application.",
+      "category": "COURSES"
+    },
+    {
+      "index": 56,
+      "text": "SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.",
+      "text_lower": "srimca is located at maliba campus, gopal vidyanagar, bardoli, surat, gujarat.",
+      "category": "COURSES"
+    },
+    {
+      "index": 57,
+      "text": "SRIMCA is a constituent college of Uka Tarsadia University.",
+      "text_lower": "srimca is a constituent college of uka tarsadia university.",
+      "category": "COURSES"
+    },
+    {
+      "index": 58,
+      "text": "SRIMCA offers MCA and MBA programmes approved by AICTE.",
+      "text_lower": "srimca offers mca and mba programmes approved by aicte.",
+      "category": "COURSES"
+    },
+    {
+      "index": 59,
+      "text": "MCA programme started in the year 2002.",
+      "text_lower": "mca programme started in the year 2002.",
+      "category": "ACADEMIC"
+    },
+    {
+      "index": 60,
+      "text": "MBA programme started in the year 2004.",
+      "text_lower": "mba programme started in the year 2004.",
+      "category": "ACADEMIC"
+    },
+    {
+      "index": 61,
+      "text": "MCA 2nd Semester commenced from Thursday, 30 January 2025.",
+      "text_lower": "mca 2nd semester commenced from thursday, 30 january 2025.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 62,
+      "text": "MCA 4th Semester commenced from Monday, 16 December 2024.",
+      "text_lower": "mca 4th semester commenced from monday, 16 december 2024.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 63,
+      "text": "BCA 4th and 6th Semester commenced from Monday, 16 December 2024.",
+      "text_lower": "bca 4th and 6th semester commenced from monday, 16 december 2024.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 64,
+      "text": "SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.",
+      "text_lower": "srimca mission is to remain on the cutting edge of education, research and service to industry and society.",
+      "category": "MISSION_VISION"
+    },
+    {
+      "index": 65,
+      "text": "SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.",
+      "text_lower": "srimca vision is to become a globally recognized premier educational institute for academic excellence.",
+      "category": "MISSION_VISION"
+    },
+    {
+      "index": 66,
+      "text": "SRIMCA has more than 250 computers with Wi-Fi connectivity.",
+      "text_lower": "srimca has more than 250 computers with wi-fi connectivity.",
+      "category": "COURSES"
+    },
+    {
+      "index": 67,
+      "text": "SRIMCA provides 200 MBps dedicated internet leased line.",
+      "text_lower": "srimca provides 200 mbps dedicated internet leased line.",
+      "category": "COURSES"
+    },
+    {
+      "index": 68,
+      "text": "SRIMCA library contains national and international books and journals.",
+      "text_lower": "srimca library contains national and international books and journals.",
+      "category": "COURSES"
+    },
+    {
+      "index": 69,
+      "text": "SRIMCA has an auditorium, seminar hall and modern classrooms.",
+      "text_lower": "srimca has an auditorium, seminar hall and modern classrooms.",
+      "category": "COURSES"
+    },
+    {
+      "index": 70,
+      "text": "MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.",
+      "text_lower": "mca 2nd semester monday 08:30-10:30 has laravel practical.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 71,
+      "text": "MCA 2nd semester Monday 10:30-11:30 has iOS theory.",
+      "text_lower": "mca 2nd semester monday 10:30-11:30 has ios theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 72,
+      "text": "MCA 2nd semester Monday 11:30-12:15 is BREAK.",
+      "text_lower": "mca 2nd semester monday 11:30-12:15 is break.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 73,
+      "text": "MCA 2nd semester Monday 12:15-01:15 has ELECTIVE theory.",
+      "text_lower": "mca 2nd semester monday 12:15-01:15 has elective theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 74,
+      "text": "MCA 2nd semester Monday 01:30-02:30 has ASP.NET theory.",
+      "text_lower": "mca 2nd semester monday 01:30-02:30 has asp.net theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 75,
+      "text": "MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory.",
+      "text_lower": "mca 2nd semester monday 02:30-03:30 has laravel theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 76,
+      "text": "MCA 2nd semester Tuesday 08:30-10:30 has LARAVEL Theory.",
+      "text_lower": "mca 2nd semester tuesday 08:30-10:30 has laravel theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 77,
+      "text": "MCA 2nd semester Tuesday 10:30-11:30 has iOS theory.",
+      "text_lower": "mca 2nd semester tuesday 10:30-11:30 has ios theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 78,
+      "text": "MCA 2nd semester Tuesday 11:30-12:15 is BREAK.",
+      "text_lower": "mca 2nd semester tuesday 11:30-12:15 is break.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 79,
+      "text": "MCA 2nd semester Tuesday 12:15-01:15 has Python theory.",
+      "text_lower": "mca 2nd semester tuesday 12:15-01:15 has python theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 80,
+      "text": "MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.",
+      "text_lower": "mca 2nd semester tuesday 01:30-02:30 has asp.net theory.",
+      "category": "TIMETABLE"
+    },
+    {
+      "index": 81,
+      "text": "MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory.",
+      "text_lower": "mca 2nd semester tuesday 02:30-03:30 has laravel theory.",
+      "category": "TIMETABLE"
+    }
+  ],
+  "qa_pairs": [
+    {
+      "question": "How many computers does SRIMCA have?",
+      "answer": "SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What are the computer facilities at SRIMCA?",
+      "answer": "SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What is the full name of SRIMCA?",
+      "answer": "College full name: \"Shrimad Rajchandra Institute of Management and Computer Application\"",
+      "keywords": [
+        "full name"
+      ]
+    },
+    {
+      "question": "What does SRIMCA stand for?",
+      "answer": "College full name: \"Shrimad Rajchandra Institute of Management and Computer Application\"",
+      "keywords": [
+        "full name"
+      ]
+    },
+    {
+      "question": "Which university is SRIMCA affiliated with?",
+      "answer": "* University: Constituent college of Uka Tarsadia University",
+      "keywords": [
+        "university"
+      ]
+    },
+    {
+      "question": "Is SRIMCA affiliated to a university?",
+      "answer": "* University: Constituent college of Uka Tarsadia University",
+      "keywords": [
+        "university"
+      ]
+    },
+    {
+      "question": "When did MCA/MBA programme start?",
+      "answer": "* Programs: MCA (started 2002), MBA (started 2004) approved by AICTE",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "When was SRIMCA established?",
+      "answer": "* Programs: MCA (started 2002), MBA (started 2004) approved by AICTE",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "How many computers does SRIMCA have?",
+      "answer": "* Infrastructure details (computers, Wi-Fi, internet, library, auditorium)",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What are the computer facilities at SRIMCA?",
+      "answer": "* Infrastructure details (computers, Wi-Fi, internet, library, auditorium)",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What is the mission of SRIMCA?",
+      "answer": "1. ASSIGNMENT SUBMISSION SYSTEM:",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What is SRIMCA's mission statement?",
+      "answer": "1. ASSIGNMENT SUBMISSION SYSTEM:",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What is the mission of SRIMCA?",
+      "answer": "- Faculty can grade/review submissions",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What is SRIMCA's mission statement?",
+      "answer": "- Faculty can grade/review submissions",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What facilities does the library have?",
+      "answer": "5. LIBRARY MANAGEMENT:",
+      "keywords": [
+        "library"
+      ]
+    },
+    {
+      "question": "Does SRIMCA have a library?",
+      "answer": "5. LIBRARY MANAGEMENT:",
+      "keywords": [
+        "library"
+      ]
+    },
+    {
+      "question": "What facilities does the library have?",
+      "answer": "- Digital library",
+      "keywords": [
+        "library"
+      ]
+    },
+    {
+      "question": "Does SRIMCA have a library?",
+      "answer": "- Digital library",
+      "keywords": [
+        "library"
+      ]
+    },
+    {
+      "question": "What is the full name of SRIMCA?",
+      "answer": "SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.",
+      "keywords": [
+        "full name"
+      ]
+    },
+    {
+      "question": "What does SRIMCA stand for?",
+      "answer": "SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.",
+      "keywords": [
+        "full name"
+      ]
+    },
+    {
+      "question": "Where is SRIMCA located?",
+      "answer": "SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.",
+      "keywords": [
+        "located"
+      ]
+    },
+    {
+      "question": "What is the address of SRIMCA?",
+      "answer": "SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.",
+      "keywords": [
+        "located"
+      ]
+    },
+    {
+      "question": "Which university is SRIMCA affiliated with?",
+      "answer": "SRIMCA is a constituent college of Uka Tarsadia University.",
+      "keywords": [
+        "university"
+      ]
+    },
+    {
+      "question": "Is SRIMCA affiliated to a university?",
+      "answer": "SRIMCA is a constituent college of Uka Tarsadia University.",
+      "keywords": [
+        "university"
+      ]
+    },
+    {
+      "question": "What courses does SRIMCA offer?",
+      "answer": "SRIMCA offers MCA and MBA programmes approved by AICTE.",
+      "keywords": [
+        "offers"
+      ]
+    },
+    {
+      "question": "What programs are available at SRIMCA?",
+      "answer": "SRIMCA offers MCA and MBA programmes approved by AICTE.",
+      "keywords": [
+        "offers"
+      ]
+    },
+    {
+      "question": "When did MCA/MBA programme start?",
+      "answer": "MCA programme started in the year 2002.",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "When was SRIMCA established?",
+      "answer": "MCA programme started in the year 2002.",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "When did MCA/MBA programme start?",
+      "answer": "MBA programme started in the year 2004.",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "When was SRIMCA established?",
+      "answer": "MBA programme started in the year 2004.",
+      "keywords": [
+        "started"
+      ]
+    },
+    {
+      "question": "What is the mission of SRIMCA?",
+      "answer": "SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What is SRIMCA's mission statement?",
+      "answer": "SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.",
+      "keywords": [
+        "mission"
+      ]
+    },
+    {
+      "question": "What is the vision of SRIMCA?",
+      "answer": "SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.",
+      "keywords": [
+        "vision"
+      ]
+    },
+    {
+      "question": "What is SRIMCA's vision statement?",
+      "answer": "SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.",
+      "keywords": [
+        "vision"
+      ]
+    },
+    {
+      "question": "How many computers does SRIMCA have?",
+      "answer": "SRIMCA has more than 250 computers with Wi-Fi connectivity.",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What are the computer facilities at SRIMCA?",
+      "answer": "SRIMCA has more than 250 computers with Wi-Fi connectivity.",
+      "keywords": [
+        "computer"
+      ]
+    },
+    {
+      "question": "What is the internet speed at SRIMCA?",
+      "answer": "SRIMCA provides 200 MBps dedicated internet leased line.",
+      "keywords": [
+        "internet"
+      ]
+    },
+    {
+      "question": "Is there Wi-Fi at SRIMCA?",
+      "answer": "SRIMCA provides 200 MBps dedicated internet leased line.",
+      "keywords": [
+        "internet"
+      ]
+    },
+    {
+      "question": "What facilities does the library have?",
+      "answer": "SRIMCA library contains national and international books and journals.",
+      "keywords": [
+        "library"
+      ]
+    },
+    {
+      "question": "Does SRIMCA have a library?",
+      "answer": "SRIMCA library contains national and international books and journals.",
+      "keywords": [
+        "library"
+      ]
+    }
+  ]
+}
