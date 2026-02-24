@@ -18,6 +18,18 @@ from database import connect_to_mongodb, initialize_indexes, health_check, close
 from firebase import initialize_firebase
 from auth import auth_bp
 
+# Import RAG AI from srimca folder
+try:
+    from srimca.app import ask as rag_ask
+    from srimca.build_db import build_db
+    from srimca.config import knowledge_col
+    RAG_AVAILABLE = True
+    print("✅ RAG AI module loaded successfully")
+except ImportError as e:
+    print(f"Warning: RAG AI module could not be imported: {e}")
+    RAG_AVAILABLE = False
+    rag_ask = None
+
 # Import route blueprints
 try:
     from routes.notices import notices_bp
@@ -104,132 +116,54 @@ def create_app(config_name=None):
             }
         }), 200
     
-    # Simple AI Chat endpoint - direct text file based
+    # RAG AI Chat endpoint - uses advanced RAG system from srimca folder
     @app.route('/api/ai/chat', methods=['POST'])
     def ai_chat():
-        """Simple AI Chat endpoint using text file knowledge base"""
+        """AI Chat endpoint using RAG (Retrieval-Augmented Generation)"""
         try:
             data = request.get_json()
             if not data or 'question' not in data:
                 return jsonify({'error': 'Question is required'}), 400
             
-            question = data['question'].strip().lower()
+            question = data['question'].strip()
             if not question:
                 return jsonify({'error': 'Question cannot be empty'}), 400
             
-            # Load knowledge base directly
-            import glob
-            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'srimca', 'data')
-            all_lines = []
+            # Check if RAG module is available
+            if not RAG_AVAILABLE or rag_ask is None:
+                return jsonify({
+                    'error': 'RAG AI module is not available. Please check server configuration.',
+                    'status': 'error'
+                }), 503
             
-            for f in glob.glob(f"{data_dir}/*.txt"):
-                with open(f, "r", encoding="utf-8") as file:
-                    all_lines.extend([l.strip() for l in file.read().split('\n') if l.strip()])
+            # Build knowledge database if empty
+            try:
+                if knowledge_col.count_documents({}) == 0:
+                    print("📦 Building knowledge database...")
+                    build_db()
+                    print("✅ Knowledge DB built")
+            except Exception as db_error:
+                print(f"Warning: Could not check/build knowledge DB: {db_error}")
             
-            # Search for matching answer
-            answer = None
-            
-            # Keywords to look for
-            keywords_map = {
-                'full name': ['full name'],
-                'located': ['located', 'where'],
-                'university': ['university', 'uka tarsadia', 'affiliated'],
-                'vision': ['vision'],
-                'mission': ['mission'],
-                'courses': ['courses', 'programme', 'programs', 'offers'],
-                'computer': ['computer', 'computers'],
-                'wifi': ['wi-fi', 'wifi', 'internet'],
-                'library': ['library', 'books', 'journals'],
-                'mca': ['mca', 'master'],
-                'mba': ['mba', 'management'],
-                'started': ['started', 'year'],
-            }
-            
-            # Check for exact question matches
-            if 'full name' in question:
-                for line in all_lines:
-                    if 'full name' in line.lower():
-                        answer = line
-                        break
-            elif 'name' in question:
-                for line in all_lines:
-                    if line.lower().startswith('srimca'):
-                        answer = line
-                        break
-            elif 'located' in question or 'where' in question or 'address' in question:
-                for line in all_lines:
-                    if 'located' in line.lower():
-                        answer = line
-                        break
-            elif 'university' in question or 'affiliated' in question:
-                for line in all_lines:
-                    if 'university' in line.lower() or 'uka tarsadia' in line.lower():
-                        answer = line
-                        break
-            elif 'vision' in question:
-                for line in all_lines:
-                    if 'vision' in line.lower():
-                        answer = line
-                        break
-            elif 'mission' in question:
-                for line in all_lines:
-                    if 'mission' in line.lower():
-                        answer = line
-                        break
-            elif 'course' in question or 'program' in question:
-                for line in all_lines:
-                    if 'offers' in line.lower():
-                        answer = line
-                        break
-            elif 'computer' in question or 'wifi' in question or 'internet' in question:
-                for line in all_lines:
-                    if 'computer' in line.lower() or 'wi-fi' in line.lower():
-                        answer = line
-                        break
-            elif 'library' in question or 'book' in question:
-                for line in all_lines:
-                    if 'library' in line.lower():
-                        answer = line
-                        break
-            elif 'timetable' in question or 'schedule' in question or 'monday' in question or 'tuesday' in question:
-                # Look for timetable entries
-                for line in all_lines:
-                    if 'monday' in line.lower() or 'tuesday' in line.lower():
-                        if 'semester' in line.lower():
-                            answer = line
-                            break
-            
-            # If no specific match, try keyword scoring
-            if not answer:
-                stop_words = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba', 'my', 'me', 'about', 'tell', 'show', 'get', 'your'}
-                keywords = [w for w in question.split() if w not in stop_words and len(w) > 2]
-                
-                best_line = None
-                best_score = 0
-                
-                for line in all_lines:
-                    score = sum(1 for k in keywords if k in line.lower())
-                    if score > best_score:
-                        best_score = score
-                        best_line = line
-                
-                if best_score >= 1:
-                    answer = best_line
-            
-            if not answer:
-                answer = "I don't have specific information about that. You can ask me about:\n- College name and location\n- Courses offered (MCA, MBA)\n- University affiliation\n- Vision and mission\n- Timetable/schedule\n- Facilities (library, computers)"
-            
-            return jsonify({
-                'question': question,
-                'answer': answer,
-                'status': 'success'
-            }), 200
+            # Get answer from RAG system
+            try:
+                answer = rag_ask(question)
+                return jsonify({
+                    'question': question,
+                    'answer': answer,
+                    'status': 'success'
+                }), 200
+            except Exception as rag_error:
+                print(f"RAG Error: {rag_error}")
+                return jsonify({
+                    'error': f'AI processing error: {str(rag_error)}',
+                    'status': 'error'
+                }), 500
             
         except Exception as e:
             print(f"AI Chat Error: {e}")
             import traceback
             traceback.print_exc()
-            return jsonify({'error': str(e)}), 500
     
     # QR Code generation endpoint
     @app.route('/generate-qr', methods=['GET'])
@@ -805,78 +739,117 @@ def create_app(config_name=None):
                     font-size: 40px;
                     margin-bottom: 15px;
                 }
-                .chat-container {
-                    display: none;
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    width: 400px;
-                    height: 500px;
-                    background: white;
-                    border-radius: 15px;
-                    box-shadow: 0 5px 30px rgba(0,0,0,0.2);
-                    flex-direction: column;
-                }
-                .chat-container.active { display: flex; }
-                .chat-header {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 15px 15px 0 0;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .chat-close {
-                    background: none;
-                    border: none;
-                    color: white;
-                    font-size: 24px;
-                    cursor: pointer;
-                }
-                .chat-messages {
-                    flex: 1;
-                    padding: 20px;
-                    overflow-y: auto;
-                }
-                .message {
-                    margin-bottom: 15px;
-                    padding: 12px 15px;
-                    border-radius: 15px;
-                    max-width: 80%;
-                }
-                .message.bot {
-                    background: #f0f0f0;
-                    color: #333;
-                    margin-right: auto;
-                }
-                .message.user {
-                    background: #667eea;
-                    color: white;
-                    margin-left: auto;
-                }
-                .chat-input {
-                    padding: 15px;
-                    border-top: 1px solid #eee;
-                    display: flex;
-                    gap: 10px;
-                }
-                .chat-input input {
-                    flex: 1;
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    font-size: 14px;
-                }
-                .chat-input button {
-                    padding: 12px 20px;
-                    background: #667eea;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                }
-                .chat-input button:hover { background: #5568d3; }
+              /* ================= CHAT CONTAINER ================= */
+.chat-container {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    height: 500px;
+    max-width: 95%;
+    max-height: 90vh;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+    flex-direction: column;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+.chat-container.active {
+    display: flex;
+}
+
+/* ================= HEADER ================= */
+.chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+/* ================= MESSAGES ================= */
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 14px;
+}
+
+.message.bot {
+    background: #eaeaea;
+    color: #333;
+    margin-right: auto;
+}
+
+.message.user {
+    background: #667eea;
+    color: white;
+    margin-left: auto;
+}
+
+/* ================= INPUT AREA ================= */
+.chat-input {
+    padding: 12px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+    background: white;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.chat-input button {
+    padding: 10px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background: #5568d3;
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .chat-container {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+}
                 .profile-card {
                     background: white;
                     border-radius: 15px;
@@ -975,19 +948,28 @@ def create_app(config_name=None):
             </div>
             
             <!-- AI Chat Widget -->
-            <div class="chat-container" id="chatContainer">
-                <div class="chat-header">
-                    <span>🤖 AI Assistant</span>
-                    <button class="chat-close" onclick="closeChat()">×</button>
-                </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message bot">Hello! I'm your SRIMCA AI assistant. How can I help you today? You can ask me about courses, departments, timings, contact info, and more!</div>
-                </div>
-                <div class="chat-input">
-                    <input type="text" id="chatInput" placeholder="Type your question..." onkeypress="handleChatKeypress(event)">
-                    <button onclick="sendMessage()">Send</button>
-                </div>
-            </div>
+            <!-- Chat Box -->
+<div class="chat-container" id="chatContainer">
+    
+    <div class="chat-header">
+        <span>🤖 SRIMCA AI Assistant</span>
+        <button class="chat-close" onclick="closeChat()">×</button>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">
+            Hello! I'm your SRIMCA AI assistant. How can I help you today?
+        </div>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="chatInput" 
+               placeholder="Type your question..." 
+               onkeypress="handleChatKeypress(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+</div>
             
             <script>
                 // Check authentication
