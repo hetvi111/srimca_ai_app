@@ -745,7 +745,7 @@ def create_app(config_name=None):
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 400px;
+    width: 500px;
     height: 500px;
     max-width: 95%;
     max-height: 90vh;
