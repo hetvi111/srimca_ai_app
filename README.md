@@ -54,42 +54,56 @@ This is a Flutter mobile app with a Flask backend for AI content management, use
 ### Steps to Deploy Backend
 
 1. **Install Railway CLI** (if not installed):
-   ```
+   
+```
    npm install -g @railway/cli
-   ```
+   
+```
 
 2. **Login to Railway**:
-   ```
+   
+```
    railway login
-   ```
+   
+```
 
 3. **Initialize Railway Project**:
-   ```
+   
+```
    railway init
-   ```
+   
+```
    - Choose "Empty Project"
    - Name it "srimca-ai-backend"
 
 4. **Link to Existing Code**:
-   ```
+   
+```
    railway link
-   ```
+   
+```
    - Select your project
 
 5. **Set Environment Variables**:
-   ```
+   
+```
    railway variables set MONGO_URI=your_mongodb_atlas_uri
-   ```
+   
+```
 
 6. **Deploy**:
-   ```
+   
+```
    railway up
-   ```
+   
+```
 
 7. **Get Deployed URL**:
-   ```
+   
+```
    railway domain
-   ```
+   
+```
    - Copy the URL (e.g., https://srimca-ai-backend.up.railway.app)
 
 ### Update Flutter App
@@ -103,14 +117,80 @@ After deployment, update the `baseUrl` in all Flutter files to the deployed URL:
 - lib/login_register_screen.dart
 
 Example:
-```dart
+```
+dart
 const String baseUrl = 'https://srimca-ai-backend.onrender.com';
 ```
 
 ### Testing
 - Test the backend health check: `GET /`
 - Test user registration/login
-- Ensure all API endpoints work
+- Test all API endpoints work
+
+## API Testing Guide
+
+### Where to Test the API
+
+#### 1. Production/Deployed API (Render.com)
+The backend is deployed on Render.com:
+```
+https://srimca-ai-backend.onrender.com
+```
+
+#### 2. Local Development
+Run locally on:
+```
+http://localhost:5000
+```
+
+---
+
+### Available API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Root - API info & endpoints |
+| `/health` | GET | Health check (MongoDB & Firebase) |
+| `/api/register` | POST | User registration |
+| `/api/login` | POST | User login |
+| `/api/notices` | GET/POST | Notices CRUD |
+| `/api/assignments` | GET/POST | Assignments CRUD |
+| `/api/materials` | GET/POST | Study materials CRUD |
+| `/api/faqs` | GET/POST | FAQs CRUD |
+| `/api/users` | GET | User management |
+| `/api/notifications` | GET/POST | Notifications |
+| `/api/admin/*` | GET/POST | Admin routes |
+| `/api/ai/chat` | POST | AI Chat (RAG-powered) |
+
+---
+
+### How to Test
+
+#### Option 1: Browser (GET endpoints)
+- `https://srimca-ai-backend.onrender.com/` - API info
+- `https://srimca-ai-backend.onrender.com/health` - Health check
+- `https://srimca-ai-backend.onrender.com/register` - Visitor registration page
+- `https://srimca-ai-backend.onrender.com/login` - Visitor login page
+
+#### Option 2: cURL/Postman (POST endpoints)
+```
+bash
+# Health check
+curl https://srimca-ai-backend.onrender.com/health
+
+# AI Chat
+curl -X POST https://srimca-ai-backend.onrender.com/api/ai/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What courses does SRIMCA offer?"}'
+```
+
+#### Option 3: Run Locally
+```
+bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
 
 ## Local Development
 To run locally:
@@ -133,5 +213,5 @@ A few resources to get you started if this is your first Flutter project:
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
 For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
+[online documentation](https://docs.flutter.dev), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
