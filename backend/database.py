@@ -94,12 +94,21 @@ def get_collection(collection_name: str):
 
 # Collection names as constants
 class Collections:
-    USERS = 'users'
+    # Primary collections (normalized)
+    USERS = 'users'              # Authentication data only (name, email, password, role)
+    USER_PROFILES = 'user_profiles'  # Personal info (phone, address) - linked by user_id
+    STUDENTS = 'students'        # Student-specific data (semester, department, enrollment)
+    FACULTIES = 'faculty'        # Faculty-specific data (department, designation)
+    
+    # Content collections
     NOTICES = 'notices'
     ASSIGNMENTS = 'assignments'
     MATERIALS = 'materials'
     FAQS = 'faqs'
-    AI_QUERIES = 'ai_queries'
+    KNOWLEDGE = 'knowledge'      # AI RAG knowledge base
+    
+    # Activity collections
+    AI_QUERIES = 'ai_queries'    # AI chat history
     SESSIONS = 'sessions'
     NOTIFICATIONS = 'notifications'
     VISITORS = 'visitors'
@@ -124,25 +133,53 @@ def initialize_indexes():
     """
     db = get_database()
     
-    # Users collection indexes
+    # Users collection indexes (authentication)
     db[Collections.USERS].create_index('email', unique=True)
     db[Collections.USERS].create_index('role')
+    db[Collections.USERS].create_index('is_active')
+    
+    # User_Profiles collection indexes (personal info)
+    db[Collections.USER_PROFILES].create_index('user_id', unique=True)
+    
+    # Students collection indexes (student-specific data)
+    db[Collections.STUDENTS].create_index('user_id', unique=True)
+    db[Collections.STUDENTS].create_index('enrollment_number', unique=True)
+    db[Collections.STUDENTS].create_index('semester')
+    db[Collections.STUDENTS].create_index('department')
+    
+    # Faculty collection indexes (faculty-specific data)
+    db[Collections.FACULTIES].create_index('user_id', unique=True)
+    db[Collections.FACULTIES].create_index('department')
+    db[Collections.FACULTIES].create_index('designation')
     
     # Notices collection indexes
     db[Collections.NOTICES].create_index('created_at')
     db[Collections.NOTICES].create_index('faculty_id')
+    db[Collections.NOTICES].create_index('target_role')
     
     # Assignments collection indexes
     db[Collections.ASSIGNMENTS].create_index('due_date')
     db[Collections.ASSIGNMENTS].create_index('faculty_id')
+    db[Collections.ASSIGNMENTS].create_index('subject')
     
     # Materials collection indexes
     db[Collections.MATERIALS].create_index('subject')
     db[Collections.MATERIALS].create_index('faculty_id')
+    db[Collections.MATERIALS].create_index('type')
+    
+    # Knowledge collection indexes (for AI RAG)
+    db[Collections.KNOWLEDGE].create_index('question')
+    db[Collections.KNOWLEDGE].create_index('category')
+    db[Collections.KNOWLEDGE].create_index('is_active')
     
     # AI Queries indexes
     db[Collections.AI_QUERIES].create_index('user_id')
     db[Collections.AI_QUERIES].create_index('created_at')
+    
+    # Notifications indexes
+    db[Collections.NOTIFICATIONS].create_index('user_id')
+    db[Collections.NOTIFICATIONS].create_index('status')
+    db[Collections.NOTIFICATIONS].create_index('created_at')
     
     print("Database indexes created successfully")
 

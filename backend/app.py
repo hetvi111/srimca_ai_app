@@ -39,6 +39,10 @@ try:
     from routes.users import users_bp
     from routes.notifications import notifications_bp
     from routes.admin import admin_bp
+    # NEW: Import normalized collection routes
+    from routes.students import students_bp
+    from routes.faculty import faculty_bp
+    from routes.knowledge import knowledge_bp
     ROUTES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some routes could not be imported: {e}")
@@ -77,6 +81,11 @@ def create_app(config_name=None):
             app.register_blueprint(users_bp)
             app.register_blueprint(notifications_bp)
             app.register_blueprint(admin_bp)
+            # NEW: Register normalized collection blueprints
+            app.register_blueprint(students_bp)
+            app.register_blueprint(faculty_bp)
+            app.register_blueprint(knowledge_bp)
+            print("✅ All route blueprints registered")
         except Exception as e:
             print(f"Warning: Could not register some blueprints: {e}")
     

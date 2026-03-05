@@ -1,6 +1,12 @@
 """
 Authentication routes for SRIMCA AI Backend
 Handles user login, registration, and JWT token generation
+
+NORMALIZED DATABASE DESIGN:
+- Users collection: Authentication only (name, email, password, role)
+- User_Profiles collection: Personal info (phone, address) - linked by user_id
+- Students collection: Student-specific data (semester, department, enrollment)
+- Faculty collection: Faculty-specific data (department, designation)
 """
 
 from flask import Blueprint, request, jsonify
@@ -10,7 +16,7 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 
 from database import get_collection, Collections
-from models import UserModel
+from models import UserModel, UserProfileModel, StudentModel, FacultyModel
 from config import get_config
 from notification_helper import create_notification
 
@@ -56,8 +62,16 @@ def verify_jwt_token(token: str) -> dict:
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Register a new user (student or visitor)
+    Register a new user (student, faculty, or visitor)
+    
+    NORMALIZED: This function now inserts data into multiple collections:
+    - Users: Authentication data (name, email, password, role)
+    - User_Profiles: Personal info (phone, address)
+    - Students: Academic data (semester, department, enrollment)
+    - Faculty: Professional data (department, designation)
+    
     Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
+    Faculty fields: name, email, password, role, mobile, department, designation
     Visitor fields: name, email, password, role, mobile, purpose
     """
     try:
@@ -74,12 +88,16 @@ def register():
         password = data['password']
         role = data.get('role', 'student').lower()
         mobile = data.get('mobile', '').strip()
+        address = data.get('address', '').strip()
         
         # For students, get academic fields
         enrollment = data.get('enrollment', '').strip()
         dob = data.get('dob', '').strip()
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
+        
+        # For faculty, get professional fields
+        designation = data.get('designation', '').strip()
         
         # For visitors, get purpose
         purpose = data.get('purpose', '').strip()
@@ -96,6 +114,13 @@ def register():
                 return jsonify({'error': 'Semester is required for students'}), 400
             if not department:
                 return jsonify({'error': 'Department is required for students'}), 400
+        elif role == 'faculty':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for faculty'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for faculty'}), 400
+            if not designation:
+                return jsonify({'error': 'Designation is required for faculty'}), 400
         elif role == 'visitor':
             if not mobile:
                 return jsonify({'error': 'Mobile number is required for visitors'}), 400
@@ -103,7 +128,7 @@ def register():
                 return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
         
         # Validate role
-        valid_roles = ['student', 'visitor']
+        valid_roles = ['student', 'faculty', 'visitor']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
         
@@ -111,8 +136,11 @@ def register():
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
         
-        # Get users collection
+        # Get collections
         users = get_collection(Collections.USERS)
+        profiles = get_collection(Collections.USER_PROFILES)
+        students = get_collection(Collections.STUDENTS)
+        faculty = get_collection(Collections.FACULTIES)
         
         # Check if user already exists
         existing_user = users.find_one({'email': email})
@@ -121,17 +149,14 @@ def register():
         
         # Check enrollment number for students
         if role == 'student' and enrollment:
-            existing_enrollment = users.find_one({'enrollment': enrollment})
+            existing_enrollment = students.find_one({'enrollment_number': enrollment})
             if existing_enrollment:
                 return jsonify({'error': 'Enrollment number already registered'}), 409
         
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Hash password
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Create user document with basic fields
+        # Create user document with basic fields (authentication only)
         user_doc = UserModel.create_user(
             name=name,
             email=email,
@@ -139,24 +164,51 @@ def register():
             role=role
         )
         
-        # Add common fields
-        user_doc['mobile'] = mobile
-        
-        # Add student-specific fields
-        if role == 'student':
-            user_doc['enrollment'] = enrollment
-            user_doc['dob'] = dob
-            user_doc['semester'] = semester
-            user_doc['department'] = department
-        
-        # Add visitor-specific fields
-        if role == 'visitor':
-            user_doc['purpose'] = purpose
-            user_doc['visit_date'] = datetime.utcnow().isoformat()
-            user_doc['approval_status'] = 'pending'
-        
         # Insert user into database
         result = users.insert_one(user_doc)
+        user_id = str(result.inserted_id)
+        user_doc['_id'] = result.inserted_id
+        
+        # === NORMALIZED: Insert into related collections ===
+        
+        # 1. Create user profile (personal info)
+        profile_doc = UserProfileModel.create_profile(
+            user_id=user_id,
+            phone=mobile,
+            address=address
+        )
+        profiles.insert_one(profile_doc)
+        
+        # 2. Create role-specific record
+        if role == 'student':
+            student_doc = StudentModel.create_student(
+                user_id=user_id,
+                semester=semester,
+                department=department,
+                enrollment_number=enrollment
+            )
+            # Add additional student fields
+            student_doc['dob'] = dob
+            students.insert_one(student_doc)
+            
+        elif role == 'faculty':
+            faculty_doc = FacultyModel.create_faculty(
+                user_id=user_id,
+                department=department,
+                designation=designation
+            )
+            faculty.insert_one(faculty_doc)
+            
+        elif role == 'visitor':
+            # Add visitor-specific fields to user doc (for backward compatibility)
+            users.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {
+                    'purpose': purpose,
+                    'visit_date': datetime.utcnow().isoformat(),
+                    'approval_status': 'pending'
+                }}
+            )
         
         # Create notification for new user registration
         create_notification(
@@ -166,14 +218,13 @@ def register():
         )
         
         # Generate token
-        user_doc['_id'] = result.inserted_id
         token = generate_jwt_token(user_doc)
         
-        # Return success response
+        # Return success response (with backward compatible user data)
         return jsonify({
             'message': 'Registration successful',
             'token': token,
-            'user': UserModel.to_dict(user_doc)
+            'user': UserModel.to_dict(user_doc, include_deprecated_profile=True)
         }), 201
     
     except Exception as e:

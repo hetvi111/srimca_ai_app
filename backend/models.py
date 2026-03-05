@@ -1,6 +1,14 @@
 """
 Data models for MongoDB collections
-Defines document structures for Users, Notices, Assignments, Materials, FAQs
+Defines document structures for normalized database design
+
+Collections:
+- Users: Authentication data only
+- User_Profiles: Personal information (phone, address)
+- Students: Student-specific data (semester, department, enrollment)
+- Faculty: Faculty-specific data (department, designation)
+- Knowledge: AI RAG knowledge base
+- Notices, Assignments, Materials, FAQs, AI_Queries: Content and activity data
 """
 
 from datetime import datetime
@@ -8,15 +16,28 @@ from bson import ObjectId
 from database import Collections
 
 
+# ============================================================================
+# NORMALIZED MODELS - Following Database Normalization Principles (1NF-3NF)
+# ============================================================================
+
 class UserModel:
-    """User model for authentication and profile management"""
+    """
+    User model for AUTHENTICATION ONLY
+    This is the PRIMARY model for login/authentication
+    
+    Normalization: 1NF - Contains only atomic values for auth fields
+    """
     
     collection_name = Collections.USERS
     
     @staticmethod
     def create_user(name: str, email: str, password: str, role: str = 'student'):
         """
-        Create a new user document
+        Create a new user document (authentication data only)
+        
+        NOTE: Profile data is now stored in User_Profile collection
+              Student data is stored in Students collection
+              Faculty data is stored in Faculty collection
         """
         return {
             'name': name,
@@ -26,30 +47,229 @@ class UserModel:
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow(),
             'is_active': True,
-            'last_login': None,
-            'profile': {
-                'phone': '',
-                'address': '',
-                'semester': '',
-                'department': '',
-                'enrollment_number': ''
-            }
+            'last_login': None
+            # DEPRECATED: 'profile' field is now in User_Profile collection
+            # Keeping for backward compatibility during migration
         }
     
     @staticmethod
-    def to_dict(user_doc):
-        """Convert user document to dictionary (without password)"""
+    def to_dict(user_doc, include_deprecated_profile=False):
+        """
+        Convert user document to dictionary (without password)
+        
+        Args:
+            user_doc: MongoDB document
+            include_deprecated_profile: If True, includes legacy profile field for backward compatibility
+        """
         if user_doc is None:
             return None
         
-        return {
+        result = {
             '_id': str(user_doc.get('_id', '')),
             'name': user_doc.get('name', ''),
             'email': user_doc.get('email', ''),
             'role': user_doc.get('role', ''),
             'created_at': user_doc.get('created_at').isoformat() if user_doc.get('created_at') else None,
             'is_active': user_doc.get('is_active', True),
-            'profile': user_doc.get('profile', {})
+            'last_login': user_doc.get('last_login').isoformat() if user_doc.get('last_login') else None
+        }
+        
+        # Backward compatibility - include profile if it exists and requested
+        if include_deprecated_profile and 'profile' in user_doc:
+            result['profile'] = user_doc.get('profile', {})
+        
+        return result
+
+
+class UserProfileModel:
+    """
+    User Profile model for PERSONAL INFORMATION
+    
+    Normalization: 2NF - No partial dependencies, linked to Users by user_id
+    This separates personal info from authentication data
+    """
+    
+    collection_name = Collections.USER_PROFILES
+    
+    @staticmethod
+    def create_profile(user_id: str, phone: str = '', address: str = ''):
+        """
+        Create a new user profile document
+        
+        Args:
+            user_id: Reference to Users collection (_id)
+            phone: Phone number
+            address: Address
+        """
+        return {
+            'user_id': user_id,
+            'phone': phone,
+            'address': address,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+    
+    @staticmethod
+    def to_dict(profile_doc):
+        """Convert profile document to dictionary"""
+        if profile_doc is None:
+            return None
+        
+        return {
+            '_id': str(profile_doc.get('_id', '')),
+            'user_id': str(profile_doc.get('user_id', '')),
+            'phone': profile_doc.get('phone', ''),
+            'address': profile_doc.get('address', ''),
+            'created_at': profile_doc.get('created_at').isoformat() if profile_doc.get('created_at') else None,
+            'updated_at': profile_doc.get('updated_at').isoformat() if profile_doc.get('updated_at') else None
+        }
+
+
+class StudentModel:
+    """
+    Student model for STUDENT-SPECIFIC DATA
+    
+    Normalization: 3NF - No transitive dependencies
+    Stores academic information separate from personal and auth data
+    
+    Example: { "user_id": "U001", "semester": "5", "department": "BCA", "enrollment_number": "SRIMCA2023BCA015" }
+    """
+    
+    collection_name = Collections.STUDENTS
+    
+    @staticmethod
+    def create_student(user_id: str, semester: str, department: str, enrollment_number: str):
+        """
+        Create a new student document
+        
+        Args:
+            user_id: Reference to Users collection (_id)
+            semester: Current semester (1-8)
+            department: Department name (BCA, MCA, BBA, MBA)
+            enrollment_number: Unique enrollment number
+        """
+        return {
+            'user_id': user_id,
+            'semester': semester,
+            'department': department,
+            'enrollment_number': enrollment_number,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+    
+    @staticmethod
+    def to_dict(student_doc):
+        """Convert student document to dictionary"""
+        if student_doc is None:
+            return None
+        
+        return {
+            '_id': str(student_doc.get('_id', '')),
+            'user_id': str(student_doc.get('user_id', '')),
+            'semester': student_doc.get('semester', ''),
+            'department': student_doc.get('department', ''),
+            'enrollment_number': student_doc.get('enrollment_number', ''),
+            'created_at': student_doc.get('created_at').isoformat() if student_doc.get('created_at') else None,
+            'updated_at': student_doc.get('updated_at').isoformat() if student_doc.get('updated_at') else None
+        }
+
+
+class FacultyModel:
+    """
+    Faculty model for FACULTY-SPECIFIC DATA
+    
+    Normalization: 3NF - No transitive dependencies
+    Stores professional information separate from personal and auth data
+    
+    Example: { "user_id": "U003", "department": "Computer Application", "designation": "Assistant Professor" }
+    """
+    
+    collection_name = Collections.FACULTIES
+    
+    @staticmethod
+    def create_faculty(user_id: str, department: str, designation: str):
+        """
+        Create a new faculty document
+        
+        Args:
+            user_id: Reference to Users collection (_id)
+            department: Department name
+            designation: Job designation (Professor, Assistant Professor, etc.)
+        """
+        return {
+            'user_id': user_id,
+            'department': department,
+            'designation': designation,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+    
+    @staticmethod
+    def to_dict(faculty_doc):
+        """Convert faculty document to dictionary"""
+        if faculty_doc is None:
+            return None
+        
+        return {
+            '_id': str(faculty_doc.get('_id', '')),
+            'user_id': str(faculty_doc.get('user_id', '')),
+            'department': faculty_doc.get('department', ''),
+            'designation': faculty_doc.get('designation', ''),
+            'created_at': faculty_doc.get('created_at').isoformat() if faculty_doc.get('created_at') else None,
+            'updated_at': faculty_doc.get('updated_at').isoformat() if faculty_doc.get('updated_at') else None
+        }
+
+
+class KnowledgeModel:
+    """
+    Knowledge model for AI RAG (Retrieval-Augmented Generation) system
+    
+    This stores the knowledge base used by the AI chatbot to answer questions
+    Optimized for vector search and semantic matching
+    
+    Example: { "question": "What is SRIMCA?", "answer": "SRIMCA stands for...", "category": "about", "embedding": [...] }
+    """
+    
+    collection_name = Collections.KNOWLEDGE
+    
+    @staticmethod
+    def create_knowledge(question: str, answer: str, category: str = 'general', embedding: list = None):
+        """
+        Create a new knowledge base document
+        
+        Args:
+            question: Question/query text
+            answer: Answer/response text
+            category: Category (about, courses, admission, contact, etc.)
+            embedding: Vector embedding for semantic search (optional)
+        """
+        return {
+            'question': question,
+            'answer': answer,
+            'category': category,
+            'embedding': embedding if embedding else [],  # For vector search
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow(),
+            'is_active': True,
+            'usage_count': 0
+        }
+    
+    @staticmethod
+    def to_dict(knowledge_doc):
+        """Convert knowledge document to dictionary"""
+        if knowledge_doc is None:
+            return None
+        
+        return {
+            '_id': str(knowledge_doc.get('_id', '')),
+            'question': knowledge_doc.get('question', ''),
+            'answer': knowledge_doc.get('answer', ''),
+            'category': knowledge_doc.get('category', 'general'),
+            'embedding': knowledge_doc.get('embedding', []),
+            'created_at': knowledge_doc.get('created_at').isoformat() if knowledge_doc.get('created_at') else None,
+            'updated_at': knowledge_doc.get('updated_at').isoformat() if knowledge_doc.get('updated_at') else None,
+            'is_active': knowledge_doc.get('is_active', True),
+            'usage_count': knowledge_doc.get('usage_count', 0)
         }
 
 

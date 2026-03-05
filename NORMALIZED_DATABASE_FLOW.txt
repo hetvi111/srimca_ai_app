@@ -1,0 +1,401 @@
+================================================================================
+                    SRIMCA AI - NORMALIZED DATABASE FLOW
+                         For Viva Presentation
+================================================================================
+
+================================================================================
+1. DATABASE COLLECTION STRUCTURE (NORMALIZED)
+================================================================================
+
+The SRIMCA AI system uses MongoDB with a normalized database design following
+Third Normal Form (3NF) principles. Here are all the collections:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PRIMARY COLLECTIONS (Normalized)                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 1. users        → Authentication data (name, email, password, role)        │
+│ 2. user_profiles → Personal info (phone, address) - linked by user_id     │
+│ 3. students     → Student data (semester, department, enrollment)        │
+│ 4. faculty      → Faculty data (department, designation)                 │
+│ 5. knowledge    → AI RAG knowledge base for chatbot                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CONTENT COLLECTIONS                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 6. notices      → College announcements                                   │
+│ 7. assignments  → Course assignments                                      │
+│ 8. materials    → Study materials                                         │
+│ 9. faqs        → Frequently asked questions                              │
+│ 10. ai_queries → AI chat history                                         │
+│ 11. notifications → User notifications                                    │
+│ 12. visitors    → Visitor registration data                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+2. USER REGISTRATION FLOW
+================================================================================
+
+STEP 1: Client sends registration request
+    ↓
+    POST /api/register
+    {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "password": "password123",
+        "role": "student",
+        "mobile": "9876543210",
+        "semester": "5",
+        "department": "BCA",
+        "enrollment_number": "SRIMCA2023BCA015"
+    }
+
+STEP 2: Server processes registration
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Step 2a: Create User in 'users' collection                      │
+    │ Collection: users                                                │
+    │ Document:                                                       │
+    │ {                                                               │
+    │   _id: ObjectId("..."),                                         │
+    │   name: "John Doe",                                            │
+    │   email: "john@example.com",                                    │
+    │   password: "$2b$12$...",  (hashed)                            │
+    │   role: "student",                                             │
+    │   created_at: ISODate("2026-03-05"),                          │
+    │   is_active: true                                               │
+    │ }                                                               │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Step 2b: Create Profile in 'user_profiles' collection            │
+    │ Collection: user_profiles                                        │
+    │ Document:                                                       │
+    │ {                                                               │
+    │   _id: ObjectId("..."),                                         │
+    │   user_id: "user_id_from_above",                               │
+    │   phone: "9876543210",                                          │
+    │   address: "",                                                  │
+    │   created_at: ISODate("2026-03-05")                            │
+    │ }                                                               │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Step 2c: Create Student Record in 'students' collection          │
+    │ Collection: students                                             │
+    │ Document:                                                       │
+    │ {                                                               │
+    │   _id: ObjectId("..."),                                         │
+    │   user_id: "user_id_from_above",                               │
+    │   semester: "5",                                                │
+    │   department: "BCA",                                            │
+    │   enrollment_number: "SRIMCA2023BCA015",                        │
+    │   created_at: ISODate("2026-03-05")                            │
+    │ }                                                               │
+    └──────────────────────────────────────────────────────────────────┘
+
+STEP 3: Generate JWT Token
+    ↓
+    JWT Payload:
+    {
+        "user_id": "...",
+        "email": "john@example.com",
+        "role": "student",
+        "name": "John Doe",
+        "exp": "...",
+        "iat": "..."
+    }
+
+STEP 4: Return response to client
+    ↓
+    {
+        "message": "Registration successful",
+        "token": "eyJ...",
+        "user": { ... }
+    }
+
+================================================================================
+3. USER LOGIN FLOW
+================================================================================
+
+STEP 1: Client sends login request
+    ↓
+    POST /api/login
+    {
+        "email": "john@example.com",
+        "password": "password123"
+    }
+
+STEP 2: Server validates credentials
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ 2a: Search 'users' collection by email                          │
+    │     db.users.findOne({email: "john@example.com"})               │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ 2b: Verify password with bcrypt                                 │
+    │     bcrypt.checkpw(input_password, stored_hash)                │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ 2c: Update last_login timestamp                                 │
+    │     db.users.updateOne({_id: ...}, {$set: {last_login: ...}})  │
+    └──────────────────────────────────────────────────────────────────┘
+
+STEP 3: Generate JWT Token
+    ↓
+    jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+STEP 4: Return response
+    ↓
+    {
+        "message": "Login successful",
+        "token": "eyJ...",
+        "user": {
+            "_id": "...",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "role": "student"
+        }
+    }
+
+================================================================================
+4. DATA RETRIEVAL FLOW (Getting User Profile)
+================================================================================
+
+EXAMPLE: Student wants to view their complete profile
+
+STEP 1: Client makes authenticated request
+    ↓
+    GET /api/users/profile
+    Header: Authorization: Bearer <token>
+
+STEP 2: Server verifies JWT token
+    ↓
+    jwt.decode(token, SECRET_KEY)
+    ↓
+    Extracts: user_id, role, email from token
+
+STEP 3: Server fetches data from multiple collections
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Query 1: Get basic user data from 'users'                       │
+    │ db.users.findOne({_id: ObjectId(user_id)})                      │
+    │                                                                  │
+    │ Result: { name, email, role, created_at, is_active }            │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Query 2: Get profile from 'user_profiles'                        │
+    │ db.user_profiles.findOne({user_id: user_id})                   │
+    │                                                                  │
+    │ Result: { phone, address }                                      │
+    └──────────────────────────────────────────────────────────────────┘
+    ↓
+    ┌──────────────────────────────────────────────────────────────────┐
+    │ Query 3: Get student data from 'students'                        │
+    │ db.students.findOne({user_id: user_id})                        │
+    │                                                                  │
+    │ Result: { semester, department, enrollment_number }            │
+    └──────────────────────────────────────────────────────────────────┘
+
+STEP 4: Combine all data and return
+    ↓
+    {
+        "user": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "role": "student",
+            "profile": {
+                "phone": "9876543210",
+                "address": ""
+            },
+            "student": {
+                "semester": "5",
+                "department": "BCA",
+                "enrollment_number": "SRIMCA2023BCA015"
+            }
+        }
+    }
+
+================================================================================
+5. NOTIFICATION FLOW
+================================================================================
+
+When a faculty posts a new notice:
+
+STEP 1: Faculty creates notice
+    ↓
+    POST /api/notices
+    {
+        "title": "Exam Schedule",
+        "content": "BCA exam will start from 10 April",
+        "priority": "important"
+    }
+
+STEP 2: Store notice in 'notices' collection
+    ↓
+    db.notices.insertOne({
+        title: "Exam Schedule",
+        content: "...",
+        faculty_id: "faculty_user_id",
+        priority: "important",
+        created_at: ISODate("...")
+    })
+
+STEP 3: Create notifications for students
+    ↓
+    notification_helper.create_notification({
+        title: "New Notice Posted",
+        message: "Exam Schedule notice has been posted",
+        notification_type: "notice",
+        target_role: "all"
+    })
+
+STEP 4: Store notifications
+    ↓
+    db.notifications.insertMany([
+        { user_id: "student_1", message: "...", status: "unread" },
+        { user_id: "student_2", message: "...", status: "unread" },
+        ...
+    ])
+
+================================================================================
+6. AI CHATBOT KNOWLEDGE FLOW
+================================================================================
+
+STEP 1: Admin adds knowledge to AI system
+    ↓
+    POST /api/knowledge
+    {
+        "question": "What courses are offered in SRIMCA?",
+        "answer": "SRIMCA offers BCA, MCA, BBA, MBA programs.",
+        "category": "courses"
+    }
+
+STEP 2: Store in 'knowledge' collection
+    ↓
+    db.knowledge.insertOne({
+        question: "What courses are offered in SRIMCA?",
+        answer: "SRIMCA offers BCA, MCA...",
+        category: "courses",
+        embedding: [...],  (for vector search)
+        is_active: true,
+        usage_count: 0
+    })
+
+STEP 3: User asks question to AI chatbot
+    ↓
+    POST /api/ai/chat
+    { "question": "What courses does SRIMCA offer?" }
+
+STEP 4: AI retrieves answer from knowledge base
+    ↓
+    - Search 'knowledge' collection
+    - Find matching question
+    - Increment usage_count
+    - Return answer
+
+================================================================================
+7. RELATIONSHIP DIAGRAM
+================================================================================
+
+                    ┌─────────────┐
+                    │    users    │  (Authentication)
+                    └──────┬──────┘
+                           │ _id
+            ┌──────────────┼──────────────┐
+            │              │               │
+            ▼              ▼               ▼
+    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+    │user_profiles │ │   students   │ │   faculty   │
+    │  (phone,     │ │ (semester,   │ │(department, │
+    │   address)   │ │  department) │ │ designation)│
+    └──────────────┘ └──────────────┘ └──────────────┘
+
+            │              │               │
+            └──────────────┼──────────────┘
+                           │
+            ┌──────────────┼──────────────┐
+            │              │               │
+            ▼              ▼               ▼
+    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+    │ notifications│ │  ai_queries  │ notices    │
+    │             │ │              │ │              │   │
+    └──────────────┘ └──────────────┘ └──────────────┘
+
+================================================================================
+8. NORMALIZATION EXPLANATION (FOR VIVA)
+================================================================================
+
+QUESTION: "Explain the normalization in your project"
+
+ANSWER:
+"In the SRIMCA AI Assistant system, database normalization was applied by
+separating different types of data into multiple collections:
+
+1. FIRST NORMAL FORM (1NF): Each collection contains only atomic values.
+   Example: The 'users' collection stores single values for each field
+   (name, email, role) rather than arrays or nested objects.
+
+2. SECOND NORMAL FORM (2NF): All non-key attributes are dependent on the
+   primary key. We use user_id as a foreign key to link collections.
+
+3. THIRD NORMAL FORM (3NF): No transitive dependencies. Student data
+   (semester, department) is in the 'students' collection, not embedded
+   in 'users'. This prevents update anomalies.
+
+For example:
+- BEFORE: User document had profile, student_data, faculty_data all together
+- AFTER: Separate collections linked by user_id reference"
+
+QUESTION: "What are the benefits of this approach?"
+
+ANSWER:
+- Reduced data redundancy
+- Easier to maintain data consistency
+- Better scalability
+- Efficient querying with indexes
+- Clear separation of concerns
+
+================================================================================
+9. KEY CODE LOCATIONS
+================================================================================
+
+File Locations:
+- backend/database.py        → Collection definitions and indexes
+- backend/models.py           → Data models (UserModel, StudentModel, etc.)
+- backend/auth.py            → Registration and login logic
+- backend/routes/users.py    → User profile routes
+- backend/routes/students.py → Student management routes
+- backend/routes/faculty.py  → Faculty management routes
+- backend/routes/knowledge.py → AI knowledge base routes
+
+API Endpoints:
+- POST /api/register        → Create new user
+- POST /api/login           → User login
+- GET  /api/users/profile   → Get user profile
+- GET  /api/students        → Get all students
+- GET  /api/faculty         → Get all faculty
+- GET  /api/knowledge       → Get AI knowledge base
+
+================================================================================
+10. MIGRATION (For Existing Data)
+================================================================================
+
+To migrate existing data to the normalized structure:
+
+1. Run the migration script:
+   cd backend
+   python migrate_to_normalized.py
+
+2. The script will:
+   - Read all existing users
+   - Extract profile data → user_profiles collection
+   - Extract student data → students collection
+   - Extract faculty data → faculty collection
+   - Mark users as migrated
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================
+
