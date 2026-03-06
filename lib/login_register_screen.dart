@@ -24,6 +24,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   final _mobileController = TextEditingController();
   final _enrollmentController = TextEditingController();
   final _dobController = TextEditingController();
+  final _designationController = TextEditingController();
 
   String _selectedSemester = '';
   String _selectedDepartment = '';
@@ -79,6 +80,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     _mobileController.dispose();
     _enrollmentController.dispose();
     _dobController.dispose();
+    _designationController.dispose();
     super.dispose();
   }
 
@@ -397,6 +399,33 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   const SizedBox(height: 16),
                 ],
 
+                // Faculty-specific fields
+                if (_selectedRole.toLowerCase() == 'faculty') ...[
+                  // Department
+                  DropdownButtonFormField<String>(
+                    value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Department / Course"),
+                    items: _departments
+                        .map((d) => DropdownMenuItem(
+                              value: d,
+                              child: Text(_departmentLabels[d] ?? d),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedDepartment = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Designation
+                  TextField(
+                    controller: _designationController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Designation (e.g., Professor, HOD)"),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Password
                 TextField(
                   controller: _passwordController,
@@ -556,25 +585,31 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
   }
 
-  // ================= MCA ENROLLMENT VALIDATION =================
-  bool isValidMCAEnrollment(String enrollment) {
-    // Must be 15 digits
-    if (enrollment.length != 15) return false;
-
-    // Must start with fixed prefix
-    if (!enrollment.startsWith("202504104610")) return false;
-
-    // Extract last 3 digits
-    String serialPart = enrollment.substring(12);
-    int? serial = int.tryParse(serialPart);
-
-    if (serial == null) return false;
-
-    // Check range 001 to 174
-    if (serial >= 1 && serial <= 174) {
+  // ================= MCA/BCA ENROLLMENT VALIDATION =================
+  bool isValidEnrollment(String enrollment, String department) {
+    // Basic validation: enrollment should not be empty
+    if (enrollment.isEmpty) return false;
+    
+    // For MCA students, apply stricter validation
+    if (department == 'mca') {
+      // Must be at least 10 characters
+      if (enrollment.length < 10) return false;
+      // Check if it contains at least some numbers
+      bool hasNumber = false;
+      for (var c in enrollment.split('')) {
+        if ('0123456789'.contains(c)) {
+          hasNumber = true;
+          break;
+        }
+      }
+      return hasNumber;
+    }
+    
+    // For BCA, just check it's not empty and has reasonable length
+    if (enrollment.length >= 5 && enrollment.length <= 20) {
       return true;
     }
-
+    
     return false;
   }
 
@@ -607,9 +642,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
       // Validate MCA enrollment numbers
       if (_selectedDepartment == 'mca') {
-        if (!isValidMCAEnrollment(enrollment)) {
+        if (!isValidEnrollment(enrollment, _selectedDepartment)) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Invalid MCA Enrollment Number. Must be between 202504104610006 and 202504104610174")),
+            const SnackBar(content: Text("Invalid Enrollment Number. Please enter a valid enrollment number")),
           );
           return;
         }
@@ -754,3 +789,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     );
   }
 }
+
+
+
