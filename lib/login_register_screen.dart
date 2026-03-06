@@ -685,6 +685,28 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       }
     }
 
+    // Faculty-specific validation
+    if (_selectedRole.toLowerCase() == 'faculty') {
+      if (mobile.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter mobile number")),
+        );
+        return;
+      }
+      if (_selectedDepartment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select department")),
+        );
+        return;
+      }
+      if (_designationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter designation")),
+        );
+        return;
+      }
+    }
+
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match")),
@@ -728,6 +750,12 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     // Add visitor-specific fields
     if (_isVisitor) {
       requestBody['purpose'] = _selectedPurpose;
+    }
+
+    // Add faculty-specific fields
+    if (_selectedRole.toLowerCase() == 'faculty') {
+      requestBody['department'] = _selectedDepartment;
+      requestBody['designation'] = _designationController.text.trim();
     }
 
     try {
