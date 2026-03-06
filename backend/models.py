@@ -74,6 +74,28 @@ class UserModel:
             'last_login': user_doc.get('last_login').isoformat() if user_doc.get('last_login') else None
         }
         
+        # Include all additional fields if they exist
+        if 'mobile' in user_doc:
+            result['mobile'] = user_doc.get('mobile', '')
+        if 'address' in user_doc:
+            result['address'] = user_doc.get('address', '')
+        if 'enrollment' in user_doc:
+            result['enrollment'] = user_doc.get('enrollment', '')
+        if 'dob' in user_doc:
+            result['dob'] = user_doc.get('dob', '')
+        if 'semester' in user_doc:
+            result['semester'] = user_doc.get('semester', '')
+        if 'department' in user_doc:
+            result['department'] = user_doc.get('department', '')
+        if 'designation' in user_doc:
+            result['designation'] = user_doc.get('designation', '')
+        if 'purpose' in user_doc:
+            result['purpose'] = user_doc.get('purpose', '')
+        if 'visit_date' in user_doc:
+            result['visit_date'] = user_doc.get('visit_date', '')
+        if 'approval_status' in user_doc:
+            result['approval_status'] = user_doc.get('approval_status', '')
+        
         # Backward compatibility - include profile if it exists and requested
         if include_deprecated_profile and 'profile' in user_doc:
             result['profile'] = user_doc.get('profile', {})

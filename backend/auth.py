@@ -18,7 +18,7 @@ from bson import ObjectId
 from database import get_collection, Collections
 from models import UserModel, UserProfileModel, StudentModel, FacultyModel
 from config import get_config
-from notification_helper import create_notification
+# from notification_helper import create_notification  # Optional: Enable if needed
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -136,11 +136,8 @@ def register():
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
         
-        # Get collections
+        # Get users collection only (store all data in single collection)
         users = get_collection(Collections.USERS)
-        profiles = get_collection(Collections.USER_PROFILES)
-        students = get_collection(Collections.STUDENTS)
-        faculty = get_collection(Collections.FACULTIES)
         
         # Check if user already exists
         existing_user = users.find_one({'email': email})
@@ -149,14 +146,14 @@ def register():
         
         # Check enrollment number for students
         if role == 'student' and enrollment:
-            existing_enrollment = students.find_one({'enrollment_number': enrollment})
+            existing_enrollment = users.find_one({'enrollment': enrollment})
             if existing_enrollment:
                 return jsonify({'error': 'Enrollment number already registered'}), 409
         
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Create user document with basic fields (authentication only)
+        # Create user document with ALL data in users collection
         user_doc = UserModel.create_user(
             name=name,
             email=email,
@@ -164,58 +161,35 @@ def register():
             role=role
         )
         
-        # Insert user into database
+        # Add ALL fields to the user document (single collection)
+        user_doc['mobile'] = mobile
+        user_doc['address'] = address
+        
+        # Add student-specific fields
+        if role == 'student':
+            user_doc['enrollment'] = enrollment
+            user_doc['dob'] = dob
+            user_doc['semester'] = semester
+            user_doc['department'] = department
+        
+        # Add faculty-specific fields
+        elif role == 'faculty':
+            user_doc['department'] = department
+            user_doc['designation'] = designation
+        
+        # Add visitor-specific fields
+        elif role == 'visitor':
+            user_doc['purpose'] = purpose
+            user_doc['visit_date'] = datetime.utcnow().isoformat()
+            user_doc['approval_status'] = 'pending'
+        
+        # Insert user into database (single collection)
         result = users.insert_one(user_doc)
-        user_id = str(result.inserted_id)
         user_doc['_id'] = result.inserted_id
         
-        # === NORMALIZED: Insert into related collections ===
         
-        # 1. Create user profile (personal info)
-        profile_doc = UserProfileModel.create_profile(
-            user_id=user_id,
-            phone=mobile,
-            address=address
-        )
-        profiles.insert_one(profile_doc)
-        
-        # 2. Create role-specific record
-        if role == 'student':
-            student_doc = StudentModel.create_student(
-                user_id=user_id,
-                semester=semester,
-                department=department,
-                enrollment_number=enrollment
-            )
-            # Add additional student fields
-            student_doc['dob'] = dob
-            students.insert_one(student_doc)
-            
-        elif role == 'faculty':
-            faculty_doc = FacultyModel.create_faculty(
-                user_id=user_id,
-                department=department,
-                designation=designation
-            )
-            faculty.insert_one(faculty_doc)
-            
-        elif role == 'visitor':
-            # Add visitor-specific fields to user doc (for backward compatibility)
-            users.update_one(
-                {'_id': ObjectId(user_id)},
-                {'$set': {
-                    'purpose': purpose,
-                    'visit_date': datetime.utcnow().isoformat(),
-                    'approval_status': 'pending'
-                }}
-            )
-        
-        # Create notification for new user registration
-        create_notification(
-            title='New User Registered',
-            message=f'{name} ({role}) has registered with email {email}',
-            notification_type='user_register'
-        )
+        # NOTE: Removed notification on registration for performance
+        # If you need registration notifications, enable separately
         
         # Generate token
         token = generate_jwt_token(user_doc)
@@ -224,9 +198,9 @@ def register():
         return jsonify({
             'message': 'Registration successful',
             'token': token,
-            'user': UserModel.to_dict(user_doc, include_deprecated_profile=True)
+            'user': UserModel.to_dict(user_doc)
         }), 201
-    
+
     except Exception as e:
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
@@ -275,18 +249,14 @@ def login():
             print(f"Password verification error: {e}")
             return jsonify({'error': 'Invalid email or password'}), 401
         
-        # Update last login
+        # Update last login (optimized - use update_one efficiently)
         users.update_one(
             {'_id': user_doc['_id']},
             {'$set': {'last_login': datetime.utcnow()}}
         )
         
-        # Create notification for user login
-        create_notification(
-            title='User Login',
-            message=f'{user_doc.get("name", "A user")} ({user_doc.get("role", "user")}) has logged in',
-            notification_type='user_login'
-        )
+        # NOTE: Removed notification creation on login for performance
+        # If you want login notifications, enable them separately
         
         # Generate token
         token = generate_jwt_token(user_doc)

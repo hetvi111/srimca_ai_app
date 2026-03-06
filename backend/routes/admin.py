@@ -324,47 +324,62 @@ def update_visitor(visitor_id):
         return jsonify({'error': 'Failed to update visitor'}), 500
 
 
+# In-memory cache for stats (simple solution)
+_stats_cache = {
+    'data': None,
+    'timestamp': 0
+}
+CACHE_DURATION = 30  # seconds
+
+
 @admin_bp.route('/stats', methods=['GET'])
 def get_stats():
-    """Get admin dashboard statistics"""
+    """Get admin dashboard statistics with caching"""
+    import time
     try:
+        current_time = time.time()
+        
+        # Check if cache is valid (less than CACHE_DURATION seconds old)
+        if _stats_cache['data'] is not None and (current_time - _stats_cache['timestamp']) < CACHE_DURATION:
+            return jsonify(_stats_cache['data']), 200
+        
+        # Get collections
         users_collection = get_collection(Collections.USERS)
         visitors_collection = get_collection(Collections.VISITORS)
         notices_collection = get_collection(Collections.NOTICES)
         materials_collection = get_collection(Collections.MATERIALS)
-        queries_collection = get_collection(Collections.QUERIES)
         
-        # Count users by role
-        total_students = users_collection.count_documents({'role': 'student'})
-        total_faculty = users_collection.count_documents({'role': 'faculty'})
-        total_admin = users_collection.count_documents({'role': 'admin'})
+        # Optimized: Use single aggregation for users count by role
+        user_role_counts = list(users_collection.aggregate([
+            {'$group': {'_id': '$role', 'count': {'$sum': 1}}},
+            {'$group': {'_id': None, 'roles': {'$push': {'role': '$_id', 'count': '$count'}}, 'total': {'$sum': '$count'}}}
+        ]))
         
-        # Count ALL users regardless of role
-        total_all_users = users_collection.count_documents({})
+        # Parse role counts
+        role_data = user_role_counts[0] if user_role_counts else {'roles': [], 'total': 0}
+        roles = {r['role']: r['count'] for r in role_data.get('roles', [])}
         
-        # Count visitors
-        total_visitors = visitors_collection.count_documents({})
+        # Single count for active users
+        active_users = users_collection.count_documents({'is_active': True})
         
-        # Count content
-        total_notices = notices_collection.count_documents({})
-        total_materials = materials_collection.count_documents({})
+        # Build stats with cached/default values
+        stats = {
+            'total_students': roles.get('student', 0),
+            'total_faculty': roles.get('faculty', 0),
+            'total_admin': roles.get('admin', 0),
+            'total_users': role_data.get('total', 0),
+            'total_visitors': visitors_collection.count_documents({}),
+            'total_notices': notices_collection.count_documents({}),
+            'total_materials': materials_collection.count_documents({}),
+            'total_queries': 0,  # Simplified - can add if needed
+            'active_users': active_users
+        }
         
-        # Count queries
-        total_queries = queries_collection.count_documents({})
+        # Cache the result
+        _stats_cache['data'] = {'stats': stats}
+        _stats_cache['timestamp'] = current_time
         
-        return jsonify({
-            'stats': {
-                'total_students': total_students,
-                'total_faculty': total_faculty,
-                'total_admin': total_admin,
-                'total_users': total_all_users,
-                'total_visitors': total_visitors,
-                'total_notices': total_notices,
-                'total_materials': total_materials,
-                'total_queries': total_queries,
-                'active_users': users_collection.count_documents({'is_active': True})
-            }
-        }), 200
+        return jsonify({'stats': stats}), 200
     
     except Exception as e:
         print(f"Get stats error: {e}")

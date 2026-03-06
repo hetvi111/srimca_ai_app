@@ -1,43 +1,625 @@
-alert
+================================================================================
+                    SRIMCA AI - COMPREHENSIVE APPLICATION OVERVIEW
+================================================================================
 
+================================================================================
+                              APP SCOPE
+================================================================================
 
-chat
+PROJECT: SRIMCA AI Assistant (Flutter Mobile App + Flask Backend)
+PURPOSE: A college management system with AI-powered assistant for
+         SRIMCA (Shrimad Rajchandra Institute of Management & Computer Applications)
 
+TARGET USERS:
+1. Admin - College administration staff
+2. Student - Enrolled students
+3. Faculty - Teaching staff
+4. Visitor - External visitors (prospective students, guests)
 
-content
+TECHNOLOGY STACK:
+-----------------
+Frontend: Flutter (Dart)
+Backend: Flask (Python)
+Database: MongoDB Atlas
+Authentication: JWT + Firebase
+AI: RAG (Retrieval-Augmented Generation) with ChromaDB
+Hosting: Render.com
 
+================================================================================
+                     DATA PREPROCESSING FOR AI RESPONSE
+================================================================================
 
-conversations
+DATA SOURCE: SRIMCA Official Website
+------------------------------------
+The AI assistant uses data scraped/preprocessed from SRIMCA's official website
+to provide accurate responses about the college.
 
+DATA PREPROCESSING STEPS:
+------------------------
 
-documents
+1. DATA COLLECTION (backend/srimca/data/sample_srimca_info.txt)
+    Manual extraction from SRIMCA official website
+    Information collected:
+      College full name: "Shrimad Rajchandra Institute of Management and Computer Application"
+     * Location: Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat
+     * University: Constituent college of Uka Tarsadia University
+     * Programs: MCA (started 2002), MBA (started 2004) approved by AICTE
+     * Academic calendar with semester dates
+     * Daily timetable for MCA 2nd semester
+     * Infrastructure details (computers, Wi-Fi, internet, library, auditorium)
 
+2. DATA LOADING (backend/srimca/loader.py)
+   - load_content(): Loads all .txt files from data directory
+   - load_lines(): Loads text files as individual lines
+   - Combines all text files into single content
 
-embedding_cach
+3. TEXT CHUNKING (backend/srimca/build_db.py)
+   - Split content by newlines into individual chunks
+   - Each line becomes a separate knowledge item
+   - Total chunks: ~30+ text segments
 
+4. EMBEDDING GENERATION (backend/srimca/config.py)
+   - Model: SentenceTransformer("all-MiniLM-L6-v2")
+   - Type: FREE local embedding model (no API cost)
+   - Creates 384-dimensional vectors for each text chunk
 
-faq
+5. VECTOR STORAGE (backend/srimca/build_db.py)
+   - MongoDB collection: "knowledge"
+   - Stores each chunk with its embedding
+   - Fields: "text", "embedding"
+   - Vector search enabled for semantic matching
 
+6. RAG PIPELINE (backend/srimca/retriever.py)
+   - Semantic search using cosine similarity
+   - Retrieves top-k most relevant chunks
+   - Context window for GPT generation
 
-knowledge
+7. ANSWER GENERATION (backend/srimca/gpt_answer.py)
+   - Uses OpenAI GPT API (optional - requires API key)
+   - Fallback to template-based responses if no API key
+   - Combines retrieved context + user question
 
+DATA FLOW FOR AI RESPONSE:
+-------------------------
+User Question → API Request → Embed Question → Vector Search (MongoDB) 
+→ Retrieve Top-K Chunks → Generate Answer (GPT/Fallback) → Return Response
 
-notice
+================================================================================
+                     FUNCTIONALITY CURRENTLY IN USE
+================================================================================
 
+CORE FEATURES IMPLEMENTED:
+-------------------------
+✅ User Authentication (Login/Register)
+✅ Role-based Access Control (Admin, Student, Faculty, Visitor)
+✅ AI Chat Assistant (RAG-based question answering)
+✅ Notice Management (Create, View, Delete notices)
+✅ Study Materials Management (Upload, View, Download)
+✅ Assignment Management
+✅ Visitor Registration & QR Code System
+✅ Notifications System
+✅ User Profile Management
+✅ Dashboard with Statistics
+✅ Knowledge Base Management
+✅ AI Query Monitoring
 
-reports
+ADMIN ROLE:
+-----------
+✓ Admin Login & Dashboard
+✓ Student Management (View, Add, Edit, Delete)
+✓ Faculty Management (View, Add, Edit, Delete)
+✓ Visitor Management (View, Approve/Reject)
+✓ Content/Materials Management (Upload, View, Delete)
+✓ AI Monitoring (View chat queries)
+✓ Reports & Analytics Dashboard
+✓ Notifications Management
+✓ Database Overview
+✓ User Management (All users)
+✓ Security Settings
 
+STUDENT ROLE:
+-------------
+✓ Student Login
+✓ Student Dashboard (Notices, Assignments, Materials count)
+✓ View Notices
+✓ View Assignments
+✓ View Study Materials
+✓ AI Chat Assistant
+✓ Chat History
+✓ Notifications
+✓ Profile View
 
-security
+FACULTY ROLE:
+-------------
+✓ Faculty Login
+✓ Faculty Dashboard
+✓ Notice Management (Create, Edit, Delete)
+✓ Visitor Inquiry Response
+✓ Event Management
+✓ Notifications
+✓ AI Monitoring
+✓ Profile Management
 
+VISITOR ROLE:
+-------------
+✓ Visitor Registration
+✓ Visitor Login (Web-based)
+✓ QR Code Generation
+✓ Visitor Dashboard (Web-based)
+✓ AI Chat (Web-based)
+✓ Profile View
 
-student
+================================================================================
+                     FUTURE SCOPE (NOT CURRENTLY USED)
+================================================================================
 
+The following features are defined in the codebase but NOT fully implemented
+or integrated into the main application flow:
 
-test_collection
+1. ASSIGNMENT SUBMISSION SYSTEM:
+   - Students can submit assignments (API exists)
+   - Faculty can grade/review submissions
+   - File upload for assignments
+   Status: Backend API exists but UI not fully integrated
 
+2. LIVE ATTENDANCE TRACKING:
+   - Track student attendance
+   - QR code based attendance
+   - Daily attendance reports
+   Status: Not implemented
 
-uploads
+3. EXAM MANAGEMENT:
+   - Exam schedule management
+   - Question bank
+   - Online exam system
+   Status: Not implemented
 
+4. PLACEMENT CELL:
+   - Company recruitment drives
+   - Job postings
+   - Student placement records
+   Status: Not implemented (mentioned in visitor purposes)
 
-users
+5. LIBRARY MANAGEMENT:
+   - Book inventory
+   - Issue/Return tracking
+   - Digital library
+   Status: Not implemented
+
+6. FEE MANAGEMENT:
+   - Online fee payment
+   - Fee receipts
+   - Due payment reminders
+   Status: Not implemented
+
+7. HOSTEL MANAGEMENT:
+   - Room allocation
+   - Hostel attendance
+   - Maintenance requests
+   Status: Not implemented
+
+8. PARENT PORTAL:
+   - Student progress tracking
+   - Fee updates
+   - Attendance reports
+   Status: Not implemented
+
+9. ADVANCED AI FEATURES:
+   - Personalized learning recommendations
+   - Auto-generated study plans
+   - Voice-based AI assistant
+   - Multi-language support
+   Status: Basic AI chat only, advanced features not implemented
+
+10. REAL-TIME NOTIFICATIONS:
+    - Push notifications (partially implemented)
+    - In-app messaging
+    - Email notifications
+    Status: Push notification service exists but limited
+
+11. OFFLINE MODE:
+    - Cache notices and materials
+    - Offline chat history
+    - Sync when online
+    Status: Not implementedw
+
+12. ANALYTICS & PREDICTIONS:
+    - Student performance prediction
+    - Traffic analysis
+    - Content popularity metrics
+    Status: Basic stats only
+
+13. SOCIAL FEATURES:
+    - Student forums
+    - Discussion groups
+    - Event sharing
+    Status: Not implemented
+
+14. E-CERTIFICATES:
+    - Generate completion certificates
+    - Achievement badges
+    Status: Not implemented
+
+15. INTEGRATION:
+    - WhatsApp integration
+    - Email automation
+    - Calendar sync
+    Status: Not implemented
+
+================================================================================
+                     UI PAGE DATA FLOW TABLE
+================================================================================
+
+This table shows data flow between pages organized by user roles.
+Data From = Source Page providing data | Data To = Destination Page receiving data
+
+================================================================================
+                              ROLE: ADMIN
+================================================================================
+
++------------------------------------------+------------------------------------------+
+| DATA FROM                                | DATA TO                                  |
++------------------------------------------+
+| LoginRegisterScreen                      | AdminMainDashboard                       |
+| - admin credentials                      | - user role & auth token                 |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | StudentManagementPage                    |
+| - navigation index                      | - student list data                      |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | FacultyManagementPage                    |
+| - navigation index                      | - faculty list data                      |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | VisitorManagementPage                    |
+| - navigation index                      | - visitor list data                      |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | ContentManagementPage                    |
+| - navigation index                      | - study materials data                  |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | AIMonitoringPage                         |
+| - navigation index                      | - AI query/chat monitoring data          |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | ReportsAnalyticsPage                     |
+| - navigation index                      | - analytics & reports data              |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | NotificationsPage                        |
+| - navigation index                      | - notifications list                    |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | DatabaseManagementPage                  |
+| - navigation index                      | - database statistics                    |
++------------------------------------------+------------------------------------------+
+| AdminMainDashboard                       | UserManagementPage                      |
+| - navigation index                      | - all users data                         |
++------------------------------------------+------------------------------------------+
+| StudentManagementPage                    | ApiService.getUsers()                    |
+| - view student details                  | - fetch students from backend            |
++------------------------------------------+------------------------------------------+
+| FacultyManagementPage                    | ApiService.getUsers()                    |
+| - view faculty details                  | - fetch faculty from backend             |
++------------------------------------------+------------------------------------------+
+| VisitorManagementPage                     | ApiService.getVisitors()                 |
+| - view visitor details                  | - fetch visitors from backend            |
++------------------------------------------+------------------------------------------+
+| ContentManagementPage                    | ApiService.getMaterials()               |
+| - view study materials                  | - fetch materials from backend           |
++------------------------------------------+------------------------------------------+
+| ContentManagementPage                    | UploadStudyMaterialPage                 |
+| - navigate to upload                     | - upload new material data               |
++------------------------------------------+------------------------------------------+
+| NotificationsPage                         | ApiService.createNotification()         |
+| - create notification                   | - send notification to backend           |
++------------------------------------------+------------------------------------------+
+| AIMonitoringPage                         | ApiService.getChatHistory()              |
+| - monitor AI chats                       | - fetch chat history from backend        |
++------------------------------------------+------------------------------------------+
+| ApiService (Backend)                      | AdminMainDashboard                       |
+| - admin stats                            | - total students/faculty/visitors        |
++------------------------------------------+------------------------------------------+
+
+================================================================================
+                            ROLE: STUDENT
+================================================================================
+
++------------------------------------------+------------------------------------------+
+| DATA FROM                                | DATA TO                                  |
++------------------------------------------+
+| LoginRegisterScreen                      | StudentHomePage                          |
+| - student credentials                    | - studentName, semester, userId, email   |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | ChatScreen                               |
+| - userId                                 | - user ID for chat history               |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | StudentProfilePage                       |
+| - userId, enrollmentNumber               | - profile data                           |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | StudentNoticePage                       |
+| - userId                                 | - notices list for student               |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | StudentNotificationsPage                |
+| - userId                                 | - notifications for student              |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | ApiService.getNotices()                  |
+| - fetch notices                          | - get notices from backend              |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | ApiService.getAssignments()             |
+| - fetch assignments                      | - get assignments from backend          |
++------------------------------------------+------------------------------------------+
+| StudentHomePage                          | ApiService.getMaterials()               |
+| - fetch materials                        | - get materials from backend            |
++------------------------------------------+------------------------------------------+
+| ChatScreen                               | ApiService.askAI()                      |
+| - question                               | - AI response                            |
++------------------------------------------+------------------------------------------+
+| ChatScreen                               | ApiService.saveChatMessage()            |
+| - question, answer                       | - save chat to history                   |
++------------------------------------------+------------------------------------------+
+| FacultyHomePage                          | ApiService.getAdminStats()               |
+| - fetch stats                           | - materials, queries, subjects data       |
++------------------------------------------+------------------------------------------+
+| FacultyHomePage                          | ApiService.getNotices()                  |
+| - fetch notices                         | - notices list                           |
++------------------------------------------+------------------------------------------+
+| FacultyHomePage                          | ApiService.getMaterials()                |
+| - fetch materials                       | - materials list                         |
++------------------------------------------+------------------------------------------+
+| FacultyNoticeManagementPage              | ApiService.createNotice()               |
+| - title, content, priority              | - create new notice                      |
++------------------------------------------+------------------------------------------+
+| FacultyEventManagementPage               | ApiService.createNotification()         |
+| - event details                          | - create event notification              |
++------------------------------------------+------------------------------------------+
+| FacultyProfilePage                       | ApiService.getUserProfile()             |
+| - userId                                | - profile data                           |
++------------------------------------------+------------------------------------------+
+| ApiService (Backend)                      | FacultyHomePage                          |
+| - stats, notices, materials             | - dashboard data                         |
++------------------------------------------+------------------------------------------+
+
+================================================================================
+                            ROLE: VISITOR
+================================================================================
+
++------------------------------------------+------------------------------------------+
+| DATA FROM                                | DATA TO                                  |
++------------------------------------------+------------------------------------------+
+| WelcomeScreen                            | VisitorHomePage                          |
+| - visitor access                         | - visitor dashboard                       |
++------------------------------------------+------------------------------------------+
+| WelcomeScreen                            | VisitorRegistrationPage                  |
+| - navigate to registration               | - visitor registration form               |
++------------------------------------------+------------------------------------------+
+| WelcomeScreen                            | VisitorQRPage                            |
+| - navigate to QR                         | - visitor QR code                         |
++------------------------------------------+------------------------------------------+
+| VisitorHomePage                          | ChatScreen                               |
+| - userId                                 | - chat with AI                            |
++------------------------------------------+------------------------------------------+
+| VisitorHomePage                          | VisitorProfilePage                       |
+| - visitor details                        | - visitor profile                         |
++------------------------------------------+------------------------------------------+
+| VisitorHomePage                          | VisitorHistoryPage                       |
+| - userId                                 | - previous visits                         |
++------------------------------------------+------------------------------------------+
+| VisitorRegistrationPage                  | ApiService.registerVisitor()            |
+| - visitor details                        | - save visitor to backend                |
++------------------------------------------+------------------------------------------+
+| VisitorQRPage                            | ApiService.getVisitorQR()               |
+| - userId                                 | - generate QR code                       |
++------------------------------------------+------------------------------------------+
+| VisitorHistoryPage                       | ApiService.getVisitorHistory()          |
+| - userId                                 | - fetch visitor history                  |
++------------------------------------------+------------------------------------------+
+| ApiService (Backend)                      | VisitorHomePage                          |
+| - visitor data                           | - visitor profile & stats                |
++------------------------------------------+------------------------------------------+
+
+================================================================================
+                        COMMON / SHARED PAGES
+================================================================================
+
++------------------------------------------+------------------------------------------+
+| DATA FROM                                | DATA TO                                  |
++------------------------------------------+------------------------------------------+
+| SplashScreen                             | FirstScreen                              |
+| - app initialized                        | - navigation decision                    |
++------------------------------------------+------------------------------------------+
+| FirstScreen                              | LoginRegisterScreen                      |
+| - not logged in                          | - login/register form                    |
++------------------------------------------+------------------------------------------+
+| FirstScreen                              | WelcomeScreen                            |
+| - new visitor                            | - visitor welcome page                   |
++------------------------------------------+------------------------------------------+
+| FirstScreen                              | main.dart routes                         |
+| - logged in user                         | - role-based dashboard                   |
+|                                          |   (admin/student/faculty)               |
++------------------------------------------+------------------------------------------+
+| LoginRegisterScreen                      | ApiService.login()                       |
+| - email, password                        | - auth token & user data                 |
++------------------------------------------+------------------------------------------+
+| LoginRegisterScreen                      | ApiService.register()                   |
+| - user details                          | - new user registration                  |
++------------------------------------------+------------------------------------------+
+| ApiService (Backend)                     | LoginRegisterScreen                      |
+| - auth token, user role                  | - redirect to role-based page            |
++------------------------------------------+------------------------------------------+
+| ChatScreen                               | ApiService.askAI()                      |
+| - question                              | - AI response                            |
++------------------------------------------+------------------------------------------+
+| ChatScreen                               | ApiService.saveChatMessage()            |
+| - userId, question, answer              | - save chat message                      |
++------------------------------------------+------------------------------------------+
+| ApiService (Backend)                      | ChatScreen                              |
+| - AI answer                             | - display response                        |
++------------------------------------------+------------------------------------------+
+| NotificationsPage                       | ApiService.getNotifications()           |
+| - fetch notifications                   | - get all notifications                  |
++------------------------------------------+------------------------------------------+
+| NotificationsPage                       | ApiService.createNotification()        |
+| - notification details                  | - create notification                     |
++------------------------------------------+------------------------------------------+
+| NotificationsPage                       | ApiService.markAsRead()                 |
+| - notification ID                       | - mark notification read                  |
++------------------------------------------+------------------------------------------+
+| ContentManagementPage                   | ApiService.getMaterials()               |
+| - fetch materials                       | - get study materials                    |
++------------------------------------------+------------------------------------------+
+| ContentManagementPage                   | ApiService.createMaterial()             |
+| - material details                      | - upload new material                     |
++------------------------------------------+------------------------------------------+
+| ContentManagementPage                   | ApiService.deleteMaterial()             |
+| - material ID                           | - delete material                         |
++------------------------------------------+------------------------------------------+
+| ReportsAnalyticsPage                    | ApiService.getAdminStats()              |
+| - fetch analytics                        | - get statistics                          |
++------------------------------------------+------------------------------------------+
+| SecurityPage                             | ApiService.getSecurityLogs()            |
+| - fetch security logs                    | - security events                         |
++------------------------------------------+------------------------------------------+
+| DatabaseManagementPage                   | ApiService.getDatabaseStats()           |
+| - fetch DB stats                        | - database statistics                     |
++------------------------------------------+------------------------------------------+
+| KnowledgePage                           | ApiService.getKnowledgeBase()           |
+| - fetch knowledge                        | - knowledge articles                      |
++------------------------------------------+------------------------------------------+
+| ManageKnowledgePage                     | ApiService.addKnowledge()               |
+| - new article                           | - add to knowledge base                  |
++------------------------------------------+------------------------------------------+
+
+================================================================================
+                          BACKEND DATA FLOW
+================================================================================
+
++------------------------------------------+------------------------------------------+
+| DATA FROM                                | DATA TO                                  |
++------------------------------------------+------------------------------------------+
+| MongoDB Database                         | backend/app.py                           |
+| - users collection                      | - user data                              |
+| - notices collection                    | - notices                                |
+| - materials collection                   | - study materials                        |
+| - assignments collection                 | - assignments                            |
+| - notifications collection               | - notifications                          |
+| - chat_history collection                | - chat messages                          |
+| - visitors collection                    | - visitor data                           |
+| - knowledge collection                  | - AI knowledge base                      |
++------------------------------------------+------------------------------------------+
+| backend/routes/users.py                  | ApiService (Flutter)                    |
+| - user CRUD operations                  | - user data                              |
++------------------------------------------+------------------------------------------+
+| backend/routes/notices.py                | ApiService (Flutter)                    |
+| - notice CRUD                           | - notices                                |
++------------------------------------------+------------------------------------------+
+| backend/routes/materials.py              | ApiService (Flutter)                    |
+| - material CRUD                         | - materials                              |
++------------------------------------------+------------------------------------------+
+| backend/routes/assignments.py            | ApiService (Flutter)                    |
+| - assignment CRUD                       | - assignments                            |
++------------------------------------------+------------------------------------------+
+| backend/routes/notifications.py          | ApiService (Flutter)                    |
+| - notification CRUD                     | - notifications                          |
++------------------------------------------+------------------------------------------+
+| backend/routes/admin.py                  | ApiService (Flutter)                     |
+| - admin operations                      | - stats, users, visitors                 |
++------------------------------------------+------------------------------------------+
+| backend/srimca/srimca_rag.py             | backend/app.py                          |
+| - RAG AI processing                     | - AI responses                           |
++------------------------------------------+------------------------------------------+
+
+================================================================================
+                              PAGE SUMMARY
+================================================================================
+
+ADMIN PAGES (12 pages):
+-----------------------
+1. AdminMainDashboard - Main admin hub with navigation
+2. AdminHomePage - Dashboard with stats overview
+3. StudentManagementPage - Manage students (CRUD)
+4. FacultyManagementPage - Manage faculty (CRUD)
+5. VisitorManagementPage - Manage visitors
+6. ContentManagementPage - Manage study materials
+7. AIMonitoringPage - Monitor AI queries
+8. ReportsAnalyticsPage - View reports & analytics
+9. NotificationsPage - Manage notifications
+10. DatabaseManagementPage - Database operations
+11. UserManagementPage - Manage all users
+12. SecurityPage - Security settings & logs
+
+STUDENT PAGES (6 pages):
+------------------------
+1. StudentHomePage - Student dashboard with notices/assignments
+2. ChatScreen - Chat with AI assistant
+3. StudentProfilePage - View/edit profile
+4. StudentNoticePage - View notices
+5. StudentNotificationsPage - View notifications
+6. StudentChatHistoryPage - View chat history
+
+FACULTY PAGES (7 pages):
+------------------------
+1. FacultyHomePage - Faculty dashboard
+2. FacultyNoticeManagementPage - Manage notices
+3. FacultyVisitorInquiryPage - Handle visitor inquiries
+4. FacultyEventManagementPage - Manage events
+5. FacultyNotificationsPage - View notifications
+6. FacultyProfilePage - View/edit profile
+7. AIAssistantPage - AI monitoring (faculty view)
+
+VISITOR PAGES (5 pages):
+------------------------
+1. VisitorHomePage - Visitor dashboard
+2. VisitorRegistrationPage - Register as visitor
+3. VisitorQRPage - Show QR code for entry
+4. VisitorProfilePage - View profile
+5. VisitorHistoryPage - View visit history
+
+COMMON PAGES (10 pages):
+------------------------
+1. SplashScreen - App loading
+2. FirstScreen - Initial routing
+3. LoginRegisterScreen - Login/Register
+4. WelcomeScreen - Welcome for visitors
+5. ChatScreen - AI chat (shared)
+6. NotificationsPage - Notifications (role-based)
+7. ContentManagementPage - Materials management
+8. KnowledgePage - Knowledge base
+9. ManageKnowledgePage - Manage knowledge
+10. SecurityPage - Security settings
+
+================================================================================
+                         MONGODB COLLECTIONS
+================================================================================
+
+Currently Used Collections:
+--------------------------
+1. users - Student, Faculty, Admin accounts
+2. visitors - Visitor registrations
+3. notices - College notices
+4. materials - Study materials
+5. assignments - Assignments
+6. notifications - System notifications
+7. chat_history - AI chat history
+8. knowledge - AI knowledge base (RAG)
+
+Defined but Not Fully Used:
+---------------------------
+1. faqs - Frequently Asked Questions
+2. queries - AI query logs
+
+================================================================================
+                         FILE STRUCTURE SUMMARY
+================================================================================
+
+Flutter App (lib/):
+- 40+ Dart files for UI pages
+- API service for backend communication
+- Firebase integration
+- Push notification service
+
+Backend (backend/):
+- Flask app.py - Main application
+- routes/ - API endpoints (7 route files)
+- srimca/ - RAG AI implementation
+- config.py, database.py, auth.py, firebase.py
+
+Database:
+- MongoDB Atlas cluster
+- Collections for users, notices, materials, etc.
+
+================================================================================
