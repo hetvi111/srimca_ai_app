@@ -546,7 +546,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
               '/student',
               arguments: {
                 'studentName': user['name'] ?? 'student',
-                'semester': '5th Semester',
+                'semester': user['semester'] ?? 'semester',
                 'userId': user['_id'] ?? '',
                 'email': user['email'] ?? '',
               },
@@ -772,7 +772,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         navigator.pop();
       }
 
-      if (res.statusCode == 201) {
+if (res.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Registration successful! Please login.")),
         );
@@ -784,19 +784,25 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
         _tabController.animateTo(0);
       } else {
+        // Print error for debugging
+        print('Registration failed with status: ${res.statusCode}');
+        print('Response body: ${res.body}');
+        
         final Map<String, dynamic> body = jsonDecode(res.body);
-        final msg = body['message']?.toString() ?? 'Registration failed';
+        final msg = body['error'] ?? body['message'] ?? 'Registration failed';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(content: Text(msg.toString())),
         );
       }
-    } catch (e) {
+} catch (e) {
       if (!mounted) return;
       // Close dialog if still open
       final navigator = Navigator.of(context);
       if (navigator.canPop()) {
         navigator.pop();
       }
+      // Print error for debugging
+      print('Registration exception: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );

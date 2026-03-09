@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:srimca_ai/firebase_options.dart';
 import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_register_screen.dart';
@@ -30,7 +31,9 @@ class AppColors {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
   // Initialize push notifications
   await PushNotificationService.initialize();

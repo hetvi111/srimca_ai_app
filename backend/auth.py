@@ -18,7 +18,7 @@ from bson import ObjectId
 from database import get_collection, Collections
 from models import UserModel, UserProfileModel, StudentModel, FacultyModel
 from config import get_config
-# from notification_helper import create_notification  # Optional: Enable if needed
+from notification_helper import create_notification  # Optional: Enable if needed
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -128,7 +128,7 @@ def register():
                 return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
         
         # Validate role
-        valid_roles = ['student', 'faculty', 'visitor']
+        valid_roles = ['student', 'faculty', 'visitor', 'admin']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
         
@@ -186,6 +186,21 @@ def register():
         # Insert user into database (single collection)
         result = users.insert_one(user_doc)
         user_doc['_id'] = result.inserted_id
+        
+        # NORMALIZED: Also create faculty record in faculty collection
+        if role == 'faculty':
+            faculty_collection = get_collection(Collections.FACULTIES)
+            faculty_doc = FacultyModel.create_faculty(
+                user_id=str(user_doc['_id']),
+                department=department,
+                designation=designation
+            )
+            try:
+                faculty_collection.insert_one(faculty_doc)
+                print(f"✅ Faculty record created for user {user_doc['_id']}")
+            except Exception as faculty_error:
+                print(f"Warning: Could not create faculty record: {faculty_error}")
+                # Continue anyway - user is created, admin can fix faculty record later
         
         
         # NOTE: Removed notification on registration for performance

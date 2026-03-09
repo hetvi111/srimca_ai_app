@@ -1,0 +1,20 @@
+{
+  "name": "Admin",
+  "email": "admin@srimca.edu",
+  "password": "$2b$12$sp/xJeCSwHOdOqEcki6sg.DyGuaASdEPTIy2ShamahvQEaCCa.twu",
+  "role": "admin",
+  "mobile": "1234567890",
+  "is_active": true,
+  "created_at": "2026-03-06T00:00:00.000Z",
+  "updated_at": "2026-03-06T00:00:00.000Z",
+  "last_login": null,
+  "address": "",
+  "enrollment": "",
+  "dob": "",
+  "semester": "",
+  "department": "",
+  "designation": "",
+  "purpose": "",
+  "visit_date": "",
+  "approval_status": ""
+}

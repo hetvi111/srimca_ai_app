@@ -14,6 +14,72 @@ SRIMCA provides 200 MBps dedicated internet leased line.
 SRIMCA library contains national and international books and journals.
 SRIMCA has an auditorium, seminar hall and modern classrooms.
 
+BCA Fee Structure - UKA Tarsadia University (2025-26)
+
+Department: Computer Science
+
+Course: BCA
+Tuition Fee per Semester: 30,000 INR
+Exam Fee: 1,500 INR
+Transportation Fee: -
+I-Card Fee: 200 INR
+Alumni Fee: 2,000 INR
+Enrollment Fee (Non Refundable): 10,000 INR
+
+Course: BCA (Hons.)
+Tuition Fee per Semester: 35,250 INR
+Exam Fee: 3,000 INR
+I-Card Fee: 200 INR
+Alumni Fee: 2,000 INR
+Enrollment Fee: 10,000 INR
+
+Course: MCA
+Tuition Fee per Semester: 50,000 INR
+Exam Fee: 3,000 INR
+I-Card Fee: 200 INR
+Alumni Fee: 2,000 INR
+Enrollment Fee: 10,000 INR
+
+SRIMCA Faculty Information
+
+Name: Dr. Dharmendra Bhatti
+Designation: Professor and Director
+Email: dgbhatti@utu.ac.in
+Expertise: Machine Learning, Information Security
+
+Name: Dr. Jitendra Nasriwala
+Designation: Associate Professor
+Email: jvnasriwala@utu.ac.in
+Expertise: Image Processing
+
+Name: Dr. Ronak Patel
+Designation: Associate Professor
+Email: ronak.patel@utu.ac.in
+Expertise: Programming, Web Technology, Biometric Authentication
+
+Name: Dr. Jitendrakumar Upadhyay
+Designation: Assistant Professor
+Email: jbupadhyay@utu.ac.in
+Expertise: Deep Learning, Machine Learning, Computer Vision
+
+Name: Dr. Sapan Naik
+Designation: Assistant Professor
+Email: sapan.naik@utu.ac.in
+Expertise: Computer Vision, Internet of Things, Machine Learning
+
+Name: Mr. Hardik Vyas
+Designation: Assistant Professor
+Email: hardik.vyas@utu.ac.in
+Expertise: Cyber Security, Network Security, Operating Systems
+
+Name: Dr. Preeti Bhatt
+Designation: Assistant Professor
+Email: preeti.bhatt@utu.ac.in
+Expertise: Image Processing, Machine Learning, Python Programming, Web Development
+
+Link to SRIMCA map
+https://maps.app.goo.gl/7ZL6RBWJFv6BZUvbA
+
 MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.
 MCA 2nd semester Monday 10:30-11:30 has iOS theory.
 MCA 2nd semester Monday 11:30-12:15 is BREAK.
@@ -27,3 +93,4 @@ MCA 2nd semester Tuesday 11:30-12:15 is BREAK.
 MCA 2nd semester Tuesday 12:15-01:15 has Python  theory.
 MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.
 MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory.
+
