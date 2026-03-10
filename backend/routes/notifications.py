@@ -15,6 +15,28 @@ from auth import verify_jwt_token
 notifications_bp = Blueprint('notifications', __name__, url_prefix='/api')
 
 
+def require_auth(f):
+    """Decorator to require authentication"""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'error': 'No authorization header'}), 401
+        
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            return jsonify({'error': 'Invalid authorization header'}), 401
+        
+        payload = verify_jwt_token(parts[1])
+        if payload is None:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = payload
+        return f(*args, **kwargs)
+    return decorated
+
+
 @notifications_bp.route('/notifications', methods=['GET'])
 def get_notifications():
     """
@@ -48,7 +70,7 @@ def get_notifications():
 
 
 @notifications_bp.route('/notifications/my', methods=['GET'])
-@verify_jwt_token
+@require_auth
 def get_my_notifications():
     """
     Get notifications for the current user based on their role
@@ -110,7 +132,7 @@ def get_unread_count():
 
 
 @notifications_bp.route('/notifications/unread-count/my', methods=['GET'])
-@verify_jwt_token
+@require_auth
 def get_my_unread_count():
     """
     Get count of unread notifications for current user
@@ -154,7 +176,7 @@ def get_my_unread_count():
 
 
 @notifications_bp.route('/notifications', methods=['POST'])
-@verify_jwt_token
+@require_auth
 def create_notification_with_target():
     """
     Create a notification with specific target audience
