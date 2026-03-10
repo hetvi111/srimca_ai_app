@@ -1,1122 +1,383 @@
 """
-SRIMCA AI Backend - Main Flask Application
-Flask + MongoDB Atlas + Firebase Integration
+Authentication routes for SRIMCA AI Backend
+Handles user login, registration, and JWT token generation
 """
 
-from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
-import os
-import sys
-import qrcode
-import io
+from flask import Blueprint, request, jsonify
+import bcrypt
+import jwt
+from datetime import datetime, timedelta
+from bson import ObjectId
 
-# Add backend directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from database import get_collection, Collections
+from models import UserModel
+from config import get_config
+from notification_helper import create_notification
 
-from config import get_config, config_by_name
-from database import connect_to_mongodb, initialize_indexes, health_check, close_mongodb_connection
-from firebase import initialize_firebase
-from auth import auth_bp
-
-# Import RAG AI from srimca folder
-try:
-    from srimca.app import ask as rag_ask
-    from srimca.build_db import build_db
-    from srimca.config import knowledge_col
-    RAG_AVAILABLE = True
-    print("✅ RAG AI module loaded successfully")
-except ImportError as e:
-    print(f"Warning: RAG AI module could not be imported: {e}")
-    RAG_AVAILABLE = False
-    rag_ask = None
-
-# Import route blueprints
-try:
-    from routes.notices import notices_bp
-    from routes.assignments import assignments_bp
-    from routes.materials import materials_bp
-    from routes.faqs import faqs_bp
-    from routes.users import users_bp
-    from routes.notifications import notifications_bp
-    from routes.admin import admin_bp
-    ROUTES_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Some routes could not be imported: {e}")
-    ROUTES_AVAILABLE = False
+# Create auth blueprint
+auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 
 
-def create_app(config_name=None):
+def generate_jwt_token(user_doc: dict) -> str:
     """
-    Create and configure the Flask application
+    Generate a JWT token for the authenticated user
     """
-    # Initialize Flask
-    app = Flask(__name__)
+    config = get_config()
     
-    # Load configuration
-    if config_name:
-        config = config_by_name.get(config_name, DevelopmentConfig)
-    else:
-        config = get_config()
+    payload = {
+        'user_id': str(user_doc.get('_id')),
+        'email': user_doc.get('email'),
+        'role': user_doc.get('role'),
+        'name': user_doc.get('name'),
+        'exp': datetime.utcnow() + timedelta(hours=config.JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow()
+    }
     
-    app.config['SECRET_KEY'] = config.JWT_SECRET_KEY
-    app.config['DEBUG'] = config.FLASK_DEBUG
+    token = jwt.encode(payload, config.JWT_SECRET_KEY, algorithm='HS256')
+    return token
+
+
+def verify_jwt_token(token: str) -> dict:
+    """
+    Verify and decode a JWT token
+    Returns the payload if valid, None otherwise
+    """
+    config = get_config()
     
-    # Configure CORS
-    cors_origins = config.CORS_ORIGINS.split(',') if config.CORS_ORIGINS != '*' else ['*']
-    CORS(app, origins=cors_origins, supports_credentials=True)
-    
-    # Register blueprints
-    app.register_blueprint(auth_bp)
-    
-    if ROUTES_AVAILABLE:
-        try:
-            app.register_blueprint(notices_bp)
-            app.register_blueprint(assignments_bp)
-            app.register_blueprint(materials_bp)
-            app.register_blueprint(faqs_bp)
-            app.register_blueprint(users_bp)
-            app.register_blueprint(notifications_bp)
-            app.register_blueprint(admin_bp)
-        except Exception as e:
-            print(f"Warning: Could not register some blueprints: {e}")
-    
-    # Health check endpoint
-    @app.route('/health', methods=['GET'])
-    def health():
-        """Health check endpoint"""
-        mongodb_status, mongodb_message = health_check()
+    try:
+        payload = jwt.decode(token, config.JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    """
+    Register a new user (student or visitor)
+    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
+    Visitor fields: name, email, password, role, mobile, purpose
+    """
+    try:
+        data = request.get_json()
         
+        # Validate required fields
+        required_fields = ['name', 'email', 'password', 'role']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'error': f'{field} is required'}), 400
+        
+        name = data['name'].strip()
+        email = data['email'].strip().lower()
+        password = data['password']
+        role = data.get('role', 'student').lower()
+        mobile = data.get('mobile', '').strip()
+        
+        # For students, get academic fields
+        enrollment = data.get('enrollment', '').strip()
+        dob = data.get('dob', '').strip()
+        semester = data.get('semester', '').strip()
+        department = data.get('department', '').strip()
+        
+# For visitors, get purpose
+        purpose = data.get('purpose', '').strip()
+        
+        # For faculty, get professional fields
+        designation = data.get('designation', '').strip()
+        
+        # Validate based on role
+        if role == 'student':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for students'}), 400
+            if not enrollment:
+                return jsonify({'error': 'Enrollment number is required for students'}), 400
+            if not dob:
+                return jsonify({'error': 'Date of birth is required for students'}), 400
+            if not semester:
+                return jsonify({'error': 'Semester is required for students'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for students'}), 400
+        elif role == 'faculty':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for faculty'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for faculty'}), 400
+            if not designation:
+                return jsonify({'error': 'Designation is required for faculty'}), 400
+        elif role == 'visitor':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for visitors'}), 400
+            if not purpose:
+                return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
+        
+        # Validate role
+        valid_roles = ['student', 'faculty', 'visitor', 'admin']
+        if role not in valid_roles:
+            return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
+        
+        # Validate password length
+        if len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
+        # Get users collection
+        users = get_collection(Collections.USERS)
+        
+        # Check if user already exists
+        existing_user = users.find_one({'email': email})
+        if existing_user:
+            return jsonify({'error': 'Email already registered'}), 409
+        
+        # Check enrollment number for students
+        if role == 'student' and enrollment:
+            existing_enrollment = users.find_one({'enrollment': enrollment})
+            if existing_enrollment:
+                return jsonify({'error': 'Enrollment number already registered'}), 409
+        
+        # Hash password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        
+        # Create user document with basic fields
+        user_doc = UserModel.create_user(
+            name=name,
+            email=email,
+            password=hashed_password.decode('utf-8'),
+            role=role
+        )
+        
+        # Add common fields
+        user_doc['mobile'] = mobile
+        
+        # Add role-specific fields
+        if role == 'student':
+            user_doc['semester'] = semester
+            user_doc['department'] = department
+            user_doc['enrollment'] = enrollment
+            user_doc['dob'] = dob
+        elif role == 'faculty':
+            user_doc['department'] = department
+            user_doc['designation'] = designation
+        elif role == 'visitor':
+            user_doc['purpose'] = purpose
+            user_doc['visit_date'] = datetime.utcnow().isoformat()
+            user_doc['approval_status'] = 'pending'
+        
+        # Insert user into database
+        result = users.insert_one(user_doc)
+        
+        # Create notification for new user registration
+        create_notification(
+            title='New User Registered',
+            message=f'{name} ({role}) has registered with email {email}',
+            notification_type='user_register'
+        )
+        
+        # Generate token
+        user_doc['_id'] = result.inserted_id
+        token = generate_jwt_token(user_doc)
+        
+        # Return success response
         return jsonify({
-            'status': 'healthy' if mongodb_status else 'degraded',
-            'mongodb': {
-                'connected': mongodb_status,
-                'message': mongodb_message
-            },
-            'firebase': {
-                'enabled': initialize_firebase() is not None
-            }
-        }), 200 if mongodb_status else 503
+            'message': 'Registration successful',
+            'token': token,
+            'user': UserModel.to_dict(user_doc)
+        }), 201
     
-    # Root endpoint
-    @app.route('/', methods=['GET'])
-    def root():
-        """Root endpoint"""
+    except Exception as e:
+        print(f"Registration error: {e}")
+        return jsonify({'error': 'Registration failed'}), 500
+
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    Login user
+    Expected JSON: { "email": "", "password": "" }
+    """
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Email and password are required'}), 400
+        
+        email = data['email'].strip().lower()
+        password = data['password']
+        
+        # Get users collection
+        users = get_collection(Collections.USERS)
+        
+        # Find user by email
+        user_doc = users.find_one({'email': email})
+        
+        if not user_doc:
+            return jsonify({'error': 'Invalid email or password'}), 401
+        
+        # Check if user is active
+        if not user_doc.get('is_active', True):
+            return jsonify({'error': 'Account is deactivated'}), 401
+        
+        # Verify password
+        stored_password = user_doc.get('password', '')
+        
+        # Handle both string and bytes password storage
+        if isinstance(stored_password, str):
+            stored_password = stored_password.encode('utf-8')
+        
+        try:
+            if not bcrypt.checkpw(password.encode('utf-8'), stored_password):
+                return jsonify({'error': 'Invalid email or password'}), 401
+        except Exception as e:
+            print(f"Password verification error: {e}")
+            return jsonify({'error': 'Invalid email or password'}), 401
+        
+        # Update last login
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'last_login': datetime.utcnow()}}
+        )
+        
+        # Create notification for user login
+        create_notification(
+            title='User Login',
+            message=f'{user_doc.get("name", "A user")} ({user_doc.get("role", "user")}) has logged in',
+            notification_type='user_login'
+        )
+        
+        # Generate token
+        token = generate_jwt_token(user_doc)
+        
+        # Return success response
         return jsonify({
-            'name': 'SRIMCA AI Backend',
-            'version': '1.0.0',
-            'status': 'running',
-            'endpoints': {
-                'auth': '/api',
-                'notices': '/api/notices',
-                'assignments': '/api/assignments',
-                'materials': '/api/materials',
-                'faqs': '/api/faqs',
-                'users': '/api/users',
-                'health': '/health'
-            }
+            'message': 'Login successful',
+            'token': token,
+            'user': UserModel.to_dict(user_doc)
         }), 200
     
-    # RAG AI Chat endpoint - uses advanced RAG system from srimca folder
-    @app.route('/api/ai/chat', methods=['POST'])
-    def ai_chat():
-        """AI Chat endpoint using RAG (Retrieval-Augmented Generation)"""
-        try:
-            data = request.get_json()
-            if not data or 'question' not in data:
-                return jsonify({'error': 'Question is required'}), 400
-            
-            question = data['question'].strip()
-            if not question:
-                return jsonify({'error': 'Question cannot be empty'}), 400
-            
-            # Check if RAG module is available
-            if not RAG_AVAILABLE or rag_ask is None:
-                return jsonify({
-                    'error': 'RAG AI module is not available. Please check server configuration.',
-                    'status': 'error'
-                }), 503
-            
-            # Build knowledge database if empty
-            try:
-                if knowledge_col.count_documents({}) == 0:
-                    print("📦 Building knowledge database...")
-                    build_db()
-                    print("✅ Knowledge DB built")
-            except Exception as db_error:
-                print(f"Warning: Could not check/build knowledge DB: {db_error}")
-            
-            # Get answer from RAG system
-            try:
-                answer = rag_ask(question)
-                return jsonify({
-                    'question': question,
-                    'answer': answer,
-                    'status': 'success'
-                }), 200
-            except Exception as rag_error:
-                print(f"RAG Error: {rag_error}")
-                return jsonify({
-                    'error': f'AI processing error: {str(rag_error)}',
-                    'status': 'error'
-                }), 500
-            
-        except Exception as e:
-            print(f"AI Chat Error: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    # QR Code generation endpoint
-    @app.route('/generate-qr', methods=['GET'])
-    def generate_qr():
-        """Generate QR code for visitor registration"""
-        registration_url = "https://srimca-ai-app.onrender.com/register"
-        
-        qr = qrcode.make(registration_url)
-        img_io = io.BytesIO()
-        qr.save(img_io, 'PNG')
-        img_io.seek(0)
-        
-        return send_file(img_io, mimetype='image/png')
-    
-    # Visitor registration page (web-based)
-    @app.route('/register', methods=['GET'])
-    def visitor_register_page():
-        """Serve the visitor registration web page"""
-        return '''
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Registration - SRIMCA</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                }
-                .container {
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                    padding: 40px;
-                    max-width: 550px;
-                    width: 100%;
-                }
-                h1 {
-                    color: #333;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 28px;
-                }
-                .subtitle {
-                    text-align: center;
-                    color: #666;
-                    margin-bottom: 30px;
-                }
-                .form-group {
-                    margin-bottom: 18px;
-                }
-                label {
-                    display: block;
-                    color: #333;
-                    margin-bottom: 6px;
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-                input, select {
-                    width: 100%;
-                    padding: 12px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 10px;
-                    font-size: 15px;
-                    transition: border-color 0.3s;
-                }
-                input:focus, select:focus {
-                    outline: none;
-                    border-color: #667eea;
-                }
-                .row {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 15px;
-                }
-                button {
-                    width: 100%;
-                    padding: 14px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    border: none;
-                    border-radius: 10px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                    margin-top: 10px;
-                }
-                button:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-                }
-                button:disabled {
-                    background: #ccc;
-                    cursor: not-allowed;
-                    transform: none;
-                }
-                .message {
-                    padding: 12px;
-                    border-radius: 10px;
-                    margin-bottom: 20px;
-                    text-align: center;
-                    display: none;
-                }
-                .message.success {
-                    background: #d4edda;
-                    color: #155724;
-                    display: block;
-                }
-                .message.error {
-                    background: #f8d7da;
-                    color: #721c24;
-                    display: block;
-                }
-                .login-link {
-                    text-align: center;
-                    margin-top: 20px;
-                    color: #666;
-                }
-                .login-link a {
-                    color: #667eea;
-                    text-decoration: none;
-                    font-weight: 600;
-                }
-                .login-link a:hover {
-                    text-decoration: underline;
-                }
-                .logo {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .logo h2 {
-                    color: #667eea;
-                    font-size: 24px;
-                }
-                .hidden { display: none; }
-                .info-text {
-                    font-size: 12px;
-                    color: #888;
-                    margin-top: 4px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">
-                    <h2>🎓 SRIMCA</h2>
-                </div>
-                <h1>Visitor Registration</h1>
-                <p class="subtitle">Welcome to SRIMCA College</p>
-                
-                <div id="message" class="message"></div>
-                
-                <form id="registrationForm">
-                    <input type="hidden" id="role" name="role" value="visitor">
-                    
-                    <!-- Common Fields -->
-                    <div class="form-group">
-                        <label for="name">Full Name *</label>
-                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email">Email ID *</label>
-                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="mobile">Mobile Number *</label>
-                        <input type="tel" id="mobile" name="mobile" required placeholder="Enter your mobile number" pattern="[0-9]{10,}">
-                    </div>
-                    
-                    <!-- Visitor-specific Fields (always visible) -->
-                    <div id="visitorFields">
-                        <div class="form-group">
-                            <label for="purpose">Purpose of Visit *</label>
-                            <select id="purpose" name="purpose" required>
-                                <option value="">Select purpose</option>
-                                <option value="admission">Admission Inquiry</option>
-                                <option value="placement">Placement/Recruitment</option>
-                                <option value="meeting">Meeting with Faculty</option>
-                                <option value="event">College Event</option>
-                                <option value="tour">Campus Tour</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <div class="info-text">Used for security tracking</div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="password">Password *</label>
-                            <input type="password" id="password" name="password" required placeholder="Create password" minlength="6">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm Password *</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm password">
-                        </div>
-                    </div>
-                    
-                    <button type="submit" id="submitBtn">Register</button>
-                </form>
-                
-                <p class="login-link">
-                    Already registered? <a href="/login">Login here</a>
-                </p>
-            </div>
-            
-            <script>
-                // Simplified for visitor-only registration
-                document.getElementById('registrationForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const password = document.getElementById('password').value;
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-                    
-                    if (password !== confirmPassword) {
-                        showMessage('Passwords do not match', 'error');
-                        return;
-                    }
-                    
-                    const submitBtn = document.getElementById('submitBtn');
-                    const messageDiv = document.getElementById('message');
-                    
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Registering...';
-                    messageDiv.className = 'message';
-                    messageDiv.style.display = 'none';
-                    
-                    const formData = {
-                        name: document.getElementById('name').value,
-                        email: document.getElementById('email').value,
-                        mobile: document.getElementById('mobile').value,
-                        password: password,
-                        role: currentRole
-                    };
-                    
-                    // Add role-specific fields
-                    if (currentRole === 'student') {
-                        formData.enrollment = document.getElementById('enrollment').value;
-                        formData.dob = document.getElementById('dob').value;
-                        formData.semester = document.getElementById('semester').value;
-                        formData.department = document.getElementById('department').value;
-                    } else {
-                        formData.purpose = document.getElementById('purpose').value;
-                    }
-                    
-                    try {
-                        const response = await fetch('/api/register', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (response.ok) {
-                            showMessage('Registration successful! Redirecting to login...', 'success');
-                            document.getElementById('registrationForm').reset();
-                            setTimeout(() => {
-                                window.location.href = '/login';
-                            }, 2000);
-                        } else {
-                            showMessage(data.error || 'Registration failed', 'error');
-                        }
-                    } catch (error) {
-                        showMessage('Network error. Please try again.', 'error');
-                    }
-                    
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Register';
-                });
-                
-                function showMessage(text, type) {
-                    const messageDiv = document.getElementById('message');
-                    messageDiv.textContent = text;
-                    messageDiv.className = 'message ' + type;
-                }
-                
-                // Initialize role
-                selectRole('student');
-            </script>
-        </body>
-        </html>
-        '''
-    
-    # Visitor login page
-    @app.route('/login', methods=['GET'])
-    def visitor_login_page():
-        """Serve the visitor login web page"""
-        return '''
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Visitor Login - SRIMCA</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                }
-                .container {
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                    padding: 40px;
-                    max-width: 450px;
-                    width: 100%;
-                }
-                h1 {
-                    color: #333;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 28px;
-                }
-                .subtitle {
-                    text-align: center;
-                    color: #666;
-                    margin-bottom: 30px;
-                }
-                .form-group {
-                    margin-bottom: 20px;
-                }
-                label {
-                    display: block;
-                    color: #333;
-                    margin-bottom: 8px;
-                    font-weight: 600;
-                }
-                input {
-                    width: 100%;
-                    padding: 14px;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 10px;
-                    font-size: 16px;
-                    transition: border-color 0.3s;
-                }
-                input:focus {
-                    outline: none;
-                    border-color: #667eea;
-                }
-                button {
-                    width: 100%;
-                    padding: 16px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    border: none;
-                    border-radius: 10px;
-                    font-size: 18px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                button:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-                }
-                button:disabled {
-                    background: #ccc;
-                    cursor: not-allowed;
-                    transform: none;
-                }
-                .message {
-                    padding: 15px;
-                    border-radius: 10px;
-                    margin-bottom: 20px;
-                    text-align: center;
-                    display: none;
-                }
-                .message.success {
-                    background: #d4edda;
-                    color: #155724;
-                    display: block;
-                }
-                .message.error {
-                    background: #f8d7da;
-                    color: #721c24;
-                    display: block;
-                }
-                .register-link {
-                    text-align: center;
-                    margin-top: 20px;
-                    color: #666;
-                }
-                .register-link a {
-                    color: #667eea;
-                    text-decoration: none;
-                    font-weight: 600;
-                }
-                .register-link a:hover {
-                    text-decoration: underline;
-                }
-                .logo {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .logo h2 {
-                    color: #667eea;
-                    font-size: 24px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">
-                    <h2>🎓 SRIMCA</h2>
-                </div>
-                <h1>Visitor Login</h1>
-                <p class="subtitle">Welcome back to SRIMCA College</p>
-                
-                <div id="message" class="message"></div>
-                
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required placeholder="Enter your password">
-                    </div>
-                    
-                    <button type="submit" id="submitBtn">Login</button>
-                </form>
-                
-                <p class="register-link">
-                    New visitor? <a href="/register">Register here</a>
-                </p>
-            </div>
-            
-            <script>
-                document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const submitBtn = document.getElementById('submitBtn');
-                    const messageDiv = document.getElementById('message');
-                    
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Logging in...';
-                    messageDiv.className = 'message';
-                    messageDiv.style.display = 'none';
-                    
-                    const formData = {
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    };
-                    
-                    try {
-                        const response = await fetch('/api/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (response.ok) {
-                            localStorage.setItem('token', data.token);
-                            localStorage.setItem('user', JSON.stringify(data.user));
-                            messageDiv.textContent = 'Login successful! Redirecting...';
-                            messageDiv.className = 'message success';
-                            setTimeout(() => {
-                                window.location.href = '/visitor-dashboard';
-                            }, 1000);
-                        } else {
-                            messageDiv.textContent = data.error || 'Invalid credentials';
-                            messageDiv.className = 'message error';
-                        }
-                    } catch (error) {
-                        messageDiv.textContent = 'Network error. Please try again.';
-                        messageDiv.className = 'message error';
-                    }
-                    
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Login';
-                });
-            </script>
-        </body>
-        </html>
-        '''
-    
-    # Visitor dashboard page
-    @app.route('/visitor-dashboard', methods=['GET'])
-    def visitor_dashboard():
-        """Serve the visitor dashboard web page"""
-        return '''
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Visitor Dashboard - SRIMCA</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: #f5f7fa;
-                    min-height: 100vh;
-                }
-                .header {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 20px 40px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .header h1 { font-size: 24px; }
-                .logout-btn {
-                    background: rgba(255,255,255,0.2);
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 14px;
-                }
-                .logout-btn:hover { background: rgba(255,255,255,0.3); }
-                .container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 40px 20px;
-                }
-                .welcome {
-                    background: white;
-                    border-radius: 15px;
-                    padding: 30px;
-                    margin-bottom: 30px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                }
-                .welcome h2 { color: #333; margin-bottom: 10px; }
-                .welcome p { color: #666; }
-                .grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
-                }
-                .card {
-                    background: white;
-                    border-radius: 15px;
-                    padding: 30px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                .card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-                }
-                .card h3 { color: #333; margin-bottom: 15px; font-size: 20px; }
-                .card p { color: #666; line-height: 1.6; }
-                .card-icon {
-                    font-size: 40px;
-                    margin-bottom: 15px;
-                }
-              /* ================= CHAT CONTAINER ================= */
-.chat-container {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 500px;
-    height: 500px;
-    max-width: 95%;
-    max-height: 90vh;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 30px rgba(0,0,0,0.2);
-    flex-direction: column;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-}
-
-.chat-container.active {
-    display: flex;
-}
-
-/* ================= HEADER ================= */
-.chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chat-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 22px;
-    cursor: pointer;
-}
-
-/* ================= MESSAGES ================= */
-.chat-messages {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    background: #f9f9f9;
-}
-
-.message {
-    margin-bottom: 12px;
-    padding: 10px 14px;
-    border-radius: 15px;
-    max-width: 80%;
-    word-wrap: break-word;
-    font-size: 14px;
-}
-
-.message.bot {
-    background: #eaeaea;
-    color: #333;
-    margin-right: auto;
-}
-
-.message.user {
-    background: #667eea;
-    color: white;
-    margin-left: auto;
-}
-
-/* ================= INPUT AREA ================= */
-.chat-input {
-    padding: 12px;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 8px;
-    background: white;
-}
-
-.chat-input input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-}
-
-.chat-input button {
-    padding: 10px 16px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.chat-input button:hover {
-    background: #5568d3;
-}
-
-/* ================= MOBILE RESPONSIVE ================= */
-@media (max-width: 768px) {
-    .chat-container {
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-    }
-}
-                .profile-card {
-                    background: white;
-                    border-radius: 15px;
-                    padding: 30px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                }
-                .profile-card h3 { color: #333; margin-bottom: 20px; }
-                .profile-item {
-                    display: flex;
-                    padding: 15px 0;
-                    border-bottom: 1px solid #eee;
-                }
-                .profile-item:last-child { border-bottom: none; }
-                .profile-label {
-                    font-weight: 600;
-                    color: #666;
-                    width: 150px;
-                }
-                .profile-value { color: #333; }
-                .status-badge {
-                    display: inline-block;
-                    padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 12px;
-                    font-weight: 600;
-                }
-                .status-pending { background: #fff3cd; color: #856404; }
-                .status-approved { background: #d4edda; color: #155724; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>🎓 SRIMCA Visitor Dashboard</h1>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
-            
-            <div class="container">
-                <div class="welcome">
-                    <h2>Welcome, <span id="visitorName">Visitor</span>!</h2>
-                    <p>We're glad to have you at SRIMCA College. Feel free to explore our campus and chat with our AI assistant.</p>
-                </div>
-                
-                <div class="grid">
-                    <div class="card" onclick="openChat()">
-                        <div class="card-icon">💬</div>
-                        <h3>AI Chat Assistant</h3>
-                        <p>Chat with our AI to get instant answers about courses, departments, timings, and more.</p>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">👤</div>
-                        <h3>My Profile</h3>
-                        <p>View your registered details, purpose of visit, and approval status.</p>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">📚</div>
-                        <h3>Course Information</h3>
-                        <p>Learn about our various courses and programs offered at SRIMCA College.</p>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-icon">🏛️</div>
-                        <h3>Campus Info</h3>
-                        <p>Get information about our campus facilities, departments, and contact details.</p>
-                    </div>
-                </div>
-                
-                <div class="profile-card" style="margin-top: 30px;">
-                    <h3>📋 My Visit Details</h3>
-                    <div class="profile-item">
-                        <span class="profile-label">Name:</span>
-                        <span class="profile-value" id="profileName">-</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Email:</span>
-                        <span class="profile-value" id="profileEmail">-</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Mobile:</span>
-                        <span class="profile-value" id="profileMobile">-</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Purpose:</span>
-                        <span class="profile-value" id="profilePurpose">-</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Visit Date:</span>
-                        <span class="profile-value" id="profileDate">-</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Status:</span>
-                        <span class="profile-value"><span class="status-badge status-pending" id="profileStatus">Pending</span></span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- AI Chat Widget -->
-            <!-- Chat Box -->
-<div class="chat-container" id="chatContainer">
-    
-    <div class="chat-header">
-        <span>🤖 SRIMCA AI Assistant</span>
-        <button class="chat-close" onclick="closeChat()">×</button>
-    </div>
-
-    <div class="chat-messages" id="chatMessages">
-        <div class="message bot">
-            Hello! I'm your SRIMCA AI assistant. How can I help you today?
-        </div>
-    </div>
-
-    <div class="chat-input">
-        <input type="text" id="chatInput" 
-               placeholder="Type your question..." 
-               onkeypress="handleChatKeypress(event)">
-        <button onclick="sendMessage()">Send</button>
-    </div>
-
-</div>
-            
-            <script>
-                // Check authentication
-                const token = localStorage.getItem('token');
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                
-                if (!token || user.role !== 'visitor') {
-                    window.location.href = '/login';
-                }
-                
-                // Display user info
-                document.getElementById('visitorName').textContent = user.name || 'Visitor';
-                document.getElementById('profileName').textContent = user.name || '-';
-                document.getElementById('profileEmail').textContent = user.email || '-';
-                document.getElementById('profileMobile').textContent = user.mobile || '-';
-                document.getElementById('profilePurpose').textContent = user.purpose || '-';
-                document.getElementById('profileDate').textContent = user.visit_date ? new Date(user.visit_date).toLocaleDateString() : '-';
-                document.getElementById('profileStatus').textContent = user.approval_status || 'pending';
-                
-                function logout() {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                }
-                
-                function openChat() {
-                    document.getElementById('chatContainer').classList.add('active');
-                }
-                
-                function closeChat() {
-                    document.getElementById('chatContainer').classList.remove('active');
-                }
-                
-                function handleChatKeypress(event) {
-                    if (event.key === 'Enter') {
-                        sendMessage();
-                    }
-                }
-                
-                async function sendMessage() {
-                    const input = document.getElementById('chatInput');
-                    const message = input.value.trim();
-                    if (!message) return;
-                    
-                    // Add user message
-                    addMessage(message, 'user');
-                    input.value = '';
-                    
-                    // Simulate AI response (in production, call AI API)
-                    setTimeout(() => {
-                        const responses = getAIResponse(message);
-                        addMessage(responses, 'bot');
-                    }, 500);
-                }
-                
-                function addMessage(text, sender) {
-                    const messagesDiv = document.getElementById('chatMessages');
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message ' + sender;
-                    messageDiv.textContent = text;
-                    messagesDiv.appendChild(messageDiv);
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }
-                
-                function getAIResponse(query) {
-                    query = query.toLowerCase();
-                    
-                    const responses = {
-                        'admission': 'SRIMCA offers various undergraduate and postgraduate courses in Engineering, Management, and Computer Applications. For admission details, please visit our admission office or call us.',
-                        'course': 'SRIMCA offers B.Tech, M.Tech, MBA, MCA, and various other courses. Our engineering programs include Computer Science, IT, Mechanical, Civil, and Electrical Engineering.',
-                        'department': 'SRIMCA has several departments including Computer Science, Information Technology, Mechanical Engineering, Civil Engineering, Electrical Engineering, and Management Studies.',
-                        'timing': 'College hours are from 9:00 AM to 5:00 PM Monday to Saturday. Administrative office hours are 9:30 AM to 4:30 PM.',
-                        'contact': 'You can contact us at: Phone: +91-XXX-XXXXXXX, Email: info@srimca.edu.in, Address: SRIMCA College, [Location]',
-                        'fee': 'Fee structure varies by course. For detailed fee information, please contact our admission department.',
-                        'placement': 'SRIMCA has a dedicated placement cell that assists students with job opportunities. Many reputed companies visit our campus for recruitment.',
-                        'hostel': 'Yes, we provide separate hostels for boys and girls with all necessary amenities.',
-                        'library': 'Our library has a vast collection of books, journals, and digital resources. It operates from 8:00 AM to 8:00 PM.',
-                        'default': 'Thank you for your question! For more detailed information, please contact our office or use the chat feature. Our team will be happy to assist you.'
-                    };
-                    
-                    for (const [key, value] of Object.entries(responses)) {
-                        if (query.includes(key)) {
-                            return value;
-                        }
-                    }
-                    return responses['default'];
-                }
-            </script>
-        </body>
-        </html>
-        '''
-    
-    # Error handlers
-    @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({'error': 'Endpoint not found'}), 404
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        return jsonify({'error': 'Internal server error'}), 500
-    
-    @app.before_request
-    def before_request():
-        """Log requests"""
-        print(f"{request.method} {request.path}")
-    
-    return app
-
-
-# Create the app
-app = create_app()
-
-# Initialize connections on startup
-def initialize_app():
-    """Initialize database and Firebase connections"""
-    print("Initializing SRIMCA AI Backend...")
-    
-    # Connect to MongoDB
-    try:
-        connect_to_mongodb()
-        initialize_indexes()
-        print("✅ MongoDB Atlas connected")
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Login failed'}), 500
+
+
+@auth_bp.route('/verify', methods=['GET'])
+def verify_token():
+    """
+    Verify JWT token
+    Expects Authorization header with Bearer token
+    """
+    auth_header = request.headers.get('Authorization')
     
-    # Initialize Firebase
+    if not auth_header:
+        return jsonify({'error': 'No authorization header'}), 401
+    
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != 'bearer':
+        return jsonify({'error': 'Invalid authorization header'}), 401
+    
+    token = parts[1]
+    payload = verify_jwt_token(token)
+    
+    if payload is None:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    
+    return jsonify({
+        'valid': True,
+        'user': payload
+    }), 200
+
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh_token():
+    """
+    Refresh JWT token
+    Expects Authorization header with Bearer token
+    """
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header:
+        return jsonify({'error': 'No authorization header'}), 401
+    
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != 'bearer':
+        return jsonify({'error': 'Invalid authorization header'}), 401
+    
+    token = parts[1]
+    payload = verify_jwt_token(token)
+    
+    if payload is None:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    
+    # Get fresh user data
+    users = get_collection(Collections.USERS)
+    user_doc = users.find_one({'_id': ObjectId(payload['user_id'])})
+    
+    if not user_doc:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Generate new token
+    new_token = generate_jwt_token(user_doc)
+    
+    return jsonify({
+        'token': new_token,
+        'user': UserModel.to_dict(user_doc)
+    }), 200
+
+
+@auth_bp.route('/change-password', methods=['POST'])
+def change_password():
+    """
+    Change user password
+    Expects JSON: { "current_password": "", "new_password": "" }
+    Requires Authorization header
+    """
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header:
+        return jsonify({'error': 'No authorization header'}), 401
+    
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != 'bearer':
+        return jsonify({'error': 'Invalid authorization header'}), 401
+    
+    token = parts[1]
+    payload = verify_jwt_token(token)
+    
+    if payload is None:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    
     try:
-        initialize_firebase()
-        print("✅ Firebase initialized")
+        data = request.get_json()
+        
+        if not data.get('current_password') or not data.get('new_password'):
+            return jsonify({'error': 'Current and new password are required'}), 400
+        
+        if len(data['new_password']) < 6:
+            return jsonify({'error': 'New password must be at least 6 characters'}), 400
+        
+        # Get user from database
+        users = get_collection(Collections.USERS)
+        user_doc = users.find_one({'_id': ObjectId(payload['user_id'])})
+        
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Verify current password
+        stored_password = user_doc.get('password', '').encode('utf-8')
+        if not bcrypt.checkpw(data['current_password'].encode('utf-8'), stored_password):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+        
+        # Hash new password
+        hashed_new_password = bcrypt.hashpw(data['new_password'].encode('utf-8'), bcrypt.gensalt())
+        
+        # Update password
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'password': hashed_new_password.decode('utf-8')}}
+        )
+        
+        return jsonify({'message': 'Password changed successfully'}), 200
+    
     except Exception as e:
-        print(f"⚠️ Firebase initialization skipped: {e}")
-
-
-# Run initialization
-if __name__ == '__main__':
-    initialize_app()
-    
-    config = get_config()
-    print(f"\n🚀 Server running on http://0.0.0.0:{config.PORT}")
-    print(f"📚 API Documentation available at http://0.0.0.0:{config.PORT}/")
-    
-    app.run(host='0.0.0.0', port=config.PORT, debug=config.FLASK_DEBUG)
-
-
-# For gunicorn/WSGI
-application = app
-
-# Cleanup on exit
-import atexit
-atexit.register(close_mongodb_connection)
+        print(f"Change password error: {e}")
+        return jsonify({'error': 'Failed to change password'}), 500
