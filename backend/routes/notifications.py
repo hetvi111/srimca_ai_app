@@ -38,7 +38,7 @@ def require_auth(f):
     return decorated
 
 
-@notifications_bp.route('/notifications', methods=['GET'])
+@notifications_bp.route('/notifications', methods=['GET'], endpoint='get_notifications')
 def get_notifications():
     """
     Get all notifications (for admin dashboard)
@@ -70,7 +70,7 @@ def get_notifications():
         return jsonify({'error': 'Failed to get notifications'}), 500
 
 
-@notifications_bp.route('/notifications/my', methods=['GET'])
+@notifications_bp.route('/notifications/my', methods=['GET'], endpoint='get_my_notifications')
 @require_auth
 def get_my_notifications():
     """
@@ -116,7 +116,7 @@ def get_my_notifications():
         return jsonify({'error': 'Failed to get notifications'}), 500
 
 
-@notifications_bp.route('/notifications/unread-count', methods=['GET'])
+@notifications_bp.route('/notifications/unread-count', methods=['GET'], endpoint='get_unread_count')
 def get_unread_count():
     """
     Get count of unread notifications
@@ -132,7 +132,7 @@ def get_unread_count():
         return jsonify({'error': 'Failed to get unread count'}), 500
 
 
-@notifications_bp.route('/notifications/unread-count/my', methods=['GET'])
+@notifications_bp.route('/notifications/unread-count/my', methods=['GET'], endpoint='get_my_unread_count')
 @require_auth
 def get_my_unread_count():
     """
@@ -176,7 +176,7 @@ def get_my_unread_count():
         return jsonify({'error': 'Failed to get unread count'}), 500
 
 
-@notifications_bp.route('/notifications', methods=['POST'])
+@notifications_bp.route('/notifications', methods=['POST'], endpoint='create_notification_with_target')
 @require_auth
 def create_notification_with_target():
     """
@@ -233,7 +233,7 @@ def create_notification_with_target():
         return jsonify({'error': 'Failed to create notification'}), 500
 
 
-@notifications_bp.route('/notifications/<notification_id>/read', methods=['POST'])
+@notifications_bp.route('/notifications/<notification_id>/read', methods=['POST'], endpoint='mark_as_read')
 def mark_as_read(notification_id):
     """
     Mark a notification as read
@@ -256,7 +256,7 @@ def mark_as_read(notification_id):
         return jsonify({'error': 'Failed to mark as read'}), 500
 
 
-@notifications_bp.route('/notifications/read-all', methods=['POST'])
+@notifications_bp.route('/notifications/read-all', methods=['POST'], endpoint='mark_all_as_read')
 def mark_all_as_read():
     """
     Mark all notifications as read
@@ -279,7 +279,7 @@ def mark_all_as_read():
         return jsonify({'error': 'Failed to mark all as read'}), 500
 
 
-@notifications_bp.route('/notifications/<notification_id>', methods=['DELETE'])
+@notifications_bp.route('/notifications/<notification_id>', methods=['DELETE'], endpoint='delete_notification')
 def delete_notification(notification_id):
     """
     Delete a notification

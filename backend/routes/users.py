@@ -36,7 +36,7 @@ def require_auth(f):
     return decorated
 
 
-@users_bp.route('/profile', methods=['GET'])
+@users_bp.route('/profile', methods=['GET'], endpoint='get_profile')
 @require_auth
 def get_profile():
     """
@@ -57,7 +57,7 @@ def get_profile():
         return jsonify({'error': 'Failed to get profile'}), 500
 
 
-@users_bp.route('/profile', methods=['PUT'])
+@users_bp.route('/profile', methods=['PUT'], endpoint='update_profile')
 @require_auth
 def update_profile():
     """
@@ -103,7 +103,7 @@ def update_profile():
         return jsonify({'error': 'Failed to update profile'}), 500
 
 
-@users_bp.route('/<user_id>', methods=['GET'])
+@users_bp.route('/<user_id>', methods=['GET'], endpoint='get_user_by_id')
 @require_auth
 def get_user(user_id):
     """
@@ -131,7 +131,7 @@ def get_user(user_id):
         return jsonify({'error': 'Failed to get user'}), 500
 
 
-@users_bp.route('/', methods=['GET'])
+@users_bp.route('/', methods=['GET'], endpoint='get_all_users')
 @require_auth
 def get_users():
     """
@@ -176,7 +176,7 @@ def get_users():
         return jsonify({'error': 'Failed to get users'}), 500
 
 
-@users_bp.route('/<user_id>/deactivate', methods=['POST'])
+@users_bp.route('/<user_id>/deactivate', methods=['POST'], endpoint='deactivate_user')
 @require_auth
 def deactivate_user(user_id):
     """
@@ -206,7 +206,7 @@ def deactivate_user(user_id):
         return jsonify({'error': 'Failed to deactivate user'}), 500
 
 
-@users_bp.route('/stats', methods=['GET'])
+@users_bp.route('/stats', methods=['GET'], endpoint='get_user_stats')
 @require_auth
 def get_admin_stats():
     """
@@ -251,7 +251,7 @@ def get_admin_stats():
         return jsonify({'error': 'Failed to get stats'}), 500
 
 
-@users_bp.route('/<user_id>/activate', methods=['POST'])
+@users_bp.route('/<user_id>/activate', methods=['POST'], endpoint='activate_user')
 @require_auth
 def activate_user(user_id):
     """

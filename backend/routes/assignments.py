@@ -38,7 +38,7 @@ def require_auth(f):
     return decorated
 
 
-@assignments_bp.route('/', methods=['GET'])
+@assignments_bp.route('/', methods=['GET'], endpoint='get_assignments')
 def get_assignments():
     """
     Get all assignments
@@ -81,7 +81,7 @@ def get_assignments():
         return jsonify({'error': 'Failed to get assignments'}), 500
 
 
-@assignments_bp.route('/<assignment_id>', methods=['GET'])
+@assignments_bp.route('/<assignment_id>', methods=['GET'], endpoint='get_assignment')
 def get_assignment(assignment_id):
     """
     Get a single assignment by ID
@@ -100,7 +100,7 @@ def get_assignment(assignment_id):
         return jsonify({'error': 'Failed to get assignment'}), 500
 
 
-@assignments_bp.route('/', methods=['POST'])
+@assignments_bp.route('/', methods=['POST'], endpoint='create_assignment')
 @require_auth
 def create_assignment():
     """
@@ -154,7 +154,7 @@ def create_assignment():
         return jsonify({'error': 'Failed to create assignment'}), 500
 
 
-@assignments_bp.route('/<assignment_id>', methods=['PUT'])
+@assignments_bp.route('/<assignment_id>', methods=['PUT'], endpoint='update_assignment')
 @require_auth
 def update_assignment(assignment_id):
     """
@@ -202,7 +202,7 @@ def update_assignment(assignment_id):
         return jsonify({'error': 'Failed to update assignment'}), 500
 
 
-@assignments_bp.route('/<assignment_id>', methods=['DELETE'])
+@assignments_bp.route('/<assignment_id>', methods=['DELETE'], endpoint='delete_assignment')
 @require_auth
 def delete_assignment(assignment_id):
     """
@@ -233,7 +233,7 @@ def delete_assignment(assignment_id):
         return jsonify({'error': 'Failed to delete assignment'}), 500
 
 
-@assignments_bp.route('/<assignment_id>/submit', methods=['POST'])
+@assignments_bp.route('/<assignment_id>/submit', methods=['POST'], endpoint='submit_assignment')
 @require_auth
 def submit_assignment(assignment_id):
     """

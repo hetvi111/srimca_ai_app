@@ -53,7 +53,7 @@ def verify_jwt_token(token: str) -> dict:
         return None
 
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route('/register', methods=['POST'], endpoint='register')
 def register():
     """
     Register a new user (student or visitor)
@@ -189,7 +189,7 @@ def register():
         return jsonify({'error': 'Registration failed'}), 500
 
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST'], endpoint='login')
 def login():
     """
     Login user
@@ -260,7 +260,7 @@ def login():
         return jsonify({'error': 'Login failed'}), 500
 
 
-@auth_bp.route('/verify', methods=['GET'])
+@auth_bp.route('/verify', methods=['GET'], endpoint='verify_token')
 def verify_token():
     """
     Verify JWT token
@@ -287,7 +287,7 @@ def verify_token():
     }), 200
 
 
-@auth_bp.route('/refresh', methods=['POST'])
+@auth_bp.route('/refresh', methods=['POST'], endpoint='refresh_token')
 def refresh_token():
     """
     Refresh JWT token
@@ -324,7 +324,7 @@ def refresh_token():
     }), 200
 
 
-@auth_bp.route('/change-password', methods=['POST'])
+@auth_bp.route('/change-password', methods=['POST'], endpoint='change_password')
 def change_password():
     """
     Change user password
