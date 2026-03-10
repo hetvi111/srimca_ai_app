@@ -18,19 +18,20 @@ notifications_bp = Blueprint('notifications', __name__, url_prefix='/api')
 def require_auth(f):
     """Decorator to require authentication"""
     from functools import wraps
+    from flask import make_response
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
         if not auth_header:
-            return jsonify({'error': 'No authorization header'}), 401
+            return make_response(jsonify({'error': 'No authorization header'}), 401)
         
         parts = auth_header.split()
         if len(parts) != 2 or parts[0].lower() != 'bearer':
-            return jsonify({'error': 'Invalid authorization header'}), 401
+            return make_response(jsonify({'error': 'Invalid authorization header'}), 401)
         
         payload = verify_jwt_token(parts[1])
         if payload is None:
-            return jsonify({'error': 'Invalid or expired token'}), 401
+            return make_response(jsonify({'error': 'Invalid or expired token'}), 401)
         
         request.user = payload
         return f(*args, **kwargs)
