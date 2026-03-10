@@ -1,0 +1,290 @@
+================================================================================
+              SRIMCA AI ASSISTANT - PRESENTATION & FUNCTIONALITY GUIDE
+================================================================================
+
+PROJECT OVERVIEW
+================================================================================
+SRIMCA AI Assistant is a comprehensive Flutter mobile application with a Flask 
+backend for Shrimad Rajchandra Institute of Management & Computer Applications (SRIMCA). 
+The app provides an AI-powered assistant for students, faculty, visitors, and 
+administrators with full college management capabilities.
+
+TECHNOLOGY STACK
+================================================================================
+FRONTEND:
+  - Flutter (Dart) - Cross-platform mobile app
+  - Firebase (Auth, Messaging, Cloud Firestore)
+  - Material Design 3 with custom Navy Blue theme
+
+BACKEND:
+  - Flask (Python) - REST API
+  - MongoDB Atlas - Database
+  - RAG (Retrieval-Augmented Generation) - AI Chat
+  - ChromaDB - Vector database for AI
+
+DEPLOYMENT:
+  - Backend: Render.com (Production)
+  - Database: MongoDB Atlas Cloud
+
+================================================================================
+                         PRESENTATION OUTLINE
+================================================================================
+
+1. INTRODUCTION (2-3 minutes)
+   - Welcome & Project Overview
+   - What is SRIMCA AI Assistant?
+   - Purpose: Bridging students with college information via AI
+
+2. TECHNOLOGY STACK (2 minutes)
+   - Flutter for Cross-platform Mobile Development
+   - Flask + MongoDB for Backend
+   - RAG-based AI System
+   - Firebase for Notifications
+
+3. USER ROLES & AUTHENTICATION (3-4 minutes)
+   - Four User Roles:
+     a) Admin - Full system control
+     b) Faculty - Content management, notices
+     c) Student - Access notices, materials, AI chat
+     d) Visitor - Registration, inquiry, campus info
+   - Login/Registration System with role-based access
+
+4. KEY FEATURES DEMONSTRATION (8-10 minutes)
+   
+   A. ADMIN DASHBOARD
+      - Statistics Overview (Students, Faculty, Visitors)
+      - User Management
+      - Content Management
+      - AI Monitoring
+      - Reports & Analytics
+      - Database Management
+      - Notifications System
+   
+   B. STUDENT FEATURES
+      - Dashboard with notices, assignments, materials
+      - AI Chat with SAI (SRIMCA AI)
+      - Profile Management
+      - Notifications
+      - Chat History
+   
+   C. FACULTY FEATURES
+      - Notice Management
+      - Visitor Inquiries
+      - Event Management
+      - AI Monitoring
+      - Upload Study Materials
+   
+   D. VISITOR FEATURES
+      - Visitor Registration
+      - QR Code for Check-in
+      - Campus Information
+      - AI Chat for Inquiries
+      - Visit History
+
+5. AI CHATBOT - SAI (3-4 minutes)
+   - RAG-powered intelligent responses
+   - College-related queries
+   - Course information
+   - Exam schedules
+   - Syllabus information
+   - Fallback responses for unknown queries
+
+6. DATABASE & BACKEND (2-3 minutes)
+   - MongoDB Collections:
+     * Users (students, faculty, visitors, admins)
+     * Notices
+     * Assignments
+     * Materials
+     * Knowledge Base (AI)
+     * Notifications
+   - RESTful API Endpoints
+
+7. DEPLOYMENT (1-2 minutes)
+   - Backend on Render.com
+   - Database on MongoDB Atlas
+   - Mobile App (APK ready)
+
+8. FUTURE ENHANCEMENTS (1 minute)
+   - Live chat with faculty
+   - Attendance tracking
+   - Online exam system
+   - Payment gateway integration
+
+9. Q&A (5 minutes)
+
+================================================================================
+                         FUNCTIONALITY STATUS
+================================================================================
+
+✅ WORKING FEATURES
+--------------------------------------------------------------------------------
+AUTHENTICATION:
+  ✅ User Registration (Student, Faculty, Admin, Visitor)
+  ✅ User Login with role-based routing
+  ✅ Password validation
+  ✅ Session management with SharedPreferences
+  ✅ Token-based authentication
+
+ADMIN FUNCTIONALITY:
+  ✅ Admin Dashboard with statistics
+  ✅ Student Management (View, Add, Delete, Activate/Deactivate)
+  ✅ Faculty Management
+  ✅ Visitor Management with approval system
+  ✅ Content Management (Notices, Assignments, Materials, FAQs)
+  ✅ AI Query Monitoring
+  ✅ Reports & Analytics with charts
+  ✅ Database Management
+  ✅ Security & Maintenance
+  ✅ Push Notifications to all users
+
+STUDENT FUNCTIONALITY:
+  ✅ Student Dashboard with stats (Notices, Assignments, Materials)
+  ✅ View Notices
+  ✅ View Assignments
+  ✅ View Study Materials
+  ✅ AI Chat (SAI) - Ask questions about college
+  ✅ Chat History
+  ✅ Notifications
+  ✅ Profile View
+  ✅ Logout
+
+FACULTY FUNCTIONALITY:
+  ✅ Faculty Dashboard
+  ✅ Notice Management (Create, Edit, Delete)
+  ✅ Assignment Management
+  ✅ Study Material Upload
+  ✅ Visitor Inquiry Response
+  ✅ Event Management
+  ✅ Notifications
+  ✅ AI Response Monitoring
+  ✅ Profile Management
+
+VISITOR FUNCTIONALITY:
+  ✅ Visitor Registration
+  ✅ QR Code Generation
+  ✅ Visitor Dashboard
+  ✅ Campus Information
+  ✅ AI Chat for inquiries
+  ✅ Visit History
+  ✅ Profile View
+
+AI CHATBOT (SAI):
+  ✅ RAG-based intelligent responses
+  ✅ Context-aware answers about SRIMCA
+  ✅ Course & Department information
+  ✅ Exam & Syllabus queries
+  ✅ Fee & Placement information
+  ✅ Library & Hostel details
+  ✅ Fallback responses
+  ✅ Chat history storage
+
+NOTIFICATIONS:
+  ✅ Push Notifications via Firebase
+  ✅ In-app notifications
+  ✅ Role-based notification targeting
+  ✅ Read/Unread status
+  ✅ Notification to specific courses/semesters
+
+UI/UX FEATURES:
+  ✅ Material Design 3
+  ✅ Navy Blue Theme
+  ✅ Dark/Light Mode
+  ✅ Responsive Layout
+  ✅ Pull-to-refresh
+  ✅ Loading indicators
+  ✅ Error handling with user feedback
+
+WEB FEATURES:
+  ✅ Visitor Registration Web Page
+  ✅ Visitor Login Web Page
+  ✅ Visitor Dashboard Web Page
+  ✅ QR Code Generation API
+
+API ENDPOINTS:
+  ✅ /health - Health check
+  ✅ /api/register - User registration
+  ✅ /api/login - User login
+  ✅ /api/notices - Notices CRUD
+  ✅ /api/assignments - Assignments CRUD
+  ✅ /api/materials - Study materials CRUD
+  ✅ /api/faqs - FAQs CRUD
+  ✅ /api/users - User management
+  ✅ /api/notifications - Notifications
+  ✅ /api/admin/* - Admin routes
+  ✅ /api/ai/chat - AI Chat (RAG-powered)
+  ✅ /generate-qr - QR Code generation
+
+================================================================================
+                           APP SCREENS
+================================================================================
+
+1. SPLASH SCREEN - App loading with logo
+2. FIRST SCREEN - Welcome page with login/register options
+3. LOGIN/REGISTER - Tab-based authentication
+4. ADMIN MAIN DASHBOARD - Navigation drawer with 9 sections
+5. STUDENT DASHBOARD - Bottom navigation (Home, AI Chat, Profile)
+6. FACULTY DASHBOARD - Bottom navigation (Home, Notices, Visitors, Events, etc.)
+7. VISITOR HOME - Cards for AI Chat, Profile, Course Info, Campus Info
+8. AI CHAT SCREEN - Chat interface with SAI
+9. PROFILE SCREENS - View/Edit profile for each role
+10. NOTIFICATIONS SCREEN - List of all notifications
+11. CONTENT MANAGEMENT - Notices, Materials, Assignments
+12. AI MONITORING - Query monitoring and analytics
+
+================================================================================
+                        DATABASE COLLECTIONS
+================================================================================
+
+1. users - All registered users (students, faculty, visitors, admins)
+2. notices - College notices
+3. assignments - Course assignments
+4. study_materials - Uploaded study materials
+5. faqs - Frequently Asked Questions
+6. knowledge_base - AI knowledge base for RAG
+7. notifications - Push notifications
+8. chat_history - User chat history with AI
+
+================================================================================
+                         PROJECT STRUCTURE
+================================================================================
+
+SRIMCA_AI/
+├── lib/                    # Flutter app code
+│   ├── main.dart          # App entry point
+│   ├── api_service.dart   # API calls
+│   ├── chat_screen.dart   # AI Chat
+│   ├── admin_*.dart       # Admin pages
+│   ├── student_*.dart     # Student pages
+│   ├── faculty_*.dart     # Faculty pages
+│   └── visitor_*.dart     # Visitor pages
+│
+├── backend/               # Flask backend
+│   ├── app.py            # Main Flask app
+│   ├── routes/           # API routes
+│   ├── srimca/           # RAG AI system
+│   └── models.py        # Database models
+│
+├── android/              # Android config
+├── ios/                  # iOS config
+└── assets/              # Images
+
+================================================================================
+                           HOW TO RUN
+================================================================================
+
+BACKEND:
+  cd backend
+  pip install -r requirements.txt
+  python app.py
+  Server runs on http://localhost:5000
+
+FLUTTER APP:
+  flutter pub get
+  flutter run
+
+BUILD APK:
+  flutter build apk --release
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================

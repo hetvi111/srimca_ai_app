@@ -32,15 +32,27 @@ class AppColors {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Check if Firebase is already initialized to avoid duplicate app error
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  // Initialize Firebase only if not already initialized
+  // This prevents "duplicate-app" error
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print('Firebase initialized successfully');
+    } else {
+      print('Firebase already initialized, skipping...');
+    }
+  } catch (e) {
+    print('Firebase initialization error: $e');
   }
   
-  // Initialize push notifications
-  await PushNotificationService.initialize();
+  // Initialize push notifications (only after Firebase is ready)
+  try {
+    await PushNotificationService.initialize();
+  } catch (e) {
+    print('Push notification initialization error: $e');
+  }
   
   runApp(const MyApp());
 }

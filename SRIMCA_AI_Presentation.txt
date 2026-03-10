@@ -1,0 +1,543 @@
+================================================================================
+              SRIMCA AI ASSISTANT - DETAILED PRESENTATION OUTLINE
+                    WITH API FUNCTIONALITY MAPPING
+================================================================================
+
+PROJECT OVERVIEW
+================================================================================
+SRIMCA AI Assistant is a comprehensive Flutter mobile application with a Flask 
+backend for Shrimad Rajchandra Institute of Management & Computer Applications (SRIMCA). 
+The app provides an AI-powered assistant for students, faculty, visitors, and 
+administrators with full college management capabilities.
+
+================================================================================
+                         PRESENTATION OUTLINE (DETAILED)
+================================================================================
+
+1. INTRODUCTION (2-3 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   • Welcome & Project Overview
+   
+   • What is SRIMCA AI Assistant?
+     SRIMCA AI Assistant is an intelligent mobile application designed for 
+     Shrimad Rajchandra Institute of Management & Computer Applications (SRIMCA). 
+     It serves as a comprehensive digital platform that connects students, faculty, 
+     visitors, and administrators with college information through AI-powered 
+     conversations and automated management systems.
+     
+     Key Capabilities:
+     → AI-powered chatbot (SAI) for instant college information
+     → Complete college management (notices, assignments, materials)
+     → Role-based access for Admin, Faculty, Student, and Visitor
+     → Push notifications for important updates
+     → QR code-based visitor management system
+     → Web portal for visitor registration
+   
+   • Purpose: Bridging students with college information via AI
+   • Key Highlight: First AI-powered college management app
+
+2. TECHNOLOGY STACK (2 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   FRONTEND:
+     ✓ Flutter (Dart) - Cross-platform mobile app (iOS & Android)
+     ✓ Firebase - Authentication, Cloud Messaging, Push Notifications
+     ✓ Material Design 3 with custom Navy Blue theme
+   
+   BACKEND:
+     ✓ Flask (Python) - REST API backend
+     ✓ MongoDB Atlas - Cloud NoSQL database
+     ✓ RAG (Retrieval-Augmented Generation) - AI Chatbot
+     ✓ ChromaDB - Vector database for AI
+     ✓ OpenAI GPT Integration - Advanced AI responses
+   
+   DEPLOYMENT:
+     ✓ Backend: Render.com (Production)
+     ✓ Database: MongoDB Atlas Cloud
+
+3. USER ROLES & AUTHENTICATION (3-4 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   Four User Roles:
+     a) ADMIN - Full system control and monitoring
+     b) FACULTY - Content management, notices, materials
+     c) STUDENT - Access notices, assignments, materials, AI chat
+     d) VISITOR - Registration, inquiry, campus info, QR check-in
+
+   AUTHENTICATION APIS:
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │ API ENDPOINT            │ METHOD │ DESCRIPTION                        │
+   ├─────────────────────────┼────────┼────────────────────────────────────┤
+   │ /api/register           │ POST   │ User registration (all roles)     │
+   │ /api/login              │ POST   │ User login with JWT token         │
+   │ /api/users/profile      │ GET    │ Get user profile                  │
+   │ /api/logout             │ POST   │ User logout                       │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+   • Token-based authentication with JWT
+   • Role-based routing after login
+   • Session management with SharedPreferences
+
+4. KEY FEATURES & API MAPPING (8-10 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+
+   A. ADMIN DASHBOARD (Complete System Control)
+   ──────────────────────────────────────────────
+      • Statistics Overview (Students, Faculty, Visitors count)
+      • User Management (CRUD operations)
+      • Content Management (Notices, Assignments, Materials, FAQs)
+      • AI Monitoring (Query tracking)
+      • Reports & Analytics with charts
+      • Database Management
+      • Notifications System
+      
+      ADMIN APIS:
+      ┌─────────────────────────────────────────────────────────────────────┐
+      │ API ENDPOINT                    │ METHOD │ DESCRIPTION            │
+      ├──────────────────────────────────┼────────┼───────────────────────┤
+      │ /api/admin/stats                 │ GET    │ Get dashboard stats   │
+      │ /api/admin/visitors              │ GET    │ Get all visitors      │
+      │ /api/admin/visitors/:id          │ PUT    │ Update visitor status│
+      │ /api/admin/*                     │ *      │ All admin operations  │
+      └─────────────────────────────────────────────────────────────────────┘
+
+   B. STUDENT FEATURES
+   ─────────────────────
+      ✓ Dashboard with notices, assignments, materials stats
+      ✓ View Notices - College announcements
+      ✓ View Assignments - Coursework and submissions
+      ✓ View Study Materials - PDF/Notes access
+      ✓ AI Chat (SAI) - Ask questions about college
+      ✓ Chat History - Previous conversations
+      ✓ Notifications - Push and in-app
+      ✓ Profile View/Edit
+      
+      STUDENT APIS:
+      ┌─────────────────────────────────────────────────────────────────────┐
+      │ API ENDPOINT              │ METHOD │ DESCRIPTION                    │
+      ├───────────────────────────┼────────┼────────────────────────────────┤
+      │ /api/notices              │ GET    │ Get all notices (filtered)    │
+      │ /api/assignments          │ GET    │ Get all assignments           │
+      │ /api/assignments/:id/submit│ POST  │ Submit assignment             │
+      │ /api/materials            │ GET    │ Get study materials           │
+      │ /api/ai/chat             │ POST   │ Chat with SAI (RAG-powered)   │
+      │ /api/chat/history/:user_id│ GET   │ Get chat history              │
+      │ /api/chat/save            │ POST   │ Save chat message             │
+      │ /api/notifications/my    │ GET    │ Get my notifications          │
+      │ /api/notifications/:id/read│ POST │ Mark notification as read     │
+      │ /api/users/:id            │ GET    │ Get user profile              │
+      └───────────────────────────┴────────┴────────────────────────────────┘
+
+   C. FACULTY FEATURES
+   ─────────────────────
+      ✓ Faculty Dashboard with stats
+      ✓ Notice Management (Create, Edit, Delete)
+      ✓ Assignment Management (Create, Edit, Delete, View submissions)
+      ✓ Study Material Upload
+      ✓ Visitor Inquiry Response
+      ✓ Event Management
+      ✓ Notifications
+      ✓ AI Response Monitoring
+      ✓ Profile Management
+      
+      FACULTY APIS:
+      ┌─────────────────────────────────────────────────────────────────────┐
+      │ API ENDPOINT              │ METHOD │ DESCRIPTION                    │
+      ├───────────────────────────┼────────┼────────────────────────────────┤
+      │ /api/notices              │ POST   │ Create new notice              │
+      │ /api/notices/:id          │ PUT    │ Update notice                  │
+      │ /api/notices/:id          │ DELETE │ Delete notice                  │
+      │ /api/assignments          │ POST   │ Create assignment              │
+      │ /api/assignments/:id      │ PUT    │ Update assignment              │
+      │ /api/assignments/:id      │ DELETE │ Delete assignment              │
+      │ /api/materials           │ POST   │ Upload study material          │
+      │ /api/materials/:id        │ PUT    │ Update material                │
+      │ /api/materials/:id        │ DELETE │ Delete material                │
+      │ /api/faqs                 │ POST   │ Create FAQ                     │
+      │ /api/faqs/:id             │ PUT    │ Update FAQ                     │
+      │ /api/notifications       │ POST   │ Send notification              │
+      └───────────────────────────┴────────┴────────────────────────────────┘
+
+   D. VISITOR FEATURES
+   ─────────────────────
+      ✓ Visitor Registration (Web & Mobile)
+      ✓ QR Code Generation for Check-in
+      ✓ Visitor Dashboard
+      ✓ Campus Information
+      ✓ AI Chat for inquiries
+      ✓ Visit History
+      ✓ Profile View
+      
+      VISITOR APIS:
+      ┌─────────────────────────────────────────────────────────────────────┐
+      │ API ENDPOINT              │ METHOD │ DESCRIPTION                    │
+      ├───────────────────────────┼────────┼────────────────────────────────┤
+      │ /api/register             │ POST   │ Register as visitor            │
+      │ /api/login                │ POST   │ Visitor login                  │
+      │ /generate-qr              │ GET    │ Generate QR code              │
+      │ /api/ai/chat              │ POST   │ AI chat for inquiries          │
+      │ /api/users/:id            │ GET    │ Get visitor profile            │
+      │ /api/visitors/:id/history │ GET    │ Get visit history              │
+      └───────────────────────────┴────────┴────────────────────────────────┘
+
+5. AI CHATBOT - SAI (SRIMCA AI) (3-4 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   • RAG-powered intelligent responses
+   • Three-tier response system:
+     1. Exact Match - Timetable queries
+     2. GPT with RAG - Context-aware answers
+     3. Fallback - Keyword-based responses
+   
+   AI APIS:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ API ENDPOINT     │ METHOD │ DESCRIPTION                            │
+   ├──────────────────┼────────┼────────────────────────────────────────┤
+   │ /api/ai/chat     │ POST   │ Main AI chat endpoint (RAG-powered)   │
+   └──────────────────┴────────┴────────────────────────────────────────┘
+   
+   AI KNOWLEDGE BASE APIS:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ API ENDPOINT              │ METHOD │ DESCRIPTION                    │
+   ├───────────────────────────┼────────┼────────────────────────────────┤
+   │ /api/knowledge            │ GET    │ Get knowledge entries          │
+   │ /api/knowledge/search     │ GET    │ Search knowledge base          │
+   │ /api/knowledge            │ POST   │ Create knowledge entry         │
+   │ /api/knowledge/bulk       │ POST   │ Bulk create entries            │
+   │ /api/knowledge/:id        │ PUT    │ Update knowledge entry         │
+   │ /api/knowledge/:id        │ DELETE │ Delete knowledge entry         │
+   │ /api/knowledge/categories │ GET    │ Get knowledge categories       │
+   └───────────────────────────┴────────┴────────────────────────────────┘
+
+   • College-related queries supported:
+     - Course information
+     - Exam schedules
+     - Syllabus information
+     - Fee details
+     - Placement statistics
+     - Library & Hostel details
+     - College timings
+
+6. DATABASE & BACKEND (2-3 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   MONGODB COLLECTIONS:
+   ┌─────────────────────┬────────────────────────────────────────────────┐
+   │ COLLECTION          │ DESCRIPTION                                    │
+   ├─────────────────────┼────────────────────────────────────────────────┤
+   │ users               │ All users (students, faculty, visitors, admins)│
+   │ notices             │ College notices and announcements             │
+   │ assignments         │ Course assignments                            │
+   │ study_materials     │ Uploaded study materials (PDFs, notes)         │
+   │ faqs                │ Frequently Asked Questions                    │
+   │ knowledge_base      │ AI knowledge base for RAG                     │
+   │ notifications       │ Push notifications                            │
+   │ chat_history        │ User chat history with AI                    │
+   │ students            │ Student-specific data (normalized)             │
+   │ faculty             │ Faculty-specific data (normalized)            │
+   └─────────────────────┴────────────────────────────────────────────────┘
+
+   COMPLETE API ENDPOINTS LIST:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ENDPOINT                        │ METHODS  │ DESCRIPTION            │
+   ├──────────────────────────────────┼──────────┼───────────────────────│
+   │ /                                │ GET      │ API root info         │
+   │ /health                         │ GET      │ Health check          │
+   │ /api/register                   │ POST     │ User registration     │
+   │ /api/login                      │ POST     │ User login            │
+   │ /api/notices                    │ GET,POST │ Notices CRUD          │
+   │ /api/notices/:id                │ GET,PUT,DELETE │ Notice operations │
+   │ /api/assignments               │ GET,POST │ Assignments CRUD      │
+   │ /api/assignments/:id           │ GET,PUT,DELETE │ Assignment ops   │
+   │ /api/assignments/:id/submit    │ POST     │ Submit assignment     │
+   │ /api/materials                 │ GET,POST │ Materials CRUD        │
+   │ /api/materials/:id             │ GET,PUT,DELETE │ Material ops     │
+   │ /api/faqs                      │ GET,POST │ FAQs CRUD             │
+   │ /api/faqs/:id                  │ GET,PUT,DELETE │ FAQ operations    │
+   │ /api/users                     │ GET      │ Get all users         │
+   │ /api/users/:id                 │ GET,PUT  │ User operations       │
+   │ /api/users/:id/activate        │ POST     │ Activate user         │
+   │ /api/users/:id/deactivate      │ POST     │ Deactivate user       │
+   │ /api/notifications             │ GET,POST │ Notifications CRUD    │
+   │ /api/notifications/my          │ GET      │ My notifications      │
+   │ /api/notifications/unread-count│ GET      │ Unread count          │
+   │ /api/notifications/:id/read    │ POST     │ Mark as read          │
+   │ /api/notifications/read-all    │ POST     │ Mark all as read      │
+   │ /api/admin/stats               │ GET      │ Admin dashboard stats │
+   │ /api/admin/visitors            │ GET,PUT  │ Visitor management    │
+   │ /api/students                  │ GET,POST │ Students CRUD         │
+   │ /api/students/:id              │ GET,PUT,DELETE │ Student ops     │
+   │ /api/faculty                   │ GET,POST │ Faculty CRUD          │
+   │ /api/faculty/:id               │ GET,PUT,DELETE │ Faculty ops     │
+   │ /api/knowledge                 │ GET,POST │ Knowledge base CRUD   │
+   │ /api/knowledge/search          │ GET      │ Search knowledge      │
+   │ /api/knowledge/bulk           │ POST     │ Bulk add knowledge   │
+   │ /api/knowledge/categories      │ GET      │ Get categories        │
+   │ /api/ai/chat                   │ POST     │ AI chat (RAG)        │
+   │ /generate-qr                    │ GET      │ Generate QR code     │
+   │ /register                       │ GET      │ Visitor reg. page    │
+   │ /login                          │ GET      │ Visitor login page   │
+   │ /visitor-dashboard             │ GET      │ Visitor dashboard     │
+   └──────────────────────────────────┴──────────┴──────────────────────┘
+
+7. DEPLOYMENT (1-2 minutes)
+   ─────────────────────────────────────────────────────────────────────────
+   • Backend deployed on Render.com
+   • Database on MongoDB Atlas Cloud
+   • Mobile APK ready for installation
+   • Web-based visitor registration
+
+8. FUTURE ENHANCEMENTS (1 minute)
+   ─────────────────────────────────────────────────────────────────────────
+   • Live chat with faculty
+   • Attendance tracking system
+   • Online exam system
+   • Payment gateway integration
+   • Library management system
+
+9. Q&A (5 minutes)
+
+================================================================================
+                         FUNCTIONALITY STATUS
+================================================================================
+
+✅ WORKING FEATURES
+─────────────────────────────────────────────────────────────────────────────
+
+AUTHENTICATION:
+  ✅ User Registration (Student, Faculty, Admin, Visitor)
+  ✅ User Login with role-based routing
+  ✅ Password validation
+  ✅ Session management with SharedPreferences
+  ✅ Token-based authentication (JWT)
+
+ADMIN FUNCTIONALITY:
+  ✅ Admin Dashboard with statistics
+  ✅ Student Management (View, Add, Delete, Activate/Deactivate)
+  ✅ Faculty Management
+  ✅ Visitor Management with approval system
+  ✅ Content Management (Notices, Assignments, Materials, FAQs)
+  ✅ AI Query Monitoring
+  ✅ Reports & Analytics with charts
+  ✅ Database Management
+  ✅ Security & Maintenance
+  ✅ Push Notifications to all users
+
+STUDENT FUNCTIONALITY:
+  ✅ Student Dashboard with stats (Notices, Assignments, Materials)
+  ✅ View Notices
+  ✅ View Assignments
+  ✅ View Study Materials
+  ✅ AI Chat (SAI) - Ask questions about college
+  ✅ Chat History
+  ✅ Notifications
+  ✅ Profile View
+  ✅ Logout
+
+FACULTY FUNCTIONALITY:
+  ✅ Faculty Dashboard
+  ✅ Notice Management (Create, Edit, Delete)
+  ✅ Assignment Management
+  ✅ Study Material Upload
+  ✅ Visitor Inquiry Response
+  ✅ Event Management
+  ✅ Notifications
+  ✅ AI Response Monitoring
+  ✅ Profile Management
+
+VISITOR FUNCTIONALITY:
+  ✅ Visitor Registration (Mobile & Web)
+  ✅ QR Code Generation
+  ✅ Visitor Dashboard
+  ✅ Campus Information
+  ✅ AI Chat for inquiries
+  ✅ Visit History
+  ✅ Profile View
+
+AI CHATBOT (SAI):
+  ✅ RAG-based intelligent responses
+  ✅ Context-aware answers about SRIMCA
+  ✅ Course & Department information
+  ✅ Exam & Syllabus queries
+  ✅ Fee & Placement information
+  ✅ Library & Hostel details
+  ✅ Fallback responses
+  ✅ Chat history storage
+  ✅ Three-tier response system (Exact Match → GPT/RAG → Fallback)
+
+NOTIFICATIONS:
+  ✅ Push Notifications via Firebase
+  ✅ In-app notifications
+  ✅ Role-based notification targeting
+  ✅ Read/Unread status
+  ✅ Notification to specific courses/semesters
+
+UI/UX FEATURES:
+  ✅ Material Design 3
+  ✅ Navy Blue Theme
+  ✅ Dark/Light Mode
+  ✅ Responsive Layout
+  ✅ Pull-to-refresh
+  ✅ Loading indicators
+  ✅ Error handling with user feedback
+
+WEB FEATURES:
+  ✅ Visitor Registration Web Page
+  ✅ Visitor Login Web Page
+  ✅ Visitor Dashboard Web Page
+  ✅ QR Code Generation API
+
+================================================================================
+                           APP SCREENS
+================================================================================
+
+1. SPLASH SCREEN - App loading with logo
+2. FIRST SCREEN - Welcome page with login/register options
+3. LOGIN/REGISTER - Tab-based authentication
+4. ADMIN MAIN DASHBOARD - Navigation drawer with 9 sections
+5. STUDENT DASHBOARD - Bottom navigation (Home, AI Chat, Profile)
+6. FACULTY DASHBOARD - Bottom navigation (Home, Notices, Visitors, Events, etc.)
+7. VISITOR HOME - Cards for AI Chat, Profile, Course Info, Campus Info
+8. AI CHAT SCREEN - Chat interface with SAI
+9. PROFILE SCREENS - View/Edit profile for each role
+10. NOTIFICATIONS SCREEN - List of all notifications
+11. CONTENT MANAGEMENT - Notices, Materials, Assignments
+12. AI MONITORING - Query monitoring and analytics
+13. VISITOR QR PAGE - QR code display for check-in
+
+================================================================================
+                        DATABASE COLLECTIONS
+================================================================================
+
+1. users - All registered users (students, faculty, visitors, admins)
+2. notices - College notices with targeting (role, course, semester)
+3. assignments - Course assignments with submissions
+4. study_materials - Uploaded study materials with categories
+5. faqs - Frequently Asked Questions
+6. knowledge_base - AI knowledge base for RAG (questions & answers)
+7. notifications - Push notifications with targeting
+8. chat_history - User chat history with AI
+9. students - Student-specific data (normalized)
+10. faculty - Faculty-specific data (normalized)
+
+================================================================================
+                         PROJECT STRUCTURE
+================================================================================
+
+SRIMCA_AI/
+├── lib/                    # Flutter app code
+│   ├── main.dart          # App entry point
+│   ├── api_service.dart   # API calls to backend
+│   ├── chat_screen.dart   # AI Chat with SAI
+│   ├── admin_*.dart       # Admin pages (15+ pages)
+│   ├── student_*.dart     # Student pages
+│   ├── faculty_*.dart     # Faculty pages
+│   ├── visitor_*.dart     # Visitor pages
+│   └── *.dart             # Shared components
+│
+├── backend/               # Flask backend
+│   ├── app.py            # Main Flask app with all routes
+│   ├── routes/           # API route blueprints
+│   │   ├── notices.py    # Notice management
+│   │   ├── assignments.py# Assignment management
+│   │   ├── materials.py  # Study materials
+│   │   ├── faqs.py       # FAQ management
+│   │   ├── users.py      # User management
+│   │   ├── notifications.py # Push notifications
+│   │   ├── admin.py      # Admin operations
+│   │   ├── students.py   # Student CRUD
+│   │   ├── faculty.py    # Faculty CRUD
+│   │   └── knowledge.py  # AI knowledge base
+│   ├── srimca/           # RAG AI system
+│   │   ├── app.py        # AI answer function
+│   │   ├── build_db.py   # Build knowledge DB
+│   │   ├── retriever.py  # RAG retrieval
+│   │   ├── gpt_answer.py # GPT integration
+│   │   ├── exact_match.py# Exact match responses
+│   │   └── fallback.py   # Fallback responses
+│   ├── auth.py           # JWT authentication
+│   ├── models.py         # Database models
+│   ├── database.py       # MongoDB connection
+│   ├── firebase.py       # Firebase integration
+│   └── notification_helper.py # Push notifications
+│
+├── android/              # Android config
+├── ios/                  # iOS config
+└── assets/              # Images and assets
+
+================================================================================
+                         HOW TO RUN
+================================================================================
+
+BACKEND:
+  cd backend
+  pip install -r requirements.txt
+  python app.py
+  Server runs on http://localhost:5000
+
+FLUTTER APP:
+  flutter pub get
+  flutter run
+
+BUILD APK:
+  flutter build apk --release
+
+================================================================================
+                         AI SYSTEM DETAILS
+================================================================================
+
+SAI (SRIMCA AI Assistant) - Three-tier Response System:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TIER 1: EXACT MATCH                                                         │
+│ Purpose: Handle timetable queries with exact responses                      │
+│ File: backend/srimca/exact_match.py                                        │
+│ Examples: "timetable", "class timing", "exam schedule"                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TIER 2: GPT WITH RAG (Retrieval-Augmented Generation)                      │
+│ Purpose: Generate context-aware answers using knowledge base                │
+│ Files:                                                                      │
+│   - backend/srimca/retriever.py  : Search knowledge base                  │
+│   - backend/srimca/gpt_answer.py  : GPT integration                         │
+│   - backend/srimca/build_db.py    : Build ChromaDB vector store            │
+│ Process:                                                                    │
+│   1. Retrieve relevant docs from knowledge base                             │
+│   2. Send context + question to GPT                                        │
+│   3. Return generated response                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TIER 3: FALLBACK (Keyword Search)                                           │
+│ Purpose: Answer queries using keyword matching                              │
+│ File: backend/srimca/fallback.py                                            │
+│ Process:                                                                    │
+│   1. Extract keywords from question                                         │
+│   2. Search knowledge base for matching answers                             │
+│   3. Return best match or default response                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Knowledge Base Categories:
+  - Courses & Departments
+  - Fees & Scholarships
+  - Placements
+  - Hostel & Library
+  - Admission Process
+  - College Events
+  - Contact Information
+
+================================================================================
+                         SUMMARY
+================================================================================
+
+SRIMCA AI is a comprehensive college management system featuring:
+  ✓ 4 User Roles (Admin, Faculty, Student, Visitor)
+  ✓ 30+ API Endpoints
+  ✓ 8 MongoDB Collections
+  ✓ AI-powered chatbot with RAG technology
+  ✓ Push notifications via Firebase
+  ✓ QR code for visitor check-in
+  ✓ Web-based visitor portal
+  ✓ Material Design 3 UI
+  ✓ Cloud deployment ready
+
+This is a complete end-to-end solution for college management with 
+intelligent AI assistance for students, faculty, and visitors.
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================
+
