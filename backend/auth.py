@@ -81,8 +81,11 @@ def register():
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
         
-        # For visitors, get purpose
+# For visitors, get purpose
         purpose = data.get('purpose', '').strip()
+        
+        # For faculty, get professional fields
+        designation = data.get('designation', '').strip()
         
         # Validate based on role
         if role == 'student':
@@ -96,6 +99,13 @@ def register():
                 return jsonify({'error': 'Semester is required for students'}), 400
             if not department:
                 return jsonify({'error': 'Department is required for students'}), 400
+        elif role == 'faculty':
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for faculty'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for faculty'}), 400
+            if not designation:
+                return jsonify({'error': 'Designation is required for faculty'}), 400
         elif role == 'visitor':
             if not mobile:
                 return jsonify({'error': 'Mobile number is required for visitors'}), 400
@@ -103,7 +113,7 @@ def register():
                 return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
         
         # Validate role
-        valid_roles = ['student', 'visitor']
+        valid_roles = ['student', 'faculty', 'visitor', 'admin']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
         
@@ -128,9 +138,6 @@ def register():
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Hash password
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
         # Create user document with basic fields
         user_doc = UserModel.create_user(
             name=name,
@@ -142,15 +149,16 @@ def register():
         # Add common fields
         user_doc['mobile'] = mobile
         
-        # Add student-specific fields
+        # Add role-specific fields
         if role == 'student':
-            user_doc['enrollment'] = enrollment
-            user_doc['dob'] = dob
             user_doc['semester'] = semester
             user_doc['department'] = department
-        
-        # Add visitor-specific fields
-        if role == 'visitor':
+            user_doc['enrollment'] = enrollment
+            user_doc['dob'] = dob
+        elif role == 'faculty':
+            user_doc['department'] = department
+            user_doc['designation'] = designation
+        elif role == 'visitor':
             user_doc['purpose'] = purpose
             user_doc['visit_date'] = datetime.utcnow().isoformat()
             user_doc['approval_status'] = 'pending'
