@@ -3,6 +3,9 @@ from .config import knowledge_col, embedding_model
 
 def retrieve_context(question, top_k=5):
     """Retrieve most relevant context using local embeddings."""
+    if embedding_model is None:
+        return ""
+
     # Create embedding locally (free)
     q_emb = embedding_model.encode(question)
     
@@ -11,7 +14,10 @@ def retrieve_context(question, top_k=5):
     scores = []
     
     for d in docs:
-        d_emb = np.array(d.get("embedding"))
+        emb = d.get("embedding")
+        if not emb:
+            continue
+        d_emb = np.array(emb)
         score = np.dot(q_emb, d_emb) / (
             np.linalg.norm(q_emb) * np.linalg.norm(d_emb)
         )

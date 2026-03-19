@@ -1,8 +1,11 @@
 import os
 from pymongo import MongoClient
-from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from dotenv import load_dotenv
+try:
+    from sentence_transformers import SentenceTransformer
+except Exception:
+    SentenceTransformer = None
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +25,12 @@ db = client[DB_NAME]
 knowledge_col = db[COLLECTION]
 
 # Free local embedding model (no API cost)
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+# Keep startup resilient when sentence-transformers is unavailable.
+if SentenceTransformer is not None:
+    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+else:
+    embedding_model = None
+    print("Warning: sentence-transformers not available; semantic retrieval disabled.")
 
 # OpenAI client (optional - for GPT answers if you have credits)
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
