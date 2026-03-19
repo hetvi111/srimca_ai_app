@@ -1,4 +1,4 @@
-import numpy as np
+import math
 from .config import knowledge_col, embedding_model
 
 def retrieve_context(question, top_k=5):
@@ -17,10 +17,16 @@ def retrieve_context(question, top_k=5):
         emb = d.get("embedding")
         if not emb:
             continue
-        d_emb = np.array(emb)
-        score = np.dot(q_emb, d_emb) / (
-            np.linalg.norm(q_emb) * np.linalg.norm(d_emb)
-        )
+
+        # Use pure-Python cosine similarity to avoid hard numpy dependency.
+        if len(q_emb) != len(emb):
+            continue
+        dot = sum(float(a) * float(b) for a, b in zip(q_emb, emb))
+        q_norm = math.sqrt(sum(float(a) * float(a) for a in q_emb))
+        d_norm = math.sqrt(sum(float(b) * float(b) for b in emb))
+        if q_norm == 0.0 or d_norm == 0.0:
+            continue
+        score = dot / (q_norm * d_norm)
         scores.append((score, d["text"]))
     
     # Sort by score and return top_k
