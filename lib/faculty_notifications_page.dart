@@ -23,9 +23,15 @@ class _FacultyNotificationsPageState extends State<FacultyNotificationsPage> {
     try {
       // Fetch role-based notifications for faculty
       final notifs = await ApiService.getMyNotifications();
+      final adminNoticeOnly = notifs.where((n) {
+        final senderRole = (n["sender_role"] ?? "").toString().toLowerCase();
+        final notifType = (n["type"] ?? n["notification_type"] ?? "").toString().toLowerCase();
+        return senderRole == "admin" && notifType == "notice";
+      }).toList();
+
       if (mounted) {
         setState(() {
-          notifications = notifs;
+          notifications = adminNoticeOnly;
           isLoading = false;
         });
       }

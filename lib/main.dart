@@ -16,6 +16,7 @@ import 'package:srimca_ai/student_page.dart';
 import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
+import 'package:srimca_ai/email_verification_page.dart';
 
 // App Theme Colors
 class AppColors {
@@ -152,6 +153,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/first': (context) => const FirstScreen(),
         '/login': (context) => const LoginRegisterScreen(),
+        '/email-verification': (context) => const EmailVerificationPage(),
         '/welcome': (context) => const WelcomeScreen(),
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),

@@ -417,6 +417,24 @@ class ApiService {
     }
   }
 
+  /// Update user (admin only) - only Faculty and Student can be edited
+  static Future<bool> updateUser({
+    required String userId,
+    required String name,
+    required String email,
+    required String role,
+  }) async {
+    try {
+      final response = await put(
+        '/api/admin/users/$userId',
+        body: {'name': name, 'email': email, 'role': role},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Delete material (admin only)
   static Future<bool> deleteMaterial(String materialId) async {
     try {
@@ -596,8 +614,11 @@ class ApiService {
   static Future<String> askAI(String question) async {
     try {
       debugPrint('Sending question to AI: $question');
+      final user = await AuthService.getUser();
       final response = await post('/api/ai/chat', body: {
         'question': question,
+        if (user != null && (user['_id']?.toString().isNotEmpty ?? false))
+          'user_id': user['_id'].toString(),
       });
       
       debugPrint('AI Response status: ${response.statusCode}');
@@ -615,6 +636,227 @@ class ApiService {
     } catch (e) {
       debugPrint('Ask AI Error: $e');
       return "I apologize, but I'm having trouble connecting to the AI service. Please check your internet connection and try again.";
+    }
+  }
+
+  /// Get AI monitoring queries and stats
+  static Future<Map<String, dynamic>> getAiMonitoringData({String period = 'all', int limit = 100}) async {
+    try {
+      final response = await get(
+        '/api/ai/queries',
+        queryParams: {
+          'period': period,
+          'limit': limit.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final queries = (data['queries'] as List<dynamic>? ?? [])
+            .cast<Map<String, dynamic>>();
+        final stats = (data['stats'] as Map<String, dynamic>? ?? {});
+        return {
+          'queries': queries,
+          'stats': {
+            'total_queries': stats['total_queries'] ?? queries.length,
+            'today_queries': stats['today_queries'] ?? 0,
+            'avg_response': stats['avg_response'] ?? '<2s',
+          },
+        };
+      }
+
+      return {
+        'queries': <Map<String, dynamic>>[],
+        'stats': {
+          'total_queries': 0,
+          'today_queries': 0,
+          'avg_response': '<2s',
+        },
+      };
+    } catch (e) {
+      debugPrint('AI Monitoring Data Error: $e');
+      return {
+        'queries': <Map<String, dynamic>>[],
+        'stats': {
+          'total_queries': 0,
+          'today_queries': 0,
+          'avg_response': '<2s',
+        },
+      };
+    }
+  }
+
+  /// Get reports & analytics data for admin dashboard
+  static Future<Map<String, dynamic>> getReportsAnalytics() async {
+    try {
+      final response = await get('/api/admin/reports/analytics');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {
+        'overview': {
+          'total_users': 0,
+          'active_today': 0,
+          'total_queries': 0,
+          'avg_response': '<2s',
+          'today_queries': 0,
+        },
+        'distribution': {
+          'students': 0,
+          'faculty': 0,
+          'visitors': 0,
+          'admins': 0,
+        },
+        'monthly_activity': <Map<String, dynamic>>[],
+      };
+    } catch (e) {
+      debugPrint('Reports Analytics Error: $e');
+      return {
+        'overview': {
+          'total_users': 0,
+          'active_today': 0,
+          'total_queries': 0,
+          'avg_response': '<2s',
+          'today_queries': 0,
+        },
+        'distribution': {
+          'students': 0,
+          'faculty': 0,
+          'visitors': 0,
+          'admins': 0,
+        },
+        'monthly_activity': <Map<String, dynamic>>[],
+      };
+    }
+  }
+
+  /// Get database management overview data
+  static Future<Map<String, dynamic>> getDatabaseOverview() async {
+    try {
+      final response = await get('/api/admin/database/overview');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {
+        'stats': {
+          'users': 0,
+          'notices': 0,
+          'materials': 0,
+          'queries': 0,
+          'notifications': 0,
+        },
+        'info': {
+          'database_name': 'srimca_ai',
+          'version': '1.0.0',
+          'size_mb': 0,
+          'last_updated': '',
+          'last_backup': null,
+        },
+      };
+    } catch (e) {
+      debugPrint('Database Overview Error: $e');
+      return {
+        'stats': {
+          'users': 0,
+          'notices': 0,
+          'materials': 0,
+          'queries': 0,
+          'notifications': 0,
+        },
+        'info': {
+          'database_name': 'srimca_ai',
+          'version': '1.0.0',
+          'size_mb': 0,
+          'last_updated': '',
+          'last_backup': null,
+        },
+      };
+    }
+  }
+
+  /// Run database backup action
+  static Future<Map<String, dynamic>> backupDatabase() async {
+    try {
+      final response = await post('/api/admin/database/backup');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'error': 'Backup failed'};
+    } catch (e) {
+      return {'error': 'Backup failed: $e'};
+    }
+  }
+
+  /// Run database restore action
+  static Future<Map<String, dynamic>> restoreDatabase() async {
+    try {
+      final response = await post('/api/admin/database/restore');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'error': 'Restore failed'};
+    } catch (e) {
+      return {'error': 'Restore failed: $e'};
+    }
+  }
+
+  /// Run database optimization action
+  static Future<bool> optimizeDatabase() async {
+    try {
+      final response = await post('/api/admin/database/optimize');
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Run database clear-cache action
+  static Future<bool> clearDatabaseCache() async {
+    try {
+      final response = await post('/api/admin/database/clear-cache');
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get visitor inquiries for faculty page
+  static Future<List<Map<String, dynamic>>> getFacultyVisitorInquiries({int limit = 100}) async {
+    try {
+      final response = await get(
+        '/api/users/faculty/visitor-inquiries',
+        queryParams: {'limit': limit.toString()},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final inquiries = data['inquiries'] as List<dynamic>? ?? [];
+        return inquiries.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Faculty Visitor Inquiries Error: $e');
+      return [];
+    }
+  }
+
+  /// Respond to visitor inquiry as faculty
+  static Future<bool> respondFacultyVisitorInquiry({
+    required String visitorId,
+    required String status,
+    String facultyReply = '',
+  }) async {
+    try {
+      final response = await put(
+        '/api/users/faculty/visitor-inquiries/$visitorId/respond',
+        body: {
+          'status': status,
+          'faculty_reply': facultyReply,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Respond Faculty Visitor Inquiry Error: $e');
+      return false;
     }
   }
 

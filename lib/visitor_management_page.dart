@@ -23,14 +23,21 @@ class Visitor {
   });
 
   factory Visitor.fromMap(Map<String, dynamic> map) {
+    final rawStatus = (map['status'] ?? map['approval_status'] ?? 'pending').toString();
+    final normalizedStatus = rawStatus.isEmpty
+        ? 'Pending'
+        : '${rawStatus[0].toUpperCase()}${rawStatus.substring(1).toLowerCase()}';
+
+    final displayName = (map['name'] ?? '').toString().trim();
+
     return Visitor(
-      id: map['_id'] ?? '',
-      name: map['name'] ?? '',
-      email: map['email'] ?? '',
-      phone: map['phone'] ?? '',
-      visitPurpose: map['visit_purpose'] ?? '',
-      visitDate: map['visit_date'] ?? '',
-      status: map['status'] ?? 'Pending',
+      id: (map['_id'] ?? '').toString(),
+      name: displayName.isNotEmpty ? displayName : 'Unknown Visitor',
+      email: (map['email'] ?? '').toString(),
+      phone: (map['phone'] ?? map['mobile'] ?? '').toString(),
+      visitPurpose: (map['visit_purpose'] ?? map['purpose'] ?? '').toString(),
+      visitDate: (map['visit_date'] ?? '').toString(),
+      status: normalizedStatus,
     );
   }
 }
@@ -53,15 +60,19 @@ class _VisitorManagementPageState extends State<VisitorManagementPage> {
     _loadVisitors();
   }
 
-  Future<void> _loadVisitors() async {
+Future<void> _loadVisitors() async {
     try {
+      debugPrint('Loading visitors...');
       // Fetch visitors from API
       final visitorsData = await ApiService.getVisitors();
+      debugPrint('Visitors data received: ${visitorsData.length} items');
+      debugPrint('First visitor: ${visitorsData.isNotEmpty ? visitorsData.first : 'none'}');
       setState(() {
         visitors = visitorsData.map((v) => Visitor.fromMap(v)).toList();
         isLoading = false;
       });
     } catch (e) {
+      debugPrint('Load visitors error: $e');
       setState(() {
         visitors = [];
         isLoading = false;
@@ -150,7 +161,10 @@ class _VisitorManagementPageState extends State<VisitorManagementPage> {
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor: const Color(0xFF1A237E),
-                              child: Text(visitor.name[0], style: const TextStyle(color: Colors.white)),
+                              child: Text(
+                                visitor.name.isNotEmpty ? visitor.name[0].toUpperCase() : '?',
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             ),
                             title: Text(visitor.name),
                             subtitle: Column(

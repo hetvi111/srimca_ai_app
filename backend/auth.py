@@ -199,20 +199,35 @@ def login():
         data = request.get_json()
         
         # Validate required fields
-        if not data.get('email') or not data.get('password'):
-            return jsonify({'error': 'Email and password are required'}), 400
-        
-        email = data['email'].strip().lower()
+        if not data.get('password'):
+            return jsonify({'error': 'Password is required'}), 400
+
+        requested_role = data.get('role', '').strip().lower()
+        identifier = (data.get('email') or '').strip()
+        enrollment = (data.get('enrollment') or '').strip()
         password = data['password']
         
         # Get users collection
         users = get_collection(Collections.USERS)
         
-        # Find user by email
-        user_doc = users.find_one({'email': email})
+        # Students must login using enrollment number only.
+        if requested_role == 'student':
+            if not enrollment:
+                return jsonify({'error': 'Enrollment number is required for student login'}), 400
+            user_doc = users.find_one({'role': 'student', 'enrollment': enrollment})
+        else:
+            # For non-student roles, continue with email based login.
+            email = identifier.lower()
+            if not email:
+                return jsonify({'error': 'Email is required'}), 400
+            user_doc = users.find_one({'email': email})
         
         if not user_doc:
-            return jsonify({'error': 'Invalid email or password'}), 401
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # If role is supplied, ensure selected role matches account role.
+        if requested_role and user_doc.get('role') != requested_role:
+            return jsonify({'error': 'Role mismatch for this account'}), 401
         
         # Check if user is active
         if not user_doc.get('is_active', True):
@@ -227,10 +242,10 @@ def login():
         
         try:
             if not bcrypt.checkpw(password.encode('utf-8'), stored_password):
-                return jsonify({'error': 'Invalid email or password'}), 401
+                return jsonify({'error': 'Invalid credentials'}), 401
         except Exception as e:
             print(f"Password verification error: {e}")
-            return jsonify({'error': 'Invalid email or password'}), 401
+            return jsonify({'error': 'Invalid credentials'}), 401
         
         # Update last login
         users.update_one(

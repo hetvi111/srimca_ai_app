@@ -5,6 +5,7 @@ import 'faculty_notice_management_page.dart';
 import 'faculty_visitor_inquiry_page.dart';
 import 'faculty_event_management_page.dart';
 import 'faculty_notifications_page.dart';
+import 'faculty_ai_assistant_page.dart';
 import 'package:srimca_ai/faculty_profile_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
@@ -98,7 +99,7 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
       FacultyVisitorInquiryPage(facultyId: widget.staffId, facultyName: widget.name, department: widget.department),
       FacultyEventManagementPage(facultyId: widget.staffId, facultyName: widget.name),
       const FacultyNotificationsPage(),
-      const AIAssistantPage(),
+      const FacultyAiAssistantPage(),
       FacultyProfilePage(userId: widget.staffId, staffId: widget.staffId),
     ];
 
@@ -241,7 +242,7 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
               _actionCard(Icons.campaign, "Manage Notices", "Post and manage notices", () => _onItemTapped(1)),
               _actionCard(Icons.people, "Visitor Inquiries", "View and respond to visitors", () => _onItemTapped(2)),
               _actionCard(Icons.event, "Manage Events", "Create and manage college events", () => _onItemTapped(3)),
-              _actionCard(Icons.psychology, "AI Monitoring", "Review AI responses", () => _onItemTapped(4)),
+              _actionCard(Icons.psychology, "AI Monitoring", "Review AI responses", () => _onItemTapped(5)),
 
               const SizedBox(height: 30),
 
@@ -373,34 +374,3 @@ class _FacultyHomePageState extends State<FacultyHomePage> {
   }
 }
 
-// AI Assistant Page placeholder
-class AIAssistantPage extends StatelessWidget {
-  const AIAssistantPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("AI Monitoring"),
-        backgroundColor: navyBlue,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.psychology, size: 80, color: accentBlue),
-            SizedBox(height: 16),
-            Text("AI Response Monitoring", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: navyBlue)),
-            SizedBox(height: 8),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text("Review AI-generated academic answers, report incorrect responses, and suggest improvements.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

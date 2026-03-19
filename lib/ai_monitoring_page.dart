@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= AI MONITORING PAGE =================
 class AIMonitoringPage extends StatefulWidget {
@@ -12,6 +13,9 @@ class _AIMonitoringPageState extends State<AIMonitoringPage> {
   List<Map<String, dynamic>> queries = [];
   bool isLoading = true;
   String selectedFilter = "All";
+  int totalQueries = 0;
+  int todayQueries = 0;
+  String avgResponse = "<2s";
 
   @override
   void initState() {
@@ -21,26 +25,40 @@ class _AIMonitoringPageState extends State<AIMonitoringPage> {
 
   Future<void> _loadQueries() async {
     try {
-      // Mock data
+      String period = 'all';
+      if (selectedFilter == 'Today') {
+        period = 'today';
+      } else if (selectedFilter == 'This Week') {
+        period = 'week';
+      }
+
+      final data = await ApiService.getAiMonitoringData(period: period, limit: 200);
+      final loadedQueries = (data['queries'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final stats = data['stats'] as Map<String, dynamic>;
+
       setState(() {
-        queries = [
-          {"student": "Malaviya Hetvi", "question": "What is Python?", "answer": "Python is a high-level programming language...", "timestamp": "2024-01-15 10:30"},
-          {"student": "Patel Smith", "question": "How to implement recursion?", "answer": "Recursion is a method where...", "timestamp": "2024-01-15 11:45"},
-          {"student": "Malaviya Vishv", "question": "What is OOP?", "answer": "Object-Oriented Programming is...", "timestamp": "2024-01-15 14:20"},
-          {"student": "Malaviya Hasti", "question": "Explain database normalization", "answer": "Database normalization is...", "timestamp": "2024-01-16 09:15"},
-        ];
+        queries = loadedQueries;
+        totalQueries = (stats['total_queries'] as num?)?.toInt() ?? loadedQueries.length;
+        todayQueries = (stats['today_queries'] as num?)?.toInt() ?? 0;
+        avgResponse = stats['avg_response']?.toString() ?? '<2s';
         isLoading = false;
       });
     } catch (e) {
       setState(() {
         queries = [];
+        totalQueries = 0;
+        todayQueries = 0;
+        avgResponse = '<2s';
         isLoading = false;
       });
     }
   }
 
   List<Map<String, dynamic>> get filteredQueries {
-    if (selectedFilter == "All") return queries;
+    if (selectedFilter == "All" || selectedFilter == "Today" || selectedFilter == "This Week") {
+      return queries;
+    }
     return queries;
   }
 
@@ -56,7 +74,9 @@ class _AIMonitoringPageState extends State<AIMonitoringPage> {
             onSelected: (value) {
               setState(() {
                 selectedFilter = value;
+                isLoading = true;
               });
+              _loadQueries();
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: "All", child: Text("All Queries")),
@@ -75,45 +95,47 @@ class _AIMonitoringPageState extends State<AIMonitoringPage> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      _buildStatCard("Total Queries", queries.length.toString(), Icons.chat, Colors.blue),
+                      _buildStatCard("Total Queries", totalQueries.toString(), Icons.chat, Colors.blue),
                       const SizedBox(width: 12),
-                      _buildStatCard("Today", "12", Icons.today, Colors.green),
+                      _buildStatCard("Today", todayQueries.toString(), Icons.today, Colors.green),
                       const SizedBox(width: 12),
-                      _buildStatCard("Avg Response", "<2s", Icons.timer, Colors.orange),
+                      _buildStatCard("Avg Response", avgResponse, Icons.timer, Colors.orange),
                     ],
                   ),
                 ),
                 // Query List
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredQueries.length,
-                    itemBuilder: (context, index) {
-                      final query = filteredQueries[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ExpansionTile(
-                          title: Text(query["student"] ?? ""),
-                          subtitle: Text(query["question"] ?? ""),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                  child: filteredQueries.isEmpty
+                      ? const Center(child: Text('No AI queries found'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredQueries.length,
+                          itemBuilder: (context, index) {
+                            final query = filteredQueries[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ExpansionTile(
+                                title: Text(query["student"]?.toString() ?? "Unknown User"),
+                                subtitle: Text(query["question"]?.toString() ?? ""),
                                 children: [
-                                  Text("Question: ${query["question"]}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
-                                  Text("Answer: ${query["answer"]}"),
-                                  const SizedBox(height: 8),
-                                  Text("Time: ${query["timestamp"]}", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                  Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Question: ${query["question"]}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 8),
+                                        Text("Answer: ${query["answer"]}"),
+                                        const SizedBox(height: 8),
+                                        Text("Time: ${query["timestamp"] ?? ''}", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),

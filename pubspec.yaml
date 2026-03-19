@@ -44,6 +44,9 @@ dependencies:
   # For storing auth token
   shared_preferences: ^2.3.0
 
+  # Deep links for Firebase email verification
+  app_links: ^6.3.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -64,12 +67,6 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see
 # following page: https://dart.dev/tools/pub/pubspec
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-  flutter:
-    sdk: flutter
 
 # The following section is specific to Flutter packages.
 flutter:

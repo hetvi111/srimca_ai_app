@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= REPORTS & ANALYTICS PAGE =================
 class ReportsAnalyticsPage extends StatefulWidget {
@@ -9,6 +10,39 @@ class ReportsAnalyticsPage extends StatefulWidget {
 }
 
 class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
+  bool _isLoading = true;
+  Map<String, dynamic> _overview = {
+    'total_users': 0,
+    'active_today': 0,
+    'total_queries': 0,
+    'avg_response': '<2s',
+  };
+  Map<String, dynamic> _distribution = {
+    'students': 0,
+    'faculty': 0,
+    'visitors': 0,
+    'admins': 0,
+  };
+  List<Map<String, dynamic>> _monthlyActivity = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnalytics();
+  }
+
+  Future<void> _loadAnalytics() async {
+    final data = await ApiService.getReportsAnalytics();
+    if (!mounted) return;
+    setState(() {
+      _overview = (data['overview'] as Map<String, dynamic>? ?? _overview);
+      _distribution = (data['distribution'] as Map<String, dynamic>? ?? _distribution);
+      _monthlyActivity = (data['monthly_activity'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>();
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,7 +50,9 @@ class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
         title: const Text("Reports & Analytics", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1A237E),
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,10 +68,10 @@ class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
               mainAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildCard("Total Users", "1,250", Icons.people, Colors.blue),
-                _buildCard("Active Today", "340", Icons.today, Colors.green),
-                _buildCard("Total Queries", "5,678", Icons.chat, Colors.orange),
-                _buildCard("Avg Response", "1.8s", Icons.timer, Colors.purple),
+                _buildCard("Total Users", _overview['total_users'].toString(), Icons.people, Colors.blue),
+                _buildCard("Active Today", _overview['active_today'].toString(), Icons.today, Colors.green),
+                _buildCard("Total Queries", _overview['total_queries'].toString(), Icons.chat, Colors.orange),
+                _buildCard("Avg Response", (_overview['avg_response'] ?? '<2s').toString(), Icons.timer, Colors.purple),
               ],
             ),
             const SizedBox(height: 24),
@@ -43,13 +79,13 @@ class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
             // User Distribution
             const Text("User Distribution", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _buildDistributionCard("Students", 850, Colors.blue),
+            _buildDistributionCard("Students", (_distribution['students'] as num?)?.toInt() ?? 0, Colors.blue),
             const SizedBox(height: 8),
-            _buildDistributionCard("Faculty", 120, Colors.green),
+            _buildDistributionCard("Faculty", (_distribution['faculty'] as num?)?.toInt() ?? 0, Colors.green),
             const SizedBox(height: 8),
-            _buildDistributionCard("Visitors", 280, Colors.orange),
+            _buildDistributionCard("Visitors", (_distribution['visitors'] as num?)?.toInt() ?? 0, Colors.orange),
             const SizedBox(height: 8),
-            _buildDistributionCard("Admins", 10, Colors.purple),
+            _buildDistributionCard("Admins", (_distribution['admins'] as num?)?.toInt() ?? 0, Colors.purple),
             
             const SizedBox(height: 24),
             
@@ -57,15 +93,50 @@ class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
             const Text("Monthly Activity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Container(
-              height: 200,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Text("Activity Chart Placeholder", style: TextStyle(color: Colors.grey)),
-              ),
+              child: _monthlyActivity.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Text("No monthly activity data", style: TextStyle(color: Colors.grey)),
+                      ),
+                    )
+                  : Column(
+                      children: _monthlyActivity
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 44,
+                                    child: Text(item['month']?.toString() ?? ''),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: LinearProgressIndicator(
+                                      value: _monthlyProgressValue((item['queries'] as num?)?.toInt() ?? 0),
+                                      minHeight: 10,
+                                      borderRadius: BorderRadius.circular(8),
+                                      backgroundColor: Colors.grey[300],
+                                      color: const Color(0xFF1A237E),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    ((item['queries'] as num?)?.toInt() ?? 0).toString(),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
             ),
             
             const SizedBox(height: 24),
@@ -98,6 +169,15 @@ class _ReportsAnalyticsPageState extends State<ReportsAnalyticsPage> {
         ),
       ),
     );
+  }
+
+  double _monthlyProgressValue(int queries) {
+    if (_monthlyActivity.isEmpty) return 0;
+    final maxQueries = _monthlyActivity
+        .map((e) => (e['queries'] as num?)?.toInt() ?? 0)
+        .fold<int>(0, (prev, value) => value > prev ? value : prev);
+    if (maxQueries <= 0) return 0;
+    return queries / maxQueries;
   }
 
   Widget _buildCard(String title, String value, IconData icon, Color color) {

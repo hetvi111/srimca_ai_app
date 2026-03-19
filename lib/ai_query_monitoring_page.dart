@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/static_data.dart';
+import 'package:srimca_ai/api_service.dart';
 
 class AiQueryMonitoringPage extends StatefulWidget {
   const AiQueryMonitoringPage({super.key});
@@ -9,7 +9,7 @@ class AiQueryMonitoringPage extends StatefulWidget {
 }
 
 class _AiQueryMonitoringPageState extends State<AiQueryMonitoringPage> {
-  List<Map<String, String>> queries = [];
+  List<Map<String, dynamic>> queries = [];
   bool isLoading = true;
 
   @override
@@ -19,15 +19,10 @@ class _AiQueryMonitoringPageState extends State<AiQueryMonitoringPage> {
   }
 
   Future<void> _loadQueries() async {
-    // Mock load queries (no backend)
-    await Future.delayed(const Duration(milliseconds: 500));
-    final faqs = StaticData.faqs;
+    final data = await ApiService.getAiMonitoringData(period: 'all', limit: 200);
+    final loadedQueries = (data['queries'] as List<dynamic>).cast<Map<String, dynamic>>();
     setState(() {
-      queries = faqs.map((faq) => {
-        "student": "Student User",
-        "question": faq['question'] ?? 'N/A',
-        "answer": faq.containsKey('answer') ? faq['answer'] : 'Answer pending...'
-      }).toList().cast<Map<String, String>>();
+      queries = loadedQueries;
       isLoading = false;
     });
   }
@@ -44,29 +39,29 @@ class _AiQueryMonitoringPageState extends State<AiQueryMonitoringPage> {
           : queries.isEmpty
               ? const Center(child: Text('No queries yet'))
               : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: queries.length,
-        itemBuilder: (context, index) {
-          final item = queries[index];
+                  padding: const EdgeInsets.all(16),
+                  itemCount: queries.length,
+                  itemBuilder: (context, index) {
+                    final item = queries[index];
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ExpansionTile(
-              title: Text(item["student"]!),
-              subtitle: Text(item["question"]!),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    "AI Answer:\n${item["answer"]}",
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                )
-              ],
-            ),
-          );
-        },
-      ),
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ExpansionTile(
+                        title: Text(item["student"]?.toString() ?? "Unknown User"),
+                        subtitle: Text(item["question"]?.toString() ?? ""),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              "AI Answer:\n${item["answer"]?.toString() ?? ''}",
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

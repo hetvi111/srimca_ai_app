@@ -261,3 +261,75 @@ class AIQueryModel:
             'created_at': query_doc.get('created_at').isoformat() if query_doc.get('created_at') else None,
             'is_helpful': query_doc.get('is_helpful')
         }
+
+
+class NotificationModel:
+    """Notification model for role-based notifications"""
+
+    collection_name = Collections.NOTIFICATIONS
+
+    @staticmethod
+    def create_notification(
+        title: str,
+        message: str,
+        notification_type: str = 'info',
+        target_role: str = 'all',
+        sender_role: str = 'admin'
+    ):
+        return {
+            'title': title,
+            'message': message,
+            'type': notification_type,
+            'target_role': target_role,
+            'sender_role': sender_role,
+            'is_read': False,
+            'created_at': datetime.utcnow()
+        }
+
+    @staticmethod
+    def to_dict(notification_doc):
+        if notification_doc is None:
+            return None
+
+        return {
+            '_id': str(notification_doc.get('_id', '')),
+            'title': notification_doc.get('title', ''),
+            'message': notification_doc.get('message', ''),
+            'type': notification_doc.get('type', 'info'),
+            'target_role': notification_doc.get('target_role', 'all'),
+            'sender_role': notification_doc.get('sender_role', 'admin'),
+            'is_read': notification_doc.get('is_read', False),
+            'created_at': notification_doc.get('created_at').isoformat() if notification_doc.get('created_at') else None
+        }
+
+
+class VisitorModel:
+    """Visitor model for visitor inquiries/approvals"""
+
+    collection_name = Collections.VISITORS
+
+    @staticmethod
+    def create_visitor(name: str, email: str = '', phone: str = '', purpose: str = ''):
+        return {
+            'name': name,
+            'email': email.lower() if email else '',
+            'phone': phone,
+            'purpose': purpose,
+            'status': 'pending',
+            'created_at': datetime.utcnow()
+        }
+
+    @staticmethod
+    def to_dict(visitor_doc):
+        if visitor_doc is None:
+            return None
+
+        return {
+            '_id': str(visitor_doc.get('_id', '')),
+            'name': visitor_doc.get('name', ''),
+            'email': visitor_doc.get('email', ''),
+            'phone': visitor_doc.get('phone', ''),
+            'purpose': visitor_doc.get('purpose', ''),
+            'status': visitor_doc.get('status', 'pending'),
+            'created_at': visitor_doc.get('created_at').isoformat() if visitor_doc.get('created_at') else None
+        }

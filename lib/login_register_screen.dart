@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:srimca_ai/static_data.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
+import 'package:srimca_ai/email_verification_page.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -210,7 +211,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 TextField(
                   controller: _emailController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: _inputDecoration("User ID"),
+                  decoration: _inputDecoration(
+                    _selectedRole.toLowerCase() == 'student'
+                        ? "Enrollment Number"
+                        : "Email",
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -257,7 +262,20 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   "If you forgot your password, please contact administrator.",
                   style: TextStyle(color: Colors.white60, fontSize: 12),
                   textAlign: TextAlign.center,
-                )
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/email-verification');
+                  },
+                  child: const Text(
+                    'Verify my email',
+                    style: TextStyle(
+                      color: Color(0xFF1E88E5),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -461,11 +479,17 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
   // ================= API LOGIN (PYTHON + MONGODB) =================
   Future<void> _apiLogin() async {
-    final email = _emailController.text.trim();
+    final userId = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    if (email.isEmpty || password.isEmpty) {
+    if (userId.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
+        SnackBar(
+          content: Text(
+            _selectedRole.toLowerCase() == 'student'
+                ? "Please enter enrollment number and password"
+                : "Please enter email and password",
+          ),
+        ),
       );
       return;
     }
@@ -482,7 +506,8 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': email,
+          if (_selectedRole.toLowerCase() == 'student') 'enrollment': userId,
+          if (_selectedRole.toLowerCase() != 'student') 'email': userId,
           'password': password,
           'role': _selectedRole.toLowerCase(),
         }),
@@ -520,6 +545,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 'semester': '5th Semester',
                 'userId': user['_id'] ?? '',
                 'email': user['email'] ?? '',
+                'enrollmentNumber': user['enrollment'] ?? '',
               },
             );
             break;
@@ -535,6 +561,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 'userId': user['_id'] ?? '',
                 'userName': user['name'] ?? 'User',
                 'email': user['email'] ?? '',
+                'enrollment': user['enrollment'] ?? '',
               },
             );
         }
@@ -711,15 +738,34 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
       if (res.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful! Please login.")),
+          const SnackBar(content: Text("Registration successful! Verify your email.")),
         );
+
+        final regEmail = _emailController.text.trim();
+        final regPassword = _passwordController.text.trim();
 
         _emailController.clear();
         _passwordController.clear();
         _confirmPasswordController.clear();
         _nameController.clear();
 
+        if (!context.mounted) return;
+        final verified = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationPage(
+              initialEmail: regEmail,
+              initialPassword: regPassword,
+            ),
+          ),
+        );
+        if (!context.mounted) return;
         _tabController.animateTo(0);
+        if (verified == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Email verified! You can now login.")),
+          );
+        }
       } else {
         final Map<String, dynamic> body = jsonDecode(res.body);
         final msg = body['message']?.toString() ?? 'Registration failed';

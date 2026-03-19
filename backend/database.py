@@ -104,6 +104,7 @@ class Collections:
     NOTIFICATIONS = 'notifications'
     VISITORS = 'visitors'
     QUERIES = 'queries'
+    SYSTEM_META = 'system_meta'
 
 
 def close_mongodb_connection():
@@ -115,6 +116,33 @@ def close_mongodb_connection():
     if _client:
         _client.close()
         print("MongoDB connection closed")
+
+
+def initialize_collections():
+    """
+    Ensure required MongoDB collections exist at startup
+    """
+    db = get_database()
+    existing_collections = set(db.list_collection_names())
+    required_collections = [
+        Collections.USERS,
+        Collections.NOTICES,
+        Collections.ASSIGNMENTS,
+        Collections.MATERIALS,
+        Collections.FAQS,
+        Collections.AI_QUERIES,
+        Collections.SESSIONS,
+        Collections.NOTIFICATIONS,
+        Collections.VISITORS,
+        Collections.QUERIES,
+        Collections.SYSTEM_META,
+    ]
+
+    for collection_name in required_collections:
+        if collection_name not in existing_collections:
+            db.create_collection(collection_name)
+
+    print("Database collections ensured successfully")
 
 
 # Initialize database with indexes
@@ -143,6 +171,26 @@ def initialize_indexes():
     # AI Queries indexes
     db[Collections.AI_QUERIES].create_index('user_id')
     db[Collections.AI_QUERIES].create_index('created_at')
+
+    # FAQs indexes
+    db[Collections.FAQS].create_index('created_at')
+    db[Collections.FAQS].create_index('created_by')
+
+    # Notifications indexes
+    db[Collections.NOTIFICATIONS].create_index('created_at')
+    db[Collections.NOTIFICATIONS].create_index('target_role')
+    db[Collections.NOTIFICATIONS].create_index('sender_role')
+    db[Collections.NOTIFICATIONS].create_index('related_id')
+
+    # Visitors indexes
+    db[Collections.VISITORS].create_index('email')
+    db[Collections.VISITORS].create_index('status')
+    db[Collections.VISITORS].create_index('created_at')
+
+    # Sessions and queries indexes
+    db[Collections.SESSIONS].create_index('user_id')
+    db[Collections.SESSIONS].create_index('created_at')
+    db[Collections.QUERIES].create_index('created_at')
     
     print("Database indexes created successfully")
 

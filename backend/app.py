@@ -11,7 +11,7 @@ import os
 from config import get_config
 
 # Import database initialization
-from database import initialize_indexes
+from database import initialize_collections, initialize_indexes
 
 # Import auth blueprint
 from auth import auth_bp
@@ -44,6 +44,7 @@ def create_app(config_name=None):
     CORS(app, origins=config.CORS_ORIGINS, supports_credentials=True)
     
     # Initialize database
+    initialize_collections()
     initialize_indexes()
     
     # Register blueprints

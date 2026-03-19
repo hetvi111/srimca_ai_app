@@ -1,0 +1,208 @@
+================================================================================
+SRIMCA AI - DATABASE SCHEMA (MongoDB Collections)
+Generated from backend/models.py, database.py, auth.py, and routes
+================================================================================
+
+Database: MongoDB (configurable via MONGODB_DB_NAME in .env)
+
+--------------------------------------------------------------------------------
+1. USERS (collection: 'users')
+--------------------------------------------------------------------------------
+Description: User accounts for authentication (students, faculty, admin, visitors)
+
+| Field              | Type     | Required | Description                          |
+|--------------------|----------|----------|--------------------------------------|
+| _id                | ObjectId | auto     | Primary key                          |
+| name               | string   | yes      | Full name                            |
+| email              | string   | yes      | Email (unique, lowercase)            |
+| password           | string   | yes      | Bcrypt hashed password               |
+| role               | string   | yes      | student|faculty|admin|visitor        |
+| mobile             | string   | yes      | Mobile/phone number                  |
+| created_at         | datetime | auto     | Creation timestamp                   |
+| updated_at         | datetime | auto     | Last update timestamp                |
+| is_active          | boolean  | yes      | Account active status (default: true)|
+| last_login         | datetime | no       | Last login timestamp                 |
+| profile            | object   | no       | Nested profile fields                |
+| profile.phone      | string   | no       | Alternate phone                      |
+| profile.address    | string   | no       | Address                              |
+| profile.semester   | string   | no       | Student semester                     |
+| profile.department | string   | no       | Department/course                    |
+| profile.enrollment_number | string | no  | Enrollment (if different from top)   |
+
+Role-specific fields:
+  Student: enrollment, dob, semester, department
+  Faculty: department, designation
+  Visitor: purpose, visit_date, approval_status
+
+Indexes: email (unique), role
+
+--------------------------------------------------------------------------------
+2. NOTICES (collection: 'notices')
+--------------------------------------------------------------------------------
+Description: College notices/announcements
+
+| Field      | Type     | Required | Description                          |
+|------------|----------|----------|--------------------------------------|
+| _id        | ObjectId | auto     | Primary key                          |
+| title      | string   | yes      | Notice title                         |
+| content    | string   | yes      | Notice body content                  |
+| faculty_id | string   | yes      | Creator's user ID                    |
+| priority   | string   | no       | normal|important|urgent (default: normal) |
+| created_at | datetime | auto     | Creation timestamp                   |
+| updated_at | datetime | auto     | Last update timestamp                |
+| is_active  | boolean  | yes      | Active status (default: true)        |
+| views      | number   | no       | View count (default: 0)              |
+
+Indexes: created_at, faculty_id
+
+--------------------------------------------------------------------------------
+3. ASSIGNMENTS (collection: 'assignments')
+--------------------------------------------------------------------------------
+Description: Coursework assignments
+
+| Field        | Type     | Required | Description                          |
+|--------------|----------|----------|--------------------------------------|
+| _id          | ObjectId | auto     | Primary key                          |
+| title        | string   | yes      | Assignment title                     |
+| description  | string   | yes      | Assignment description               |
+| due_date     | string   | yes      | Due date (YYYY-MM-DD)                |
+| faculty_id   | string   | yes      | Creator's user ID                    |
+| subject      | string   | yes      | Subject/course name                  |
+| max_marks    | number   | no       | Maximum marks (default: 100)         |
+| created_at   | datetime | auto     | Creation timestamp                   |
+| updated_at   | datetime | auto     | Last update timestamp                |
+| is_active    | boolean  | yes      | Active status (default: true)        |
+| submissions  | array    | no       | Student submissions                  |
+
+Indexes: due_date, faculty_id
+
+--------------------------------------------------------------------------------
+4. MATERIALS (collection: 'materials')
+--------------------------------------------------------------------------------
+Description: Study materials (notes, syllabus, papers, books, videos)
+
+| Field        | Type     | Required | Description                          |
+|--------------|----------|----------|--------------------------------------|
+| _id          | ObjectId | auto     | Primary key                          |
+| title        | string   | yes      | Material title                       |
+| subject      | string   | yes      | Subject/course                       |
+| type         | string   | yes      | notes|syllabus|paper|book|video      |
+| faculty_id   | string   | yes      | Uploader's user ID                   |
+| file_url     | string   | no       | File URL or path                     |
+| description  | string   | no       | Material description                 |
+| created_at   | datetime | auto     | Creation timestamp                   |
+| updated_at   | datetime | auto     | Last update timestamp                |
+| is_active    | boolean  | yes      | Active status (default: true)        |
+| downloads    | number   | no       | Download count (default: 0)          |
+| status       | string   | no       | pending|approved|rejected        |
+
+Indexes: subject, faculty_id
+
+--------------------------------------------------------------------------------
+5. FAQS (collection: 'faqs')
+--------------------------------------------------------------------------------
+Description: Frequently asked questions
+
+| Field       | Type     | Required | Description                          |
+|-------------|----------|----------|--------------------------------------|
+| _id         | ObjectId | auto     | Primary key                          |
+| question    | string   | yes      | FAQ question                         |
+| answer      | string   | no       | FAQ answer                           |
+| created_by  | string   | no       | Creator user ID                      |
+| created_at  | datetime | auto     | Creation timestamp                   |
+| updated_at  | datetime | auto     | Last update timestamp                |
+| is_active   | boolean  | yes      | Active status (default: true)        |
+| views       | number   | no       | View count (default: 0)              |
+
+--------------------------------------------------------------------------------
+6. AI_QUERIES (collection: 'ai_queries')
+--------------------------------------------------------------------------------
+Description: AI chat/interaction logs
+
+| Field       | Type     | Required | Description                          |
+|-------------|----------|----------|--------------------------------------|
+| _id         | ObjectId | auto     | Primary key                          |
+| user_id     | string   | yes      | User who made the query              |
+| query       | string   | yes      | User's question                      |
+| response    | string   | yes      | AI response                          |
+| created_at  | datetime | auto     | Creation timestamp                   |
+| is_helpful  | boolean  | no       | User feedback (true|false|null)     |
+
+Indexes: user_id, created_at
+
+--------------------------------------------------------------------------------
+7. VISITORS (collection: 'visitors')
+--------------------------------------------------------------------------------
+Description: Visitor registrations (legacy/supplementary to users with role=visitor)
+
+| Field        | Type     | Required | Description                          |
+|--------------|----------|----------|--------------------------------------|
+| _id          | ObjectId | auto     | Primary key                          |
+| name         | string   | yes      | Visitor name                         |
+| email        | string   | no       | Email                                |
+| phone        | string   | no       | Phone number                         |
+| purpose      | string   | no       | Purpose of visit                     |
+| status       | string   | no       | pending|approved|rejected|completed   |
+| visit_date   | string   | no       | Visit date                           |
+| entry_time   | string   | no       | Entry time                           |
+| exit_time    | string   | no       | Exit time                            |
+| created_at   | datetime | no       | Creation timestamp                   |
+| faculty_reply| string   | no       | Faculty response to inquiry          |
+
+--------------------------------------------------------------------------------
+8. NOTIFICATIONS (collection: 'notifications')
+--------------------------------------------------------------------------------
+Description: Push/ in-app notifications
+
+| Field           | Type     | Required | Description                          |
+|-----------------|----------|----------|--------------------------------------|
+| _id             | ObjectId | auto     | Primary key                          |
+| title           | string   | yes      | Notification title                   |
+| message         | string   | yes      | Notification body                    |
+| type            | string   | yes      | notice|event|assignment|upload|user_register|user_login|system |
+| target_role     | string   | yes      | all|student|faculty|admin        |
+| target_courses  | array    | no       | Courses for students                 |
+| target_semesters| array    | no       | Semesters for students               |
+| sender_role     | string   | no       | admin|faculty                              |
+| sender_id       | string   | no       | Sender user ID                       |
+| sender_name     | string   | no       | Sender display name                  |
+| related_id      | string   | no       | Related entity ID                    |
+| related_type    | string   | no       | notice|assignment|material|event   |
+| is_read         | boolean  | no       | Read status (default: false)         |
+| created_at      | datetime | auto     | Creation timestamp                   |
+
+--------------------------------------------------------------------------------
+9. SESSIONS (collection: 'sessions')
+--------------------------------------------------------------------------------
+Description: User sessions (referenced in Collections)
+
+| Field  | Type     | Description                    |
+|--------|----------|--------------------------------|
+| _id    | ObjectId | Primary key                    |
+| (other session fields as used in app) |
+
+--------------------------------------------------------------------------------
+10. QUERIES (collection: 'queries')
+--------------------------------------------------------------------------------
+Description: General queries (used in admin stats)
+
+| Field  | Type     | Description                    |
+|--------|----------|--------------------------------|
+| _id    | ObjectId | Primary key                    |
+| (query-related fields)          |
+
+--------------------------------------------------------------------------------
+11. SYSTEM_META (collection: 'system_meta')
+--------------------------------------------------------------------------------
+Description: System metadata (database ops, backups, etc.)
+
+| Field  | Type     | Description                    |
+|--------|----------|--------------------------------|
+| _id    | string   | e.g. 'database_ops'            |
+| last_backup | datetime | Last backup timestamp      |
+| last_optimize | datetime | Last optimize timestamp    |
+| (other meta fields)            |
+
+================================================================================
+END OF DATABASE SCHEMA
+================================================================================

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:app_links/app_links.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/firebase_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,10 +33,75 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    // Navigate to first screen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/first');
-    });
+    // Navigate based on saved login session after splash delay.
+    Timer(const Duration(seconds: 3), _navigateNext);
+  }
+
+  Future<void> _navigateNext() async {
+    if (!mounted) return;
+
+    // Handle Firebase email verification link (app opened from email)
+    try {
+      final appLinks = AppLinks();
+      final uri = await appLinks.getInitialLink();
+      if (uri != null && FirebaseService.isSignInWithEmailLink(uri.toString())) {
+        final prefs = await SharedPreferences.getInstance();
+        final email = prefs.getString('email_for_sign_in_link');
+        if (email != null && email.isNotEmpty) {
+          final result = await FirebaseService.signInWithEmailLink(
+            email: email,
+            link: uri.toString(),
+          );
+          if (result['success'] == true) {
+            await prefs.remove('email_for_sign_in_link');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Email verified successfully!')),
+              );
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    final isLoggedIn = await AuthService.isLoggedIn();
+    final savedUser = await AuthService.getUser();
+
+    if (isLoggedIn && savedUser != null) {
+      final role = (savedUser['role'] ?? '').toString().toLowerCase();
+      switch (role) {
+        case 'admin':
+          Navigator.pushReplacementNamed(context, '/admin');
+          return;
+        case 'faculty':
+          Navigator.pushReplacementNamed(context, '/faculty');
+          return;
+        case 'student':
+          Navigator.pushReplacementNamed(
+            context,
+            '/student',
+            arguments: {
+              'studentName': savedUser['name'] ?? 'Student',
+              'semester': savedUser['semester'] ?? 'N/A',
+              'userId': savedUser['_id'] ?? '',
+              'email': savedUser['email'] ?? '',
+              'enrollmentNumber': savedUser['enrollment'] ?? '',
+              'course': savedUser['department'] ?? '',
+            },
+          );
+          return;
+        case 'visitor':
+          Navigator.pushReplacementNamed(context, '/visitor');
+          return;
+        default:
+          // Unknown role: clear stale session and go to login flow.
+          await AuthService.clearAuth();
+          Navigator.pushReplacementNamed(context, '/login');
+          return;
+      }
+    }
+
+    Navigator.pushReplacementNamed(context, '/first');
   }
 
   @override

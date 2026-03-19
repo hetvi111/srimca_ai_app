@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/static_data.dart';
+import 'package:srimca_ai/api_service.dart';
 
 class FacultyAiAssistantPage extends StatefulWidget {
   const FacultyAiAssistantPage({super.key});
@@ -25,13 +25,23 @@ class _FacultyAiAssistantPageState
 
   Future<void> _loadConversations() async {
     try {
-      // Mock load FAQs (no backend)
-      final faqs = StaticData.faqs;
+      final user = await AuthService.getUser();
+      final userId = user?['_id']?.toString() ?? '';
+      final history = userId.isNotEmpty
+          ? await ApiService.getChatHistory(userId)
+          : <Map<String, dynamic>>[];
+
       setState(() {
-        messages = faqs.map((faq) => {
-          "role": "ai",
-          "text": "${faq['question']}\n\nAnswer: ${faq.containsKey('answer') ? faq['answer'] : 'Pending...'}"
-        }).toList().cast<Map<String, String>>();
+        messages = history.expand((item) => [
+          {
+            "role": "user",
+            "text": (item['question'] ?? '').toString(),
+          },
+          {
+            "role": "ai",
+            "text": (item['answer'] ?? '').toString(),
+          },
+        ]).toList().cast<Map<String, String>>();
         isLoading = false;
       });
     } catch (e) {
@@ -40,19 +50,31 @@ class _FacultyAiAssistantPageState
   }
 
   Future<void> sendMessage() async {
-    if (controller.text.trim().isEmpty) return;
+    final question = controller.text.trim();
+    if (question.isEmpty) return;
 
     setState(() {
-      messages.add({"role": "user", "text": controller.text});
+      messages.add({"role": "user", "text": question});
       isSending = true;
     });
 
     try {
-      // Mock add FAQ (no backend)
+      final answer = await ApiService.askAI(question);
+      final user = await AuthService.getUser();
+      final userId = user?['_id']?.toString() ?? '';
+
+      if (userId.isNotEmpty) {
+        await ApiService.saveChatMessage(
+          userId: userId,
+          question: question,
+          answer: answer,
+        );
+      }
+
       setState(() {
         messages.add({
           "role": "ai",
-          "text": "Query received and processed by AI system."
+          "text": answer
         });
       });
     } catch (e) {

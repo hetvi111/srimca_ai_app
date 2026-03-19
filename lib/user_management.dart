@@ -69,7 +69,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
   List<User> get filteredUsers {
     var tempUsers = users;
     if (selectedRole != "All") {
-      tempUsers = tempUsers.where((u) => u.role == selectedRole).toList();
+      final roleLower = selectedRole.toLowerCase();
+      tempUsers = tempUsers.where((u) => u.role.toLowerCase() == roleLower).toList();
     }
     if (searchQuery.isNotEmpty) {
       tempUsers = tempUsers
@@ -129,11 +130,14 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   /// ================= EDIT USER =================
-  void editUser(User user) {
+  /// Only Faculty and Student can be edited. Admin users cannot be edited.
+  Future<void> editUser(User user) async {
     final nameCtrl = TextEditingController(text: user.name);
     final emailCtrl = TextEditingController(text: user.email);
-    String role = user.role;
+    String role = user.role.toLowerCase();
+    if (role != 'faculty' && role != 'student') role = 'student';
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -149,12 +153,13 @@ class _UserManagementPageState extends State<UserManagementPage> {
               controller: emailCtrl,
               decoration: const InputDecoration(labelText: "Email"),
             ),
-            DropdownButtonFormField(
+            DropdownButtonFormField<String>(
               value: role,
-              items: ["Admin", "Faculty", "Student"]
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-              onChanged: (value) => role = value!,
+              items: const [
+                DropdownMenuItem(value: "faculty", child: Text("Faculty")),
+                DropdownMenuItem(value: "student", child: Text("Student")),
+              ],
+              onChanged: (value) => role = value ?? 'student',
               decoration: const InputDecoration(labelText: "Role"),
             ),
           ],
@@ -164,13 +169,36 @@ class _UserManagementPageState extends State<UserManagementPage> {
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel")),
           ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  user.name = nameCtrl.text;
-                  user.email = emailCtrl.text;
-                  user.role = role;
-                });
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                final email = emailCtrl.text.trim();
+                if (name.isEmpty || email.isEmpty) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Name and email are required')),
+                    );
+                  }
+                  return;
+                }
                 Navigator.pop(context);
+                final success = await ApiService.updateUser(
+                  userId: user.id,
+                  name: name,
+                  email: email,
+                  role: role.toLowerCase(),
+                );
+                if (mounted) {
+                  if (success) {
+                    await _loadUsers();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User updated successfully')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to update user')),
+                    );
+                  }
+                }
               },
               child: const Text("Save")),
         ],
@@ -343,10 +371,12 @@ class _UserManagementPageState extends State<UserManagementPage> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 18),
-                                onPressed: () => editUser(user),
-                              ),
+                              if (user.role.toLowerCase() == 'faculty' ||
+                                  user.role.toLowerCase() == 'student')
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  onPressed: () => editUser(user),
+                                ),
                               IconButton(
                                 icon: const Icon(Icons.delete, size: 18),
                                 onPressed: () => deleteUser(user.id),

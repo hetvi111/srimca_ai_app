@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 /// ================= DATABASE MANAGEMENT PAGE =================
 class DatabaseManagementPage extends StatefulWidget {
@@ -11,14 +12,41 @@ class DatabaseManagementPage extends StatefulWidget {
 class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
   bool isBackingUp = false;
   bool isRestoring = false;
+  bool isLoading = true;
+  String lastBackup = 'Never';
+  Map<String, dynamic> dbInfo = {
+    'database_name': 'srimca_ai',
+    'version': '1.0.0',
+    'size_mb': 0,
+    'last_updated': '',
+  };
 
   Map<String, dynamic> dbStats = {
-    "users": 1250,
-    "notices": 156,
-    "materials": 423,
-    "queries": 5678,
-    "notifications": 89,
+    "users": 0,
+    "notices": 0,
+    "materials": 0,
+    "queries": 0,
+    "notifications": 0,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDatabaseOverview();
+  }
+
+  Future<void> _loadDatabaseOverview() async {
+    final data = await ApiService.getDatabaseOverview();
+    if (!mounted) return;
+    setState(() {
+      dbStats = (data['stats'] as Map<String, dynamic>? ?? dbStats);
+      dbInfo = (data['info'] as Map<String, dynamic>? ?? dbInfo);
+      lastBackup = (dbInfo['last_backup']?.toString().isNotEmpty ?? false)
+          ? dbInfo['last_backup'].toString()
+          : 'Never';
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +55,9 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
         title: const Text("Database Management", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1A237E),
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +117,7 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      "Last Backup: 2024-01-15 10:30 AM",
+                      "Last Backup: $lastBackup",
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
@@ -135,10 +165,10 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _buildInfoRow("Database Name", "srimca_ai_db"),
-                    _buildInfoRow("Version", "1.0.0"),
-                    _buildInfoRow("Size", "125 MB"),
-                    _buildInfoRow("Last Updated", "2024-01-15"),
+                    _buildInfoRow("Database Name", dbInfo["database_name"]?.toString() ?? 'srimca_ai'),
+                    _buildInfoRow("Version", dbInfo["version"]?.toString() ?? '1.0.0'),
+                    _buildInfoRow("Size", "${dbInfo["size_mb"]?.toString() ?? '0'} MB"),
+                    _buildInfoRow("Last Updated", dbInfo["last_updated"]?.toString() ?? ''),
                   ],
                 ),
               ),
@@ -183,35 +213,46 @@ class _DatabaseManagementPageState extends State<DatabaseManagementPage> {
 
   Future<void> _performBackup() async {
     setState(() => isBackingUp = true);
-    await Future.delayed(const Duration(seconds: 2));
+    final result = await ApiService.backupDatabase();
     if (mounted) {
       setState(() => isBackingUp = false);
+      if (result['last_backup'] != null) {
+        lastBackup = result['last_backup'].toString();
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Database backup completed successfully!")),
+        SnackBar(
+          content: Text(result['error']?.toString() ?? "Database backup completed successfully!"),
+        ),
       );
+      _loadDatabaseOverview();
     }
   }
 
   Future<void> _performRestore() async {
     setState(() => isRestoring = true);
-    await Future.delayed(const Duration(seconds: 2));
+    final result = await ApiService.restoreDatabase();
     if (mounted) {
       setState(() => isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Database restored successfully!")),
+        SnackBar(
+          content: Text(result['error']?.toString() ?? "Database restored successfully!"),
+        ),
       );
+      _loadDatabaseOverview();
     }
   }
 
-  void _optimizeDatabase() {
+  Future<void> _optimizeDatabase() async {
+    final success = await ApiService.optimizeDatabase();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Database optimization completed!")),
+      SnackBar(content: Text(success ? "Database optimization completed!" : "Database optimization failed")),
     );
   }
 
-  void _clearCache() {
+  Future<void> _clearCache() async {
+    final success = await ApiService.clearDatabaseCache();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Cache cleared successfully!")),
+      SnackBar(content: Text(success ? "Cache cleared successfully!" : "Cache clear failed")),
     );
   }
 }

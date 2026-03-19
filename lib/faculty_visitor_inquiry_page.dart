@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:srimca_ai/api_service.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -25,6 +26,7 @@ class FacultyVisitorInquiryPage extends StatefulWidget {
 class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
   List<Map<String, dynamic>> visitors = [];
   bool isLoading = true;
+  final Map<String, TextEditingController> _replyControllers = {};
 
   @override
   void initState() {
@@ -33,73 +35,65 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
   }
 
   Future<void> _loadVisitors() async {
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
+    try {
+      final data = await ApiService.getFacultyVisitorInquiries();
+      if (!mounted) return;
       setState(() {
-        visitors = _getDemoVisitors();
+        visitors = data;
         isLoading = false;
       });
+      for (final visitor in data) {
+        final id = (visitor['_id'] ?? '').toString();
+        if (id.isEmpty) continue;
+        _replyControllers.putIfAbsent(
+          id,
+          () => TextEditingController(text: (visitor['faculty_reply'] ?? '').toString()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        visitors = [];
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load visitor inquiries: $e')),
+      );
     }
   }
 
-  List<Map<String, dynamic>> _getDemoVisitors() {
-    return [
-      {
-        'id': '1',
-        'name': 'John Smith',
-        'purpose': 'Guest Lecture Inquiry',
-        'department': widget.department,
-        'visitDate': '2024-02-25',
-        'status': 'pending',
-        'phone': '+91 9876543210',
-        'email': 'john.smith@example.com',
-      },
-      {
-        'id': '2',
-        'name': 'Dr. Sarah Johnson',
-        'purpose': 'Academic Collaboration',
-        'department': widget.department,
-        'visitDate': '2024-02-28',
-        'status': 'approved',
-        'phone': '+91 9876543211',
-        'email': 'sarah.j@mit.edu',
-      },
-      {
-        'id': '3',
-        'name': 'Michael Brown',
-        'purpose': 'Workshop Proposal',
-        'department': widget.department,
-        'visitDate': '2024-03-01',
-        'status': 'pending',
-        'phone': '+91 9876543212',
-        'email': 'michael.brown@example.com',
-      },
-      {
-        'id': '4',
-        'name': 'Emily Davis',
-        'purpose': 'Research Discussion',
-        'department': widget.department,
-        'visitDate': '2024-02-15',
-        'status': 'completed',
-        'phone': '+91 9876543213',
-        'email': 'emily.d@stanford.edu',
-      },
-    ];
-  }
-
   Future<void> _updateStatus(String visitorId, String newStatus) async {
+    final reply = _replyControllers[visitorId]?.text.trim() ?? '';
+    final ok = await ApiService.respondFacultyVisitorInquiry(
+      visitorId: visitorId,
+      status: newStatus,
+      facultyReply: reply,
+    );
+    if (!mounted) return;
+
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update visitor inquiry')),
+      );
+      return;
+    }
+
     setState(() {
       visitors = visitors.map((v) {
-        if (v['id'] == visitorId) {
-          return {...v, 'status': newStatus};
+        if ((v['_id'] ?? '').toString() == visitorId) {
+          return {
+            ...v,
+            'status': newStatus,
+            'approval_status': newStatus,
+            'faculty_reply': reply,
+          };
         }
         return v;
       }).toList();
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Visitor request ${newStatus}!')),
+      SnackBar(content: Text('Visitor request ${newStatus.toUpperCase()} and reply saved')),
     );
   }
 
@@ -147,7 +141,15 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
   }
 
   Widget _buildVisitorCard(Map<String, dynamic> visitor) {
-    final status = visitor['status'] ?? 'pending';
+    final status = (visitor['status'] ?? visitor['approval_status'] ?? 'pending').toString().toLowerCase();
+    final visitorId = (visitor['_id'] ?? visitor['id'] ?? '').toString();
+    final visitDate = (visitor['visit_date'] ?? visitor['visitDate'] ?? '').toString();
+    final question = (visitor['question'] ?? visitor['purpose'] ?? '').toString();
+    final purpose = (visitor['purpose'] ?? '').toString();
+    final replyController = _replyControllers.putIfAbsent(
+      visitorId,
+      () => TextEditingController(text: (visitor['faculty_reply'] ?? '').toString()),
+    );
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -180,7 +182,7 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(visitor['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: navyBlue)),
-                      Text(visitor['purpose'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      Text(purpose, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     ],
                   ),
                 ),
@@ -204,9 +206,20 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
             child: Column(
               children: [
                 _buildDetailRow(Icons.badge, "Department", visitor['department'] ?? ''),
-                _buildDetailRow(Icons.calendar_today, "Visit Date", visitor['visitDate'] ?? ''),
+                _buildDetailRow(Icons.calendar_today, "Visit Date", visitDate),
                 _buildDetailRow(Icons.phone, "Phone", visitor['phone'] ?? ''),
                 _buildDetailRow(Icons.email, "Email", visitor['email'] ?? ''),
+                _buildDetailRow(Icons.help_outline, "Visitor Question", question),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: replyController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Reply Message',
+                    hintText: 'Type your answer for this visitor inquiry',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 // Action buttons
                 if (status == 'pending')
@@ -214,7 +227,7 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _updateStatus(visitor['id'], 'rejected'),
+                          onPressed: visitorId.isEmpty ? null : () => _updateStatus(visitorId, 'rejected'),
                           icon: const Icon(Icons.close, color: Colors.red),
                           label: const Text('Reject', style: TextStyle(color: Colors.red)),
                           style: OutlinedButton.styleFrom(
@@ -225,7 +238,7 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => _updateStatus(visitor['id'], 'approved'),
+                          onPressed: visitorId.isEmpty ? null : () => _updateStatus(visitorId, 'approved'),
                           icon: const Icon(Icons.check),
                           label: const Text('Approve'),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -237,7 +250,7 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () => _updateStatus(visitor['id'], 'completed'),
+                      onPressed: visitorId.isEmpty ? null : () => _updateStatus(visitorId, 'completed'),
                       icon: const Icon(Icons.done_all),
                       label: const Text('Mark as Completed'),
                     ),
@@ -271,5 +284,13 @@ class _FacultyVisitorInquiryPageState extends State<FacultyVisitorInquiryPage> {
       case 'completed': return Colors.blue;
       default: return Colors.orange;
     }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _replyControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 }

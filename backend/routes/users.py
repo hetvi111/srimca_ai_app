@@ -5,6 +5,7 @@ Handles user profile operations
 
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
+from datetime import datetime
 
 from database import get_collection, Collections
 from models import UserModel
@@ -279,3 +280,123 @@ def activate_user(user_id):
     except Exception as e:
         print(f"Activate user error: {e}")
         return jsonify({'error': 'Failed to activate user'}), 500
+
+
+@users_bp.route('/faculty/visitor-inquiries', methods=['GET'], endpoint='get_faculty_visitor_inquiries')
+@require_auth
+def get_faculty_visitor_inquiries():
+    """
+    Get visitor inquiries for faculty view
+    Requires authentication (faculty/admin)
+    """
+    try:
+        current_role = request.user.get('role', '')
+        if current_role not in ['faculty', 'admin']:
+            return jsonify({'error': 'Only faculty/admin can view visitor inquiries'}), 403
+
+        limit = int(request.args.get('limit', 100))
+        users_collection = get_collection(Collections.USERS)
+        visitors_collection = get_collection(Collections.VISITORS)
+
+        inquiries = []
+
+        # Primary source: visitor registrations in users collection
+        visitor_users = list(
+            users_collection.find({'role': 'visitor'})
+            .sort('created_at', -1)
+            .limit(limit)
+        )
+        for user in visitor_users:
+            inquiries.append({
+                '_id': str(user.get('_id', '')),
+                'name': user.get('name', ''),
+                'email': user.get('email', ''),
+                'phone': user.get('mobile', user.get('phone', '')),
+                'purpose': user.get('purpose', ''),
+                'question': user.get('visitor_question', user.get('purpose', '')),
+                'visit_date': user.get('visit_date', ''),
+                'status': user.get('approval_status', user.get('status', 'pending')),
+                'faculty_reply': user.get('faculty_reply', ''),
+                'updated_at': user.get('updated_at').isoformat() if user.get('updated_at') else None,
+                'created_at': user.get('created_at').isoformat() if user.get('created_at') else None,
+            })
+
+        # Secondary source: legacy visitors collection
+        existing_emails = {i.get('email', '').lower() for i in inquiries if i.get('email')}
+        legacy_visitors = list(
+            visitors_collection.find()
+            .sort('created_at', -1)
+            .limit(limit)
+        )
+        for visitor in legacy_visitors:
+            email = visitor.get('email', '')
+            if email and email.lower() in existing_emails:
+                continue
+            inquiries.append({
+                '_id': str(visitor.get('_id', '')),
+                'name': visitor.get('name', ''),
+                'email': email,
+                'phone': visitor.get('phone', ''),
+                'purpose': visitor.get('purpose', ''),
+                'question': visitor.get('question', visitor.get('purpose', '')),
+                'visit_date': visitor.get('visit_date', ''),
+                'status': visitor.get('status', 'pending'),
+                'faculty_reply': visitor.get('faculty_reply', ''),
+                'updated_at': visitor.get('updated_at').isoformat() if visitor.get('updated_at') else None,
+                'created_at': visitor.get('created_at').isoformat() if visitor.get('created_at') else None,
+            })
+
+        inquiries.sort(key=lambda x: x.get('created_at') or '', reverse=True)
+
+        return jsonify({'inquiries': inquiries, 'count': len(inquiries)}), 200
+    except Exception as e:
+        print(f"Get faculty visitor inquiries error: {e}")
+        return jsonify({'error': 'Failed to get visitor inquiries'}), 500
+
+
+@users_bp.route('/faculty/visitor-inquiries/<visitor_id>/respond', methods=['PUT'], endpoint='respond_faculty_visitor_inquiry')
+@require_auth
+def respond_faculty_visitor_inquiry(visitor_id):
+    """
+    Update visitor inquiry status and faculty response
+    Requires authentication (faculty/admin)
+    """
+    try:
+        current_role = request.user.get('role', '')
+        if current_role not in ['faculty', 'admin']:
+            return jsonify({'error': 'Only faculty/admin can respond to visitor inquiries'}), 403
+
+        data = request.get_json() or {}
+        new_status = data.get('status', '').strip().lower()
+        faculty_reply = data.get('faculty_reply', '').strip()
+        if new_status not in ['approved', 'rejected', 'pending', 'completed']:
+            return jsonify({'error': 'Invalid status'}), 400
+
+        update_doc = {
+            'updated_at': datetime.utcnow(),
+            'status': new_status,
+            'approval_status': new_status,
+            'faculty_reply': faculty_reply,
+            'faculty_replied_by': request.user.get('name', ''),
+            'faculty_replied_by_id': request.user.get('user_id', ''),
+        }
+
+        users_collection = get_collection(Collections.USERS)
+        visitors_collection = get_collection(Collections.VISITORS)
+
+        users_result = users_collection.update_one(
+            {'_id': ObjectId(visitor_id), 'role': 'visitor'},
+            {'$set': update_doc}
+        )
+        visitors_result = visitors_collection.update_one(
+            {'_id': ObjectId(visitor_id)},
+            {'$set': update_doc}
+        )
+
+        if users_result.matched_count == 0 and visitors_result.matched_count == 0:
+            return jsonify({'error': 'Visitor inquiry not found'}), 404
+
+        return jsonify({'message': 'Visitor inquiry updated successfully'}), 200
+    except Exception as e:
+        print(f"Respond faculty visitor inquiry error: {e}")
+        return jsonify({'error': 'Failed to update visitor inquiry'}), 500
