@@ -1,5 +1,5 @@
 import glob
-from config import DATA_DIR
+from .config import DATA_DIR
 
 def load_content():
     """Load all text files from data directory."""

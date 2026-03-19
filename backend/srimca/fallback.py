@@ -1,4 +1,4 @@
-from loader import load_content
+from .loader import load_content
 
 def get_fallback_answer(question):
     """Keyword-based fallback when GPT is unavailable."""
