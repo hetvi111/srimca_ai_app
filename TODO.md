@@ -1,26 +1,5 @@
-# SRIMCA AI Chat & Backend Fix Plan
-Breakdown of approved plan
-- Remove duplicate `app.register_blueprint(notifications_bp)`
-- ✅ Clean registration
-
-## Step 2: [COMPLETE] Fix backend/routes/ai.py (import path)
-- Moved srimca/ inside backend/
-- Fixed relative import `from .srimca.app import ask`
-- ✅ Import now works
-
-## Step 3: [PENDING] Verify backend/srimca/app.py 'ask' function
-- Read and ensure 'ask' function exists and works
-
-## Step 4: [PENDING] Test backend
-- cd backend && python app.py
-- Test /api/ai/chat endpoint
-
-## Step 5: [PENDING] Test Flutter AI chat
-- Run Flutter app
-- Test chat functionality
-
-## Step 6: [COMPLETE] Monitor & Deploy
-- Check production deployment
-- Add error logging if needed
-
-**Progress: 2/6 steps complete**
+# Fix sentence_transformers import error
+- [ ] Edit backend/requirements.txt to add missing deps
+- [ ] pip install -r backend/requirements.txt
+- [ ] Test: python backend/app.py (should start without import error)
+- [ ] Deploy to Render (git push)
