@@ -1,6 +1,6 @@
-from retriever import retrieve_context
-from config import openai_client
-from fallback import get_fallback_answer
+from .retriever import retrieve_context
+from .config import openai_client
+from .fallback import get_fallback_answer
 
 def get_gpt_answer(question):
     """Generate answer using GPT with retrieved context."""

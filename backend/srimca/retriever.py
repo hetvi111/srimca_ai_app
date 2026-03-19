@@ -1,5 +1,5 @@
 import numpy as np
-from config import knowledge_col, embedding_model
+from .config import knowledge_col, embedding_model
 
 def retrieve_context(question, top_k=5):
     """Retrieve most relevant context using local embeddings."""

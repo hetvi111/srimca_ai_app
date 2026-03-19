@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .srimca.app import ask
+from srimca.app import ask
 
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 

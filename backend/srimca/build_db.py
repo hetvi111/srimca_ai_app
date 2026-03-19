@@ -1,5 +1,5 @@
-from config import knowledge_col, embedding_model
-from loader import load_content
+from .config import knowledge_col, embedding_model
+from .loader import load_content
 
 def build_db():
     """Build vector database using local embeddings (FREE)."""

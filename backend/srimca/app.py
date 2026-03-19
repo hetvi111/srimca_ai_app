@@ -1,8 +1,8 @@
-from exact_match import get_exact_answer
-from gpt_answer import get_gpt_answer
-from fallback import get_fallback_answer
-from build_db import build_db
-from config import knowledge_col
+from .exact_match import get_exact_answer
+from .gpt_answer import get_gpt_answer
+from .fallback import get_fallback_answer
+from .build_db import build_db
+from .config import knowledge_col
 
 
 def ask(question):

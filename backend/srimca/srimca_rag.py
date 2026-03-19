@@ -5,7 +5,7 @@ from typing import Optional
 from pymongo import MongoClient
 from openai import OpenAI
 from dotenv import load_dotenv
-from config import DATA_DIR, knowledge_col
+from .config import DATA_DIR, knowledge_col
 
 load_dotenv()
 

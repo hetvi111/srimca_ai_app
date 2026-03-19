@@ -1,5 +1,5 @@
 import re
-from loader import load_content
+from .loader import load_content
 
 def get_exact_answer(question):
     """Get exact answer for timetable queries using pattern matching."""
