@@ -1,7 +1,10 @@
 import os
 from pymongo import MongoClient
-from openai import OpenAI
 from dotenv import load_dotenv
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
 try:
     from sentence_transformers import SentenceTransformer
 except Exception:
@@ -33,4 +36,7 @@ else:
     print("Warning: sentence-transformers not available; semantic retrieval disabled.")
 
 # OpenAI client (optional - for GPT answers if you have credits)
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+if OpenAI is not None and OPENAI_API_KEY:
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+else:
+    openai_client = None
