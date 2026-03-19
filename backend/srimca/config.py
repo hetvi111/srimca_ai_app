@@ -15,6 +15,9 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv()
 
+# Set HF_TOKEN for Hugging Face Hub (avoids unauth warnings, enables higher limits)
+os.environ['HF_TOKEN'] = os.getenv('HF_TOKEN', '')
+
 # Configuration
 DATA_DIR = os.path.join(SCRIPT_DIR, "data")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://n8n:n8nconnection@cluster0.guplsjx.mongodb.net")

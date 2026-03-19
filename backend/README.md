@@ -65,26 +65,14 @@ bash
 cp .env.example .env
 ```
 
-Edit `.env` with your actual values:
+Edit `.env` with your actual values from `.env.example`. **Important new vars:**
 
-```
-env
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/srimca_ai?retryWrites=true&w=majority
+- **HF_TOKEN**: Get free from https://huggingface.co/settings/tokens (required for AI model downloads without rate limit warnings)
+- All other vars (MongoDB, Firebase, JWT, etc.)
 
-# Firebase (from Firebase Console > Project Settings > Service Accounts)
-FIREBASE_PROJECT_ID=srimcaai
-FIREBASE_PRIVATE_KEY=your_private_key
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@your-project.iam.gserviceaccount.com
+**Example .env structure shown in .env.example**
 
-# JWT
-JWT_SECRET_KEY=change_this_to_a_secure_random_string
-JWT_EXPIRATION_HOURS=24
-
-# Flask
-FLASK_ENV=development
-PORT=5000
-```
+**Note:** HF_TOKEN eliminates "unauthenticated requests" warning from sentence-transformers (used in AI chat). Sign up at Hugging Face if needed.
 
 ### 4. MongoDB Atlas Setup
 
