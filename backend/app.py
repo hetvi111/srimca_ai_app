@@ -6,6 +6,7 @@ This is the main Flask application that registers all blueprints and routes.
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
+import threading
 
 # Import config
 from config import get_config
@@ -27,6 +28,17 @@ from routes.ai import ai_bp
 from routes.notifications import notifications_bp
 
 
+def initialize_database_async():
+    """Initialize database resources without blocking app startup."""
+    try:
+        initialize_collections()
+        initialize_indexes()
+        print("Database initialization completed")
+    except Exception as e:
+        # Keep the API process alive even if database init fails at startup.
+        print(f"Database initialization warning: {e}")
+
+
 def create_app(config_name=None):
     """Application factory for creating Flask app"""
     app = Flask(__name__)
@@ -43,9 +55,9 @@ def create_app(config_name=None):
     # Enable CORS
     CORS(app, origins=config.CORS_ORIGINS, supports_credentials=True)
     
-    # Initialize database
-    initialize_collections()
-    initialize_indexes()
+    # Initialize database in a background thread so the server can bind quickly.
+    db_init_thread = threading.Thread(target=initialize_database_async, daemon=True)
+    db_init_thread.start()
     
     # Register blueprints
     app.register_blueprint(auth_bp)
