@@ -4,7 +4,8 @@ Breakdown of approved plan
 - ✅ Clean registration
 
 ## Step 2: [COMPLETE] Fix backend/routes/ai.py (import path)
-- Added sys.path fix for srimca import
+- Moved srimca/ inside backend/
+- Fixed relative import `from .srimca.app import ask`
 - ✅ Import now works
 
 ## Step 3: [PENDING] Verify backend/srimca/app.py 'ask' function
