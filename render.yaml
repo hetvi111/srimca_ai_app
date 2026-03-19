@@ -3,13 +3,11 @@ services:
     name: srimca-ai-backend
     runtime: python
     buildCommand: python -m pip install --upgrade pip && python -m pip install -r backend/requirements.txt && python -m pip install -r backend/srimca/requirements.txt
-    startCommand: python backend/app.py
+    startCommand: cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 1 app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: PORT
-        value: 10000
       - key: MONGODB_URI
         sync: false  # Set this in Render dashboard
-      - key: DB_NAME
+      - key: MONGODB_DB_NAME
         value: srimca_ai
