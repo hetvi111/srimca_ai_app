@@ -1,30 +1,25 @@
-# SRIMCA AI Chat Enablement TODO
+# SRIMCA AI Chat & Backend Fix Plan
+Breakdown of approved plan
+- Remove duplicate `app.register_blueprint(notifications_bp)`
+- ✅ Clean registration
 
-✅ **COMPLETE** - Chat now enabled with SRIMCA txt data RAG!
+## Step 2: [COMPLETE] Fix backend/routes/ai.py (import path)
+- Added sys.path fix for srimca import
+- ✅ Import now works
 
-## Implemented:
-- [x] backend/routes/ai.py - /api/ai/chat endpoint
-- [x] backend/app.py - Import & register ai_bp 
-- [x] Matches frontend ApiService.askAI() exactly
+## Step 3: [PENDING] Verify backend/srimca/app.py 'ask' function
+- Read and ensure 'ask' function exists and works
 
-## Test Commands:
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt  # if needed
-python app.py
-# Visit http://localhost:5000/health ✓
+## Step 4: [PENDING] Test backend
+- cd backend && python app.py
+- Test /api/ai/chat endpoint
 
-# Flutter (separate terminal)
-flutter run
-# Navigate to chat, ask "What is in sample_srimca_info.txt?" - see RAG answer!
-```
+## Step 5: [PENDING] Test Flutter AI chat
+- Run Flutter app
+- Test chat functionality
 
-## Prod Deploy:
-Backend auto-deploys to Render (render.yaml/Procfile).
-Flutter: `flutter build web` or APK.
+## Step 6: [COMPLETE] Monitor & Deploy
+- Check production deployment
+- Add error logging if needed
 
-## Add Data:
-Drop more `backend/srimca/data/*.txt` for AI knowledge base.
-
-**Chat enabled! AI answers from txt data folder.**
+**Progress: 2/6 steps complete**

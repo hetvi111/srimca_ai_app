@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
-
-from ..srimca.app import ask
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from srimca.app import ask
 
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 
