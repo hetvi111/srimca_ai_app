@@ -2,7 +2,7 @@ from .exact_match import get_exact_answer
 from .gpt_answer import get_gpt_answer
 from .fallback import get_fallback_answer
 from .build_db import build_db
-from .config import knowledge_col
+from .config import get_knowledge_collection
 
 
 def ask(question):
@@ -25,6 +25,7 @@ def ask(question):
 
 
 if __name__ == "__main__":
+    knowledge_col = get_knowledge_collection()
     # Build database if empty
     if knowledge_col.count_documents({}) == 0:
         print("📦 Building knowledge database...")

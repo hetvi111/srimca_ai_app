@@ -1,8 +1,9 @@
 import math
-from .config import knowledge_col, embedding_model
+from .config import get_knowledge_collection, get_embedding_model
 
 def retrieve_context(question, top_k=5):
     """Retrieve most relevant context using local embeddings."""
+    embedding_model = get_embedding_model()
     if embedding_model is None:
         return ""
 
@@ -10,6 +11,7 @@ def retrieve_context(question, top_k=5):
     q_emb = embedding_model.encode(question)
     
     # Calculate similarity scores
+    knowledge_col = get_knowledge_collection()
     docs = list(knowledge_col.find())
     scores = []
     

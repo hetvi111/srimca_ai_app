@@ -1,8 +1,9 @@
-from .config import knowledge_col, embedding_model
+from .config import get_knowledge_collection, get_embedding_model
 from .loader import load_content
 
 def build_db():
     """Build vector database using local embeddings (FREE)."""
+    knowledge_col = get_knowledge_collection()
     print("🗑️  Clearing existing knowledge base...")
     knowledge_col.delete_many({})
     
@@ -12,6 +13,7 @@ def build_db():
     
     print(f"🔧 Creating embeddings for {len(lines)} chunks...")
 
+    embedding_model = get_embedding_model()
     if embedding_model is None:
         print("⚠️  Embedding model unavailable; storing text-only knowledge entries.")
         for line in lines:
