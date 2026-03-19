@@ -37,7 +37,7 @@ def require_auth(f):
     return decorated
 
 
-@faqs_bp.route('/', methods=['GET'])
+@faqs_bp.route('/', methods=['GET'], endpoint='get_faqs')
 def get_faqs():
     """
     Get all FAQs
@@ -72,7 +72,7 @@ def get_faqs():
         return jsonify({'error': 'Failed to get FAQs'}), 500
 
 
-@faqs_bp.route('/<faq_id>', methods=['GET'])
+@faqs_bp.route('/<faq_id>', methods=['GET'], endpoint='get_faq')
 def get_faq(faq_id):
     """
     Get a single FAQ by ID
@@ -94,7 +94,7 @@ def get_faq(faq_id):
         return jsonify({'error': 'Failed to get FAQ'}), 500
 
 
-@faqs_bp.route('/', methods=['POST'])
+@faqs_bp.route('/', methods=['POST'], endpoint='create_faq')
 @require_auth
 def create_faq():
     """
@@ -136,7 +136,7 @@ def create_faq():
         return jsonify({'error': 'Failed to create FAQ'}), 500
 
 
-@faqs_bp.route('/<faq_id>', methods=['PUT'])
+@faqs_bp.route('/<faq_id>', methods=['PUT'], endpoint='update_faq')
 @require_auth
 def update_faq(faq_id):
     """
@@ -185,7 +185,7 @@ def update_faq(faq_id):
         return jsonify({'error': 'Failed to update FAQ'}), 500
 
 
-@faqs_bp.route('/<faq_id>', methods=['DELETE'])
+@faqs_bp.route('/<faq_id>', methods=['DELETE'], endpoint='delete_faq')
 @require_auth
 def delete_faq(faq_id):
     """

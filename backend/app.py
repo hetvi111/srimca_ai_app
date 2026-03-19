@@ -23,6 +23,8 @@ from routes.materials import materials_bp
 from routes.faqs import faqs_bp
 from routes.users import users_bp
 from routes.admin import admin_bp
+from routes.ai import ai_bp
+# from routes.notifications import notifications_bp  # Temporarily disabled due to Flask 3.0 issue
 from routes.notifications import notifications_bp
 
 
@@ -53,6 +55,9 @@ def create_app(config_name=None):
     app.register_blueprint(faqs_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(ai_bp)
+    # Temporarily disabled due to Flask 3.0 compatibility issue
+    # app.register_blueprint(notifications_bp)
     app.register_blueprint(notifications_bp)
     
     # Health check route

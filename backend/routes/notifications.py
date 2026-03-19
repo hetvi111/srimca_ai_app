@@ -15,7 +15,30 @@ from auth import verify_jwt_token
 notifications_bp = Blueprint('notifications', __name__, url_prefix='/api')
 
 
-@notifications_bp.route('/notifications', methods=['GET'])
+def require_auth(f):
+    """Decorator to require authentication"""
+    from functools import wraps
+    from flask import make_response
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return make_response(jsonify({'error': 'No authorization header'}), 401)
+        
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            return make_response(jsonify({'error': 'Invalid authorization header'}), 401)
+        
+        payload = verify_jwt_token(parts[1])
+        if payload is None:
+            return make_response(jsonify({'error': 'Invalid or expired token'}), 401)
+        
+        request.user = payload
+        return f(*args, **kwargs)
+    return decorated
+
+
+@notifications_bp.route('/notifications', methods=['GET'], endpoint='get_notifications')
 def get_notifications():
     """
     Get all notifications (for admin dashboard)
@@ -47,8 +70,8 @@ def get_notifications():
         return jsonify({'error': 'Failed to get notifications'}), 500
 
 
-@notifications_bp.route('/notifications/my', methods=['GET'])
-@verify_jwt_token
+@notifications_bp.route('/notifications/my', methods=['GET'], endpoint='get_my_notifications')
+@require_auth
 def get_my_notifications():
     """
     Get notifications for the current user based on their role
@@ -93,7 +116,7 @@ def get_my_notifications():
         return jsonify({'error': 'Failed to get notifications'}), 500
 
 
-@notifications_bp.route('/notifications/unread-count', methods=['GET'])
+@notifications_bp.route('/notifications/unread-count', methods=['GET'], endpoint='get_unread_count')
 def get_unread_count():
     """
     Get count of unread notifications
@@ -109,8 +132,8 @@ def get_unread_count():
         return jsonify({'error': 'Failed to get unread count'}), 500
 
 
-@notifications_bp.route('/notifications/unread-count/my', methods=['GET'])
-@verify_jwt_token
+@notifications_bp.route('/notifications/unread-count/my', methods=['GET'], endpoint='get_my_unread_count')
+@require_auth
 def get_my_unread_count():
     """
     Get count of unread notifications for current user
@@ -153,8 +176,8 @@ def get_my_unread_count():
         return jsonify({'error': 'Failed to get unread count'}), 500
 
 
-@notifications_bp.route('/notifications', methods=['POST'])
-@verify_jwt_token
+@notifications_bp.route('/notifications', methods=['POST'], endpoint='create_notification_with_target')
+@require_auth
 def create_notification_with_target():
     """
     Create a notification with specific target audience
@@ -210,7 +233,7 @@ def create_notification_with_target():
         return jsonify({'error': 'Failed to create notification'}), 500
 
 
-@notifications_bp.route('/notifications/<notification_id>/read', methods=['POST'])
+@notifications_bp.route('/notifications/<notification_id>/read', methods=['POST'], endpoint='mark_as_read')
 def mark_as_read(notification_id):
     """
     Mark a notification as read
@@ -233,7 +256,7 @@ def mark_as_read(notification_id):
         return jsonify({'error': 'Failed to mark as read'}), 500
 
 
-@notifications_bp.route('/notifications/read-all', methods=['POST'])
+@notifications_bp.route('/notifications/read-all', methods=['POST'], endpoint='mark_all_as_read')
 def mark_all_as_read():
     """
     Mark all notifications as read
@@ -256,7 +279,7 @@ def mark_all_as_read():
         return jsonify({'error': 'Failed to mark all as read'}), 500
 
 
-@notifications_bp.route('/notifications/<notification_id>', methods=['DELETE'])
+@notifications_bp.route('/notifications/<notification_id>', methods=['DELETE'], endpoint='delete_notification')
 def delete_notification(notification_id):
     """
     Delete a notification

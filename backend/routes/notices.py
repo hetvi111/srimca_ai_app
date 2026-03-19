@@ -38,7 +38,7 @@ def require_auth(f):
     return decorated
 
 
-@notices_bp.route('/', methods=['GET'])
+@notices_bp.route('/', methods=['GET'], endpoint='get_notices')
 def get_notices():
     """
     Get all notices
@@ -81,7 +81,7 @@ def get_notices():
         return jsonify({'error': 'Failed to get notices'}), 500
 
 
-@notices_bp.route('/<notice_id>', methods=['GET'])
+@notices_bp.route('/<notice_id>', methods=['GET'], endpoint='get_notice')
 def get_notice(notice_id):
     """
     Get a single notice by ID
@@ -103,7 +103,7 @@ def get_notice(notice_id):
         return jsonify({'error': 'Failed to get notice'}), 500
 
 
-@notices_bp.route('/', methods=['POST'])
+@notices_bp.route('/', methods=['POST'], endpoint='create_notice')
 @require_auth
 def create_notice():
     """
@@ -243,7 +243,7 @@ def create_notice():
         return jsonify({'error': 'Failed to create notice'}), 500
 
 
-@notices_bp.route('/<notice_id>', methods=['PUT'])
+@notices_bp.route('/<notice_id>', methods=['PUT'], endpoint='update_notice')
 @require_auth
 def update_notice(notice_id):
     """
@@ -290,7 +290,7 @@ def update_notice(notice_id):
         return jsonify({'error': 'Failed to update notice'}), 500
 
 
-@notices_bp.route('/<notice_id>', methods=['DELETE'])
+@notices_bp.route('/<notice_id>', methods=['DELETE'], endpoint='delete_notice')
 @require_auth
 def delete_notice(notice_id):
     """

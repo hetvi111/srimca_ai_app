@@ -38,7 +38,7 @@ def require_auth(f):
     return decorated
 
 
-@materials_bp.route('/', methods=['GET'])
+@materials_bp.route('/', methods=['GET'], endpoint='get_materials')
 def get_materials():
     """
     Get all study materials
@@ -85,7 +85,7 @@ def get_materials():
         return jsonify({'error': 'Failed to get materials'}), 500
 
 
-@materials_bp.route('/<material_id>', methods=['GET'])
+@materials_bp.route('/<material_id>', methods=['GET'], endpoint='get_material')
 def get_material(material_id):
     """
     Get a single material by ID
@@ -107,7 +107,7 @@ def get_material(material_id):
         return jsonify({'error': 'Failed to get material'}), 500
 
 
-@materials_bp.route('/', methods=['POST'])
+@materials_bp.route('/', methods=['POST'], endpoint='create_material')
 @require_auth
 def create_material():
     """
@@ -166,7 +166,7 @@ def create_material():
         return jsonify({'error': 'Failed to upload material'}), 500
 
 
-@materials_bp.route('/<material_id>', methods=['PUT'])
+@materials_bp.route('/<material_id>', methods=['PUT'], endpoint='update_material')
 @require_auth
 def update_material(material_id):
     """
@@ -214,7 +214,7 @@ def update_material(material_id):
         return jsonify({'error': 'Failed to update material'}), 500
 
 
-@materials_bp.route('/<material_id>', methods=['DELETE'])
+@materials_bp.route('/<material_id>', methods=['DELETE'], endpoint='delete_material')
 @require_auth
 def delete_material(material_id):
     """

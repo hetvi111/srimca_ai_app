@@ -16,7 +16,7 @@ from config import get_config
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 
-@admin_bp.route('/login', methods=['POST'])
+@admin_bp.route('/login', methods=['POST'], endpoint='admin_login')
 def admin_login():
     """
     Admin login - returns token with admin role
@@ -111,7 +111,7 @@ def require_admin(f):
     return decorated
 
 
-@admin_bp.route('/users', methods=['GET'])
+@admin_bp.route('/users', methods=['GET'], endpoint='get_users_by_role')
 def get_users_by_role():
     """
     Get users filtered by role
@@ -144,7 +144,7 @@ def get_users_by_role():
         return jsonify({'error': 'Failed to get users'}), 500
 
 
-@admin_bp.route('/users/<user_id>', methods=['GET'])
+@admin_bp.route('/users/<user_id>', methods=['GET'], endpoint='get_user')
 def get_user(user_id):
     """Get a specific user by ID"""
     try:
@@ -172,7 +172,7 @@ def get_user(user_id):
         return jsonify({'error': 'Failed to get user'}), 500
 
 
-@admin_bp.route('/users', methods=['POST'])
+@admin_bp.route('/users', methods=['POST'], endpoint='create_user_admin')
 def create_user():
     """Create a new user"""
     try:
@@ -217,7 +217,7 @@ def create_user():
         return jsonify({'error': 'Failed to create user'}), 500
 
 
-@admin_bp.route('/users/<user_id>', methods=['PUT'])
+@admin_bp.route('/users/<user_id>', methods=['PUT'], endpoint='update_user_admin')
 def update_user(user_id):
     """Update a user"""
     try:
@@ -254,7 +254,7 @@ def update_user(user_id):
         return jsonify({'error': 'Failed to update user'}), 500
 
 
-@admin_bp.route('/users/<user_id>', methods=['DELETE'])
+@admin_bp.route('/users/<user_id>', methods=['DELETE'], endpoint='delete_user_admin')
 def delete_user(user_id):
     """Delete a user"""
     try:
@@ -272,7 +272,7 @@ def delete_user(user_id):
         return jsonify({'error': 'Failed to delete user'}), 500
 
 
-@admin_bp.route('/visitors', methods=['GET'])
+@admin_bp.route('/visitors', methods=['GET'], endpoint='get_visitors')
 def get_visitors():
     """Get all visitors"""
     try:
@@ -302,7 +302,7 @@ def get_visitors():
         return jsonify({'error': 'Failed to get visitors'}), 500
 
 
-@admin_bp.route('/visitors/<visitor_id>', methods=['PUT'])
+@admin_bp.route('/visitors/<visitor_id>', methods=['PUT'], endpoint='update_visitor')
 def update_visitor(visitor_id):
     """Update visitor status"""
     try:
@@ -324,7 +324,7 @@ def update_visitor(visitor_id):
         return jsonify({'error': 'Failed to update visitor'}), 500
 
 
-@admin_bp.route('/stats', methods=['GET'])
+@admin_bp.route('/stats', methods=['GET'], endpoint='get_stats')
 def get_stats():
     """Get admin dashboard statistics"""
     try:
