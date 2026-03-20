@@ -213,7 +213,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(
                     _selectedRole.toLowerCase() == 'student'
-                        ? "Enrollment Number"
+                        ? "Email / Enrollment"
                         : "Email",
                   ),
                 ),
@@ -345,57 +345,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 16),
 
-                // Student-specific fields
-                if (_isStudent) ...[
-                  // Enrollment Number
-                  TextField(
-                    controller: _enrollmentController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Enrollment Number"),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Date of Birth
-                  TextField(
-                    controller: _dobController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Date of Birth (YYYY-MM-DD)"),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Semester
-                  DropdownButtonFormField<String>(
-                    value: _selectedSemester.isEmpty ? null : _selectedSemester,
-                    dropdownColor: const Color(0xFF2D2A47),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Semester"),
-                    items: _semesters
-                        .map((s) => DropdownMenuItem(
-                              value: s,
-                              child: Text("Semester $s"),
-                            ))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedSemester = v ?? ''),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Department
-                  DropdownButtonFormField<String>(
-                    value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
-                    dropdownColor: const Color(0xFF2D2A47),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Department / Course"),
-                    items: _departments
-                        .map((d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(_departmentLabels[d] ?? d),
-                            ))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedDepartment = v ?? ''),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
                 // Visitor-specific fields
                 if (_isVisitor) ...[
                   // Purpose of Visit
@@ -481,12 +430,15 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   Future<void> _apiLogin() async {
     final userId = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final selectedRoleLower = _selectedRole.toLowerCase();
+    final isStudent = selectedRoleLower == 'student';
+    final looksLikeEmail = userId.contains('@');
     if (userId.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _selectedRole.toLowerCase() == 'student'
-                ? "Please enter enrollment number and password"
+            isStudent
+                ? "Please enter email and password"
                 : "Please enter email and password",
           ),
         ),
@@ -506,10 +458,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          if (_selectedRole.toLowerCase() == 'student') 'enrollment': userId,
-          if (_selectedRole.toLowerCase() != 'student') 'email': userId,
+          if (isStudent && looksLikeEmail) 'email': userId,
+          if (isStudent && !looksLikeEmail) 'enrollment': userId,
+          if (!isStudent) 'email': userId,
           'password': password,
-          'role': _selectedRole.toLowerCase(),
+          'role': selectedRoleLower,
         }),
       );
       if (!mounted) return;
@@ -623,47 +576,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
 
     // Role-specific validation
-    if (_isStudent) {
-      final enrollment = _enrollmentController.text.trim();
-      final dob = _dobController.text.trim();
-      
-      if (enrollment.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter enrollment number")),
-        );
-        return;
-      }
-
-      // Validate MCA enrollment numbers
-      if (_selectedDepartment == 'mca') {
-        if (!isValidMCAEnrollment(enrollment)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Invalid MCA Enrollment Number. Must be between 202504104610006 and 202504104610174")),
-          );
-          return;
-        }
-      }
-
-      if (dob.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter date of birth")),
-        );
-        return;
-      }
-      if (_selectedSemester.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please select semester")),
-        );
-        return;
-      }
-      if (_selectedDepartment.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please select department")),
-        );
-        return;
-      }
-    }
-
     if (_isVisitor) {
       if (mobile.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -710,14 +622,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       'role': _selectedRole.toLowerCase(),
       'mobile': mobile,
     };
-
-    // Add student-specific fields
-    if (_isStudent) {
-      requestBody['enrollment'] = _enrollmentController.text.trim();
-      requestBody['dob'] = _dobController.text.trim();
-      requestBody['semester'] = _selectedSemester;
-      requestBody['department'] = _selectedDepartment;
-    }
 
     // Add visitor-specific fields
     if (_isVisitor) {

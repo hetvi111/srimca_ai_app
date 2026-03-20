@@ -57,7 +57,7 @@ def verify_jwt_token(token: str) -> dict:
 def register():
     """
     Register a new user (student or visitor)
-    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
+    Student fields: name, email, password, role (academic fields optional)
     Visitor fields: name, email, password, role, mobile, purpose
     """
     try:
@@ -88,17 +88,10 @@ def register():
         designation = data.get('designation', '').strip()
         
         # Validate based on role
+        # Students: allow email + password registration (academic fields optional).
         if role == 'student':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for students'}), 400
-            if not enrollment:
-                return jsonify({'error': 'Enrollment number is required for students'}), 400
-            if not dob:
-                return jsonify({'error': 'Date of birth is required for students'}), 400
-            if not semester:
-                return jsonify({'error': 'Semester is required for students'}), 400
-            if not department:
-                return jsonify({'error': 'Department is required for students'}), 400
+            # Academic fields are optional for now; we store them if provided.
+            pass
         elif role == 'faculty':
             if not mobile:
                 return jsonify({'error': 'Mobile number is required for faculty'}), 400
@@ -193,7 +186,8 @@ def register():
 def login():
     """
     Login user
-    Expected JSON: { "email": "", "password": "" }
+    Expected JSON: student -> { "email"/"enrollment": "", "password": "", "role": "student" }
+                   other roles -> { "email": "", "password": "", "role": "faculty"/"admin"/"visitor" }
     """
     try:
         data = request.get_json()
@@ -210,11 +204,17 @@ def login():
         # Get users collection
         users = get_collection(Collections.USERS)
         
-        # Students must login using enrollment number only.
+        # Students can login using either enrollment number or email.
         if requested_role == 'student':
-            if not enrollment:
-                return jsonify({'error': 'Enrollment number is required for student login'}), 400
-            user_doc = users.find_one({'role': 'student', 'enrollment': enrollment})
+            user_doc = None
+            if enrollment:
+                user_doc = users.find_one({'role': 'student', 'enrollment': enrollment})
+            if not user_doc:
+                email = identifier.lower()
+                if email:
+                    user_doc = users.find_one({'role': 'student', 'email': email})
+            if not user_doc and not enrollment and not identifier:
+                return jsonify({'error': 'Enrollment number or email is required for student login'}), 400
         else:
             # For non-student roles, continue with email based login.
             email = identifier.lower()
