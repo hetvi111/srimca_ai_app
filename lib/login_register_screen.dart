@@ -567,9 +567,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         }
       } else {
         final Map<String, dynamic> body = jsonDecode(res.body) as Map<String, dynamic>;
-        final msg = body['message']?.toString() ?? 'Login failed';
+        final msg = body['message']?.toString() ??
+            body['error']?.toString() ??
+            'Login failed';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(content: Text('Login failed (${res.statusCode}): $msg')),
         );
       }
     } catch (e) {
