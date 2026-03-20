@@ -134,7 +134,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
   Future<void> editUser(User user) async {
     final nameCtrl = TextEditingController(text: user.name);
     final emailCtrl = TextEditingController(text: user.email);
-    String role = user.role.toLowerCase();
+    // Normalize backend role strings so DropdownButton value always matches one item.
+    String role = user.role.toString().toLowerCase().trim();
     if (role != 'faculty' && role != 'student') role = 'student';
 
     if (!context.mounted) return;
@@ -159,7 +160,9 @@ class _UserManagementPageState extends State<UserManagementPage> {
                 DropdownMenuItem(value: "faculty", child: Text("Faculty")),
                 DropdownMenuItem(value: "student", child: Text("Student")),
               ],
-              onChanged: (value) => role = value ?? 'student',
+              onChanged: (value) => role = value?.trim().toLowerCase() == 'faculty'
+                  ? 'faculty'
+                  : 'student',
               decoration: const InputDecoration(labelText: "Role"),
             ),
           ],

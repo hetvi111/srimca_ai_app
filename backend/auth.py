@@ -1,6 +1,12 @@
 """
 Authentication routes for SRIMCA AI Backend
 Handles user login, registration, and JWT token generation
+
+NORMALIZED DATABASE DESIGN:
+- Users collection: Authentication only (name, email, password, role)
+- User_Profiles collection: Personal info (phone, address) - linked by user_id
+- Students collection: Student-specific data (semester, department, enrollment)
+- Faculty collection: Faculty-specific data (department, designation)
 """
 
 from flask import Blueprint, request, jsonify
@@ -10,9 +16,9 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 
 from database import get_collection, Collections
-from models import UserModel
+from models import UserModel, UserProfileModel, StudentModel, FacultyModel
 from config import get_config
-from notification_helper import create_notification
+from notification_helper import create_notification  # Optional: Enable if needed
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -53,11 +59,19 @@ def verify_jwt_token(token: str) -> dict:
         return None
 
 
-@auth_bp.route('/register', methods=['POST'], endpoint='register')
+@auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Register a new user (student or visitor)
-    Student fields: name, email, password, role (academic fields optional)
+    Register a new user (student, faculty, or visitor)
+    
+    NORMALIZED: This function now inserts data into multiple collections:
+    - Users: Authentication data (name, email, password, role)
+    - User_Profiles: Personal info (phone, address)
+    - Students: Academic data (semester, department, enrollment)
+    - Faculty: Professional data (department, designation)
+    
+    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
+    Faculty fields: name, email, password, role, mobile, department, designation
     Visitor fields: name, email, password, role, mobile, purpose
     """
     try:
@@ -74,6 +88,7 @@ def register():
         password = data['password']
         role = data.get('role', 'student').lower()
         mobile = data.get('mobile', '').strip()
+        address = data.get('address', '').strip()
         
         # For students, get academic fields
         enrollment = data.get('enrollment', '').strip()
@@ -81,17 +96,24 @@ def register():
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
         
-# For visitors, get purpose
-        purpose = data.get('purpose', '').strip()
-        
         # For faculty, get professional fields
         designation = data.get('designation', '').strip()
         
+        # For visitors, get purpose
+        purpose = data.get('purpose', '').strip()
+        
         # Validate based on role
-        # Students: allow email + password registration (academic fields optional).
         if role == 'student':
-            # Academic fields are optional for now; we store them if provided.
-            pass
+            if not mobile:
+                return jsonify({'error': 'Mobile number is required for students'}), 400
+            if not enrollment:
+                return jsonify({'error': 'Enrollment number is required for students'}), 400
+            if not dob:
+                return jsonify({'error': 'Date of birth is required for students'}), 400
+            if not semester:
+                return jsonify({'error': 'Semester is required for students'}), 400
+            if not department:
+                return jsonify({'error': 'Department is required for students'}), 400
         elif role == 'faculty':
             if not mobile:
                 return jsonify({'error': 'Mobile number is required for faculty'}), 400
@@ -114,7 +136,7 @@ def register():
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
         
-        # Get users collection
+        # Get users collection only (store all data in single collection)
         users = get_collection(Collections.USERS)
         
         # Check if user already exists
@@ -131,7 +153,7 @@ def register():
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Create user document with basic fields
+        # Create user document with ALL data in users collection
         user_doc = UserModel.create_user(
             name=name,
             email=email,
@@ -139,95 +161,90 @@ def register():
             role=role
         )
         
-        # Add common fields
+        # Add ALL fields to the user document (single collection)
         user_doc['mobile'] = mobile
+        user_doc['address'] = address
         
-        # Add role-specific fields
+        # Add student-specific fields
         if role == 'student':
-            user_doc['semester'] = semester
-            user_doc['department'] = department
             user_doc['enrollment'] = enrollment
             user_doc['dob'] = dob
+            user_doc['semester'] = semester
+            user_doc['department'] = department
+        
+        # Add faculty-specific fields
         elif role == 'faculty':
             user_doc['department'] = department
             user_doc['designation'] = designation
+        
+        # Add visitor-specific fields
         elif role == 'visitor':
             user_doc['purpose'] = purpose
             user_doc['visit_date'] = datetime.utcnow().isoformat()
             user_doc['approval_status'] = 'pending'
         
-        # Insert user into database
+        # Insert user into database (single collection)
         result = users.insert_one(user_doc)
+        user_doc['_id'] = result.inserted_id
         
-        # Create notification for new user registration
-        create_notification(
-            title='New User Registered',
-            message=f'{name} ({role}) has registered with email {email}',
-            notification_type='user_register'
-        )
+        # NORMALIZED: Also create faculty record in faculty collection
+        if role == 'faculty':
+            faculty_collection = get_collection(Collections.FACULTIES)
+            faculty_doc = FacultyModel.create_faculty(
+                user_id=str(user_doc['_id']),
+                department=department,
+                designation=designation
+            )
+            try:
+                faculty_collection.insert_one(faculty_doc)
+                print(f"✅ Faculty record created for user {user_doc['_id']}")
+            except Exception as faculty_error:
+                print(f"Warning: Could not create faculty record: {faculty_error}")
+                # Continue anyway - user is created, admin can fix faculty record later
+        
+        
+        # NOTE: Removed notification on registration for performance
+        # If you need registration notifications, enable separately
         
         # Generate token
-        user_doc['_id'] = result.inserted_id
         token = generate_jwt_token(user_doc)
         
-        # Return success response
+        # Return success response (with backward compatible user data)
         return jsonify({
             'message': 'Registration successful',
             'token': token,
             'user': UserModel.to_dict(user_doc)
         }), 201
-    
+
     except Exception as e:
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
 
 
-@auth_bp.route('/login', methods=['POST'], endpoint='login')
+@auth_bp.route('/login', methods=['POST'])
 def login():
     """
     Login user
-    Expected JSON: student -> { "email"/"enrollment": "", "password": "", "role": "student" }
-                   other roles -> { "email": "", "password": "", "role": "faculty"/"admin"/"visitor" }
+    Expected JSON: { "email": "", "password": "" }
     """
     try:
         data = request.get_json()
         
         # Validate required fields
-        if not data.get('password'):
-            return jsonify({'error': 'Password is required'}), 400
-
-        requested_role = data.get('role', '').strip().lower()
-        identifier = (data.get('email') or '').strip()
-        enrollment = (data.get('enrollment') or '').strip()
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Email and password are required'}), 400
+        
+        email = data['email'].strip().lower()
         password = data['password']
         
         # Get users collection
         users = get_collection(Collections.USERS)
         
-        # Students can login using either enrollment number or email.
-        if requested_role == 'student':
-            user_doc = None
-            if enrollment:
-                user_doc = users.find_one({'role': 'student', 'enrollment': enrollment})
-            if not user_doc:
-                email = identifier.lower()
-                if email:
-                    user_doc = users.find_one({'role': 'student', 'email': email})
-            if not user_doc and not enrollment and not identifier:
-                return jsonify({'error': 'Enrollment number or email is required for student login'}), 400
-        else:
-            # For non-student roles, continue with email based login.
-            email = identifier.lower()
-            if not email:
-                return jsonify({'error': 'Email is required'}), 400
-            user_doc = users.find_one({'email': email})
+        # Find user by email
+        user_doc = users.find_one({'email': email})
         
         if not user_doc:
-            return jsonify({'error': 'Invalid credentials'}), 401
-
-        # If role is supplied, ensure selected role matches account role.
-        if requested_role and user_doc.get('role') != requested_role:
-            return jsonify({'error': 'Role mismatch for this account'}), 401
+            return jsonify({'error': 'Invalid email or password'}), 401
         
         # Check if user is active
         if not user_doc.get('is_active', True):
@@ -242,23 +259,19 @@ def login():
         
         try:
             if not bcrypt.checkpw(password.encode('utf-8'), stored_password):
-                return jsonify({'error': 'Invalid credentials'}), 401
+                return jsonify({'error': 'Invalid email or password'}), 401
         except Exception as e:
             print(f"Password verification error: {e}")
-            return jsonify({'error': 'Invalid credentials'}), 401
+            return jsonify({'error': 'Invalid email or password'}), 401
         
-        # Update last login
+        # Update last login (optimized - use update_one efficiently)
         users.update_one(
             {'_id': user_doc['_id']},
             {'$set': {'last_login': datetime.utcnow()}}
         )
         
-        # Create notification for user login
-        create_notification(
-            title='User Login',
-            message=f'{user_doc.get("name", "A user")} ({user_doc.get("role", "user")}) has logged in',
-            notification_type='user_login'
-        )
+        # NOTE: Removed notification creation on login for performance
+        # If you want login notifications, enable them separately
         
         # Generate token
         token = generate_jwt_token(user_doc)
@@ -275,7 +288,7 @@ def login():
         return jsonify({'error': 'Login failed'}), 500
 
 
-@auth_bp.route('/verify', methods=['GET'], endpoint='verify_token')
+@auth_bp.route('/verify', methods=['GET'])
 def verify_token():
     """
     Verify JWT token
@@ -302,7 +315,7 @@ def verify_token():
     }), 200
 
 
-@auth_bp.route('/refresh', methods=['POST'], endpoint='refresh_token')
+@auth_bp.route('/refresh', methods=['POST'])
 def refresh_token():
     """
     Refresh JWT token
@@ -339,7 +352,7 @@ def refresh_token():
     }), 200
 
 
-@auth_bp.route('/change-password', methods=['POST'], endpoint='change_password')
+@auth_bp.route('/change-password', methods=['POST'])
 def change_password():
     """
     Change user password

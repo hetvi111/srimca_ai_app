@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:srimca_ai/static_data.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
-import 'package:srimca_ai/email_verification_page.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -25,6 +24,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   final _mobileController = TextEditingController();
   final _enrollmentController = TextEditingController();
   final _dobController = TextEditingController();
+  final _designationController = TextEditingController();
 
   String _selectedSemester = '';
   String _selectedDepartment = '';
@@ -80,6 +80,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     _mobileController.dispose();
     _enrollmentController.dispose();
     _dobController.dispose();
+    _designationController.dispose();
     super.dispose();
   }
 
@@ -211,11 +212,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 TextField(
                   controller: _emailController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: _inputDecoration(
-                    _selectedRole.toLowerCase() == 'student'
-                        ? "Email / Enrollment"
-                        : "Email",
-                  ),
+                  decoration: _inputDecoration("User ID"),
                 ),
                 const SizedBox(height: 16),
 
@@ -262,20 +259,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   "If you forgot your password, please contact administrator.",
                   style: TextStyle(color: Colors.white60, fontSize: 12),
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/email-verification');
-                  },
-                  child: const Text(
-                    'Verify my email',
-                    style: TextStyle(
-                      color: Color(0xFF1E88E5),
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
+                )
               ],
             ),
           ),
@@ -345,6 +329,57 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 16),
 
+                // Student-specific fields
+                if (_isStudent) ...[
+                  // Enrollment Number
+                  TextField(
+                    controller: _enrollmentController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Enrollment Number"),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Date of Birth
+                  TextField(
+                    controller: _dobController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Date of Birth (YYYY-MM-DD)"),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Semester
+                  DropdownButtonFormField<String>(
+                    value: _selectedSemester.isEmpty ? null : _selectedSemester,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Semester"),
+                    items: _semesters
+                        .map((s) => DropdownMenuItem(
+                              value: s,
+                              child: Text("Semester $s"),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedSemester = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Department
+                  DropdownButtonFormField<String>(
+                    value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Department / Course"),
+                    items: _departments
+                        .map((d) => DropdownMenuItem(
+                              value: d,
+                              child: Text(_departmentLabels[d] ?? d),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedDepartment = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Visitor-specific fields
                 if (_isVisitor) ...[
                   // Purpose of Visit
@@ -360,6 +395,33 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                             ))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPurpose = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Faculty-specific fields
+                if (_selectedRole.toLowerCase() == 'faculty') ...[
+                  // Department
+                  DropdownButtonFormField<String>(
+                    value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
+                    dropdownColor: const Color(0xFF2D2A47),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Department / Course"),
+                    items: _departments
+                        .map((d) => DropdownMenuItem(
+                              value: d,
+                              child: Text(_departmentLabels[d] ?? d),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedDepartment = v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Designation
+                  TextField(
+                    controller: _designationController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Designation (e.g., Professor, HOD)"),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -428,20 +490,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
   // ================= API LOGIN (PYTHON + MONGODB) =================
   Future<void> _apiLogin() async {
-    final userId = _emailController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final selectedRoleLower = _selectedRole.toLowerCase();
-    final isStudent = selectedRoleLower == 'student';
-    final looksLikeEmail = userId.contains('@');
-    if (userId.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isStudent
-                ? "Please enter email and password"
-                : "Please enter email and password",
-          ),
-        ),
+        const SnackBar(content: Text("Please enter email and password")),
       );
       return;
     }
@@ -458,11 +511,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          if (isStudent && looksLikeEmail) 'email': userId,
-          if (isStudent && !looksLikeEmail) 'enrollment': userId,
-          if (!isStudent) 'email': userId,
+          'email': email,
           'password': password,
-          'role': selectedRoleLower,
+          'role': _selectedRole.toLowerCase(),
         }),
       );
       if (!mounted) return;
@@ -495,10 +546,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
               '/student',
               arguments: {
                 'studentName': user['name'] ?? 'student',
-                'semester': '5th Semester',
+                'semester': user['semester'] ?? 'semester',
                 'userId': user['_id'] ?? '',
                 'email': user['email'] ?? '',
-                'enrollmentNumber': user['enrollment'] ?? '',
               },
             );
             break;
@@ -514,17 +564,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 'userId': user['_id'] ?? '',
                 'userName': user['name'] ?? 'User',
                 'email': user['email'] ?? '',
-                'enrollment': user['enrollment'] ?? '',
               },
             );
         }
       } else {
         final Map<String, dynamic> body = jsonDecode(res.body) as Map<String, dynamic>;
-        final msg = body['message']?.toString() ??
-            body['error']?.toString() ??
-            'Login failed';
+        final msg = body['message']?.toString() ?? 'Login failed';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed (${res.statusCode}): $msg')),
+          SnackBar(content: Text(msg)),
         );
       }
     } catch (e) {
@@ -538,25 +585,31 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
   }
 
-  // ================= MCA ENROLLMENT VALIDATION =================
-  bool isValidMCAEnrollment(String enrollment) {
-    // Must be 15 digits
-    if (enrollment.length != 15) return false;
-
-    // Must start with fixed prefix
-    if (!enrollment.startsWith("202504104610")) return false;
-
-    // Extract last 3 digits
-    String serialPart = enrollment.substring(12);
-    int? serial = int.tryParse(serialPart);
-
-    if (serial == null) return false;
-
-    // Check range 001 to 174
-    if (serial >= 1 && serial <= 174) {
+  // ================= MCA/BCA ENROLLMENT VALIDATION =================
+  bool isValidEnrollment(String enrollment, String department) {
+    // Basic validation: enrollment should not be empty
+    if (enrollment.isEmpty) return false;
+    
+    // For MCA students, apply stricter validation
+    if (department == 'mca') {
+      // Must be at least 10 characters
+      if (enrollment.length < 10) return false;
+      // Check if it contains at least some numbers
+      bool hasNumber = false;
+      for (var c in enrollment.split('')) {
+        if ('0123456789'.contains(c)) {
+          hasNumber = true;
+          break;
+        }
+      }
+      return hasNumber;
+    }
+    
+    // For BCA, just check it's not empty and has reasonable length
+    if (enrollment.length >= 5 && enrollment.length <= 20) {
       return true;
     }
-
+    
     return false;
   }
 
@@ -576,6 +629,47 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     }
 
     // Role-specific validation
+    if (_isStudent) {
+      final enrollment = _enrollmentController.text.trim();
+      final dob = _dobController.text.trim();
+      
+      if (enrollment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter enrollment number")),
+        );
+        return;
+      }
+
+      // Validate MCA enrollment numbers
+      if (_selectedDepartment == 'mca') {
+        if (!isValidEnrollment(enrollment, _selectedDepartment)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Invalid Enrollment Number. Please enter a valid enrollment number")),
+          );
+          return;
+        }
+      }
+
+      if (dob.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter date of birth")),
+        );
+        return;
+      }
+      if (_selectedSemester.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select semester")),
+        );
+        return;
+      }
+      if (_selectedDepartment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select department")),
+        );
+        return;
+      }
+    }
+
     if (_isVisitor) {
       if (mobile.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -586,6 +680,28 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       if (_selectedPurpose.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please select purpose of visit")),
+        );
+        return;
+      }
+    }
+
+    // Faculty-specific validation
+    if (_selectedRole.toLowerCase() == 'faculty') {
+      if (mobile.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter mobile number")),
+        );
+        return;
+      }
+      if (_selectedDepartment.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select department")),
+        );
+        return;
+      }
+      if (_designationController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter designation")),
         );
         return;
       }
@@ -623,9 +739,23 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       'mobile': mobile,
     };
 
+    // Add student-specific fields
+    if (_isStudent) {
+      requestBody['enrollment'] = _enrollmentController.text.trim();
+      requestBody['dob'] = _dobController.text.trim();
+      requestBody['semester'] = _selectedSemester;
+      requestBody['department'] = _selectedDepartment;
+    }
+
     // Add visitor-specific fields
     if (_isVisitor) {
       requestBody['purpose'] = _selectedPurpose;
+    }
+
+    // Add faculty-specific fields
+    if (_selectedRole.toLowerCase() == 'faculty') {
+      requestBody['department'] = _selectedDepartment;
+      requestBody['designation'] = _designationController.text.trim();
     }
 
     try {
@@ -642,50 +772,37 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         navigator.pop();
       }
 
-      if (res.statusCode == 201) {
+if (res.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful! Verify your email.")),
+          const SnackBar(content: Text("Registration successful! Please login.")),
         );
-
-        final regEmail = _emailController.text.trim();
-        final regPassword = _passwordController.text.trim();
 
         _emailController.clear();
         _passwordController.clear();
         _confirmPasswordController.clear();
         _nameController.clear();
 
-        if (!context.mounted) return;
-        final verified = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EmailVerificationPage(
-              initialEmail: regEmail,
-              initialPassword: regPassword,
-            ),
-          ),
-        );
-        if (!context.mounted) return;
         _tabController.animateTo(0);
-        if (verified == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Email verified! You can now login.")),
-          );
-        }
       } else {
+        // Print error for debugging
+        print('Registration failed with status: ${res.statusCode}');
+        print('Response body: ${res.body}');
+        
         final Map<String, dynamic> body = jsonDecode(res.body);
-        final msg = body['message']?.toString() ?? 'Registration failed';
+        final msg = body['error'] ?? body['message'] ?? 'Registration failed';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(content: Text(msg.toString())),
         );
       }
-    } catch (e) {
+} catch (e) {
       if (!mounted) return;
       // Close dialog if still open
       final navigator = Navigator.of(context);
       if (navigator.canPop()) {
         navigator.pop();
       }
+      // Print error for debugging
+      print('Registration exception: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -706,3 +823,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     );
   }
 }
+
+
+
