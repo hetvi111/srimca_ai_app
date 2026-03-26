@@ -7,6 +7,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 import threading
+import traceback
 
 # Import config
 from config import get_config
@@ -93,6 +94,12 @@ def create_app(config_name=None):
     
     @app.errorhandler(500)
     def internal_error(error):
+        # Log full traceback so Render/local logs show what failed.
+        try:
+            app.logger.error("HTTP 500 error:\n%s", "".join(traceback.format_exception(type(error), error, error.__traceback__)))
+        except Exception:
+            print("HTTP 500 error (failed to format traceback).")
+            print(error)
         return jsonify({'error': 'Internal server error'}), 500
     
     return app
