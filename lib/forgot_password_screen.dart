@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/firebase_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -28,7 +28,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _successMessage = null;
     });
 
-    final result = await ApiService.forgotPassword(_emailController.text.trim());
+    final result = await FirebaseService.sendPasswordResetEmail(
+      _emailController.text.trim(),
+    );
     
     setState(() {
       _isLoading = false;
@@ -36,7 +38,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (result['success'] == true) {
       setState(() {
-        _successMessage = result['message'] ?? 'Reset request sent successfully!';
+        _successMessage =
+            result['message'] ?? 'Password reset email sent successfully!';
       });
       // Clear email and show success for 3 seconds
       Future.delayed(const Duration(seconds: 3), () {
@@ -46,7 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
     } else {
       setState(() {
-        _errorMessage = result['error'] ?? 'Failed to send request';
+        _errorMessage = result['message'] ?? 'Failed to send reset email';
       });
     }
   }
@@ -70,7 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Reset Password Request',
+              'Reset Password',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -78,7 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter your email. Admin will process your request and set a new password.',
+              'Enter your email and we will send a password reset link.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -120,7 +123,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       )
                     : const Text(
-                        'Send Reset Request',
+                        'Send Reset Email',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
