@@ -482,6 +482,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 _buildActionCard(context, 'Upload Material', Icons.upload_file, () {}),
                 _buildActionCard(context, 'View Reports', Icons.assessment, () {}),
                 _buildActionCard(context, 'Send Notification', Icons.notifications_active, () {}),
+                _buildActionCard(context, 'Password Requests', Icons.lock_reset, () {
+                  Navigator.pushNamed(context, '/admin-password-requests');
+                }),
               ],
             ),
           ],

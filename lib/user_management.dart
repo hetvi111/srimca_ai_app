@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/admin/admin_edit_user_page.dart';
 
 /// ================= USER MODEL =================
 class User {
@@ -132,81 +133,24 @@ class _UserManagementPageState extends State<UserManagementPage> {
   /// ================= EDIT USER =================
   /// Only Faculty and Student can be edited. Admin users cannot be edited.
   Future<void> editUser(User user) async {
-    final nameCtrl = TextEditingController(text: user.name);
-    final emailCtrl = TextEditingController(text: user.email);
-    // Normalize backend role strings so DropdownButton value always matches one item.
-    String role = user.role.toString().toLowerCase().trim();
-    if (role != 'faculty' && role != 'student') role = 'student';
-
-    if (!context.mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Edit User"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: "Name"),
-            ),
-            TextField(
-              controller: emailCtrl,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            DropdownButtonFormField<String>(
-              value: role,
-              items: const [
-                DropdownMenuItem(value: "faculty", child: Text("Faculty")),
-                DropdownMenuItem(value: "student", child: Text("Student")),
-              ],
-              onChanged: (value) => role = value?.trim().toLowerCase() == 'faculty'
-                  ? 'faculty'
-                  : 'student',
-              decoration: const InputDecoration(labelText: "Role"),
-            ),
-          ],
+    final shouldRefresh = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminEditUserPage(
+          userId: user.id,
+          initialData: {
+            '_id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'role': user.role,
+            'is_active': user.status == 'Active',
+          },
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
-          ElevatedButton(
-              onPressed: () async {
-                final name = nameCtrl.text.trim();
-                final email = emailCtrl.text.trim();
-                if (name.isEmpty || email.isEmpty) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Name and email are required')),
-                    );
-                  }
-                  return;
-                }
-                Navigator.pop(context);
-                final success = await ApiService.updateUser(
-                  userId: user.id,
-                  name: name,
-                  email: email,
-                  role: role.toLowerCase(),
-                );
-                if (mounted) {
-                  if (success) {
-                    await _loadUsers();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User updated successfully')),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to update user')),
-                    );
-                  }
-                }
-              },
-              child: const Text("Save")),
-        ],
       ),
     );
+    if (shouldRefresh == true) {
+      await _loadUsers();
+    }
   }
 
   /// ================= ADD USER DIALOG =================

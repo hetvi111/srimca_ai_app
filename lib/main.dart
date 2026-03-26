@@ -17,6 +17,8 @@ import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/email_verification_page.dart';
+import 'package:srimca_ai/forgot_password_page.dart';
+import 'package:srimca_ai/admin_password_requests_page.dart';
 
 // App Theme Colors
 class AppColors {
@@ -157,6 +159,8 @@ class _MyAppState extends State<MyApp> {
         '/welcome': (context) => const WelcomeScreen(),
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/admin-password-requests': (context) => const AdminPasswordRequestsPage(),
         '/content-knowledge': (context) => const ContentManagementPage(),
         '/monitoring': (context) => const AIMonitoringPage(),
         '/reports': (context) => ReportsAnalyticsPage(),

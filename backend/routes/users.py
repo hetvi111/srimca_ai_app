@@ -403,3 +403,120 @@ def respond_faculty_visitor_inquiry(visitor_id):
     except Exception as e:
         print(f"Respond faculty visitor inquiry error: {e}")
         return jsonify({'error': 'Failed to update visitor inquiry'}), 500
+
+
+# ================= ADMIN-CONTROLLED FORGOT PASSWORD =================
+
+@users_bp.route('/forgot-password', methods=['POST'], endpoint='forgot_password_request')
+def forgot_password_request():
+    """
+    Student/Faculty submits forgot-password request (admin will approve/reset).
+    Body: { "email": "..." }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users_collection = get_collection(Collections.USERS)
+        user_doc = users_collection.find_one({'email': email})
+        if not user_doc:
+            # Don't leak whether an email exists.
+            return jsonify({'message': 'If the email exists, your request has been submitted.'}), 200
+
+        requests_collection = get_collection(Collections.PASSWORD_RESET_REQUESTS)
+
+        # If there is already a pending request, do not duplicate.
+        existing = requests_collection.find_one({'email': email, 'status': 'pending'})
+        if existing:
+            return jsonify({'message': 'Password reset request already pending.'}), 200
+
+        req_doc = PasswordResetRequestModel.create_request(email=email)
+        requests_collection.insert_one(req_doc)
+
+        return jsonify({'message': 'Password reset request submitted successfully.'}), 201
+    except Exception as e:
+        print(f"Forgot password request error: {e}")
+        return jsonify({'error': 'Failed to submit request'}), 500
+
+
+@users_bp.route('/admin/password-requests', methods=['GET'], endpoint='get_password_requests_admin')
+@require_auth
+def get_password_requests_admin():
+    """
+    Admin: view all password reset requests.
+    """
+    try:
+        if request.user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+
+        limit = int(request.args.get('limit', 100))
+        requests_collection = get_collection(Collections.PASSWORD_RESET_REQUESTS)
+        reqs = list(
+            requests_collection.find()
+            .sort('created_at', -1)
+            .limit(limit)
+        )
+
+        result = [PasswordResetRequestModel.to_dict(r) for r in reqs]
+        return jsonify({'requests': result, 'count': len(result)}), 200
+    except Exception as e:
+        print(f"Get password requests error: {e}")
+        return jsonify({'error': 'Failed to get requests'}), 500
+
+
+@users_bp.route('/admin/reset-password/<request_id>', methods=['POST'], endpoint='reset_password_admin')
+@require_auth
+def reset_password_admin(request_id):
+    """
+    Admin approves request, generates random password, updates user password, marks request approved.
+    Returns the new password so admin can communicate it.
+    """
+    try:
+        if request.user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+
+        requests_collection = get_collection(Collections.PASSWORD_RESET_REQUESTS)
+        req_doc = requests_collection.find_one({'_id': ObjectId(request_id)})
+        if not req_doc:
+            return jsonify({'error': 'Request not found'}), 404
+
+        email = (req_doc.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Invalid request email'}), 400
+
+        users_collection = get_collection(Collections.USERS)
+        user_doc = users_collection.find_one({'email': email})
+        if not user_doc:
+            return jsonify({'error': 'User not found for this email'}), 404
+
+        # Generate a random temporary password (admin will share with user)
+        alphabet = string.ascii_letters + string.digits
+        new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
+
+        hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        users_collection.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'password': hashed.decode('utf-8'), 'updated_at': datetime.utcnow()}}
+        )
+
+        requests_collection.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': {
+                'status': 'approved',
+                'updated_at': datetime.utcnow(),
+                'reset_password': new_password
+            }}
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Password reset successfully',
+            'email': email,
+            'new_password': new_password,
+            'request_id': request_id,
+        }), 200
+    except Exception as e:
+        print(f"Reset password admin error: {e}")
+        return jsonify({'error': 'Failed to reset password'}), 500

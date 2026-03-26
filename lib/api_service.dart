@@ -981,5 +981,55 @@ class ApiService {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
+
+  /// Admin: Get single user by ID
+  static Future<Map<String, dynamic>?> getAdminUserById(String userId) async {
+    try {
+      final response = await get('/api/admin/users/$userId');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['user'] as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get admin user by id error: $e');
+      return null;
+    }
+  }
+
+  /// Admin: Update user with full fields
+  static Future<Map<String, dynamic>> adminUpdateUser({
+    required String userId,
+    required String name,
+    required String email,
+    required String role,
+    required String phone,
+    required String gender,
+    required bool isActive,
+  }) async {
+    try {
+      final response = await put(
+        '/api/admin/users/$userId',
+        body: {
+          'name': name,
+          'email': email,
+          'role': role,
+          'mobile': phone,
+          'gender': gender,
+          'is_active': isActive,
+          // Keep profile fields too for UI consistency
+          'profile_phone': phone,
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'data': data};
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Update failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
 }
 
