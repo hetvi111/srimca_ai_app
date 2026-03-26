@@ -8,8 +8,11 @@ from bson import ObjectId
 from datetime import datetime
 
 from database import get_collection, Collections
-from models import UserModel
+from models import UserModel, PasswordResetRequestModel
 from auth import verify_jwt_token
+import bcrypt
+import secrets
+import string
 
 # Create users blueprint
 users_bp = Blueprint('users', __name__, url_prefix='/api/users')

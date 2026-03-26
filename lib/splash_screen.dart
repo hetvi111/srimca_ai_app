@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
+import 'package:srimca_ai/push_notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -71,12 +72,21 @@ class _SplashScreenState extends State<SplashScreen>
       final role = (savedUser['role'] ?? '').toString().toLowerCase();
       switch (role) {
         case 'admin':
+          try {
+            await PushNotificationService.subscribeToRoleTopics('admin');
+          } catch (_) {}
           Navigator.pushReplacementNamed(context, '/admin');
           return;
         case 'faculty':
+          try {
+            await PushNotificationService.subscribeToRoleTopics('faculty');
+          } catch (_) {}
           Navigator.pushReplacementNamed(context, '/faculty');
           return;
         case 'student':
+          try {
+            await PushNotificationService.subscribeToRoleTopics('student');
+          } catch (_) {}
           Navigator.pushReplacementNamed(
             context,
             '/student',

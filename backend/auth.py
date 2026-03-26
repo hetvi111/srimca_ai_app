@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 
 from database import get_collection, Collections
-from models import UserModel, UserProfileModel, StudentModel, FacultyModel
+from models import UserModel
 from config import get_config
 from notification_helper import create_notification  # Optional: Enable if needed
 
@@ -229,6 +229,11 @@ def login():
     """
     try:
         data = request.get_json()
+        # Debug (safe): helps identify whether the email matches a user record.
+        try:
+            print(f"LOGIN ATTEMPT: email={data.get('email', '')}")
+        except Exception:
+            print("LOGIN ATTEMPT: email=<unavailable>")
         
         # Validate required fields
         if not data.get('email') or not data.get('password'):
@@ -242,6 +247,7 @@ def login():
         
         # Find user by email
         user_doc = users.find_one({'email': email})
+        print(f"USER FOUND: {user_doc is not None}")
         
         if not user_doc:
             return jsonify({'error': 'Invalid email or password'}), 401
@@ -252,6 +258,11 @@ def login():
         
         # Verify password
         stored_password = user_doc.get('password', '')
+        # Debug (safe): print only a prefix, not the whole hash.
+        if isinstance(stored_password, str) and len(stored_password) > 6:
+            print(f"STORED PASSWORD HASH PREFIX: {stored_password[:6]}")
+        else:
+            print("STORED PASSWORD HASH PREFIX: <missing/unknown>")
         
         # Handle both string and bytes password storage
         if isinstance(stored_password, str):

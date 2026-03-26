@@ -105,6 +105,7 @@ class Collections:
     VISITORS = 'visitors'
     QUERIES = 'queries'
     SYSTEM_META = 'system_meta'
+    PASSWORD_RESET_REQUESTS = 'password_requests'
 
 
 def close_mongodb_connection():
@@ -135,7 +136,8 @@ def initialize_collections():
         Collections.NOTIFICATIONS,
         Collections.VISITORS,
         Collections.QUERIES,
-        Collections.SYSTEM_META,
+    Collections.SYSTEM_META,
+        Collections.PASSWORD_RESET_REQUESTS,
     ]
 
     for collection_name in required_collections:
@@ -191,6 +193,11 @@ def initialize_indexes():
     db[Collections.SESSIONS].create_index('user_id')
     db[Collections.SESSIONS].create_index('created_at')
     db[Collections.QUERIES].create_index('created_at')
+    
+    # Password reset requests indexes
+    db[Collections.PASSWORD_RESET_REQUESTS].create_index('email')
+    db[Collections.PASSWORD_RESET_REQUESTS].create_index('status')
+    db[Collections.PASSWORD_RESET_REQUESTS].create_index('created_at')
     
     print("Database indexes created successfully")
 

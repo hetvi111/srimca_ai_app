@@ -78,7 +78,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Color typeColor;
                     IconData typeIcon;
                     
-                    String notifType = notification["type"] ?? notification["notification_type"] ?? "notice";
+                    final notifType = (notification["type"] ?? notification["notification_type"] ?? "notice")
+                        .toString()
+                        .toLowerCase();
+                    final isRead = (notification["is_read"] ?? notification["isRead"] ?? true) as bool;
+
                     switch (notifType) {
                       case "exam":
                         typeColor = Colors.red;
@@ -100,6 +104,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       case "material":
                         typeColor = Colors.teal;
                         typeIcon = Icons.upload_file;
+                        break;
+                      case "notice":
+                        typeColor = Colors.green;
+                        typeIcon = Icons.notifications;
                         break;
                       default:
                         typeColor = Colors.green;
@@ -147,7 +155,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         ),
                         title: Text(
                           notification["title"] ?? "Notification",
-                          style: const TextStyle(fontWeight: FontWeight.bold)
+                          style: TextStyle(
+                            fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                          )
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

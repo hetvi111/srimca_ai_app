@@ -79,7 +79,36 @@ class AuthService {
   /// Check if user is logged in
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
-    return token != null && token.isNotEmpty;
+    if (token == null || token.isEmpty) return false;
+    // Only force re-login if token is clearly expired.
+    return !_isJwtExpired(token);
+  }
+
+  static bool _isJwtExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+
+      final payloadJson = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final payload = jsonDecode(payloadJson);
+      final exp = payload['exp'];
+
+      if (exp is num) {
+        final expMillis = exp * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(expMillis.toInt()).isBefore(DateTime.now());
+      }
+      if (exp is String) {
+        final parsed = int.tryParse(exp);
+        if (parsed == null) return false;
+        return DateTime.fromMillisecondsSinceEpoch(parsed * 1000).isBefore(DateTime.now());
+      }
+      return false;
+    } catch (_) {
+      // If token can't be decoded, avoid forcing re-login.
+      return false;
+    }
   }
 
   /// Get user profile from backend
@@ -903,4 +932,54 @@ class ApiService {
       return false;
     }
   }
+
+  /// Forgot Password - Student submits email request
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await post('/api/users/forgot-password', body: {'email': email});
+      
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message'] ?? 'Request sent successfully'};
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'error': data['error'] ?? 'Failed to send request'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Get Password Reset Requests (admin only)
+  static Future<List<Map<String, dynamic>>> getPasswordRequests({int limit = 100}) async {
+    try {
+      final response = await get('/api/users/admin/password-requests', queryParams: {'limit': limit.toString()});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final requests = data['requests'] as List<dynamic>? ?? [];
+        return requests.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Get password requests error: $e');
+      return [];
+    }
+  }
+
+  /// Admin Reset Password for request
+  static Future<Map<String, dynamic>?> adminResetPassword(String requestId) async {
+    try {
+      final response = await post('/api/users/admin/reset-password/$requestId');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'error': data['error'] ?? 'Reset failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
 }
+

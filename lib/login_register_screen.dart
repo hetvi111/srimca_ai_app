@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:srimca_ai/static_data.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
+import 'package:srimca_ai/push_notification_service.dart';
+import 'package:srimca_ai/forgot_password_screen.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -255,11 +257,27 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 ),
                 const SizedBox(height: 12),
 
-                const Text(
-                  "If you forgot your password, please contact administrator.",
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
-                  textAlign: TextAlign.center,
-                )
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lock_reset, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -490,7 +508,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
   // ================= API LOGIN (PYTHON + MONGODB) =================
   Future<void> _apiLogin() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -513,7 +531,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         body: jsonEncode({
           'email': email,
           'password': password,
-          'role': _selectedRole.toLowerCase(),
         }),
       );
       if (!mounted) return;
@@ -533,6 +550,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         );
         await Future.delayed(const Duration(milliseconds: 300));
         final String role = (user['role'] as String? ?? '').toLowerCase();
+        // Subscribe this device to role-based FCM topics for push notifications.
+        try {
+          if (role.isNotEmpty) {
+            await PushNotificationService.subscribeToRoleTopics(role);
+          }
+        } catch (e) {
+          debugPrint('FCM topic subscription failed: $e');
+        }
         switch (role) {
           case 'admin':
             Navigator.pushReplacementNamed(context, '/admin');
@@ -569,7 +594,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         }
       } else {
         final Map<String, dynamic> body = jsonDecode(res.body) as Map<String, dynamic>;
-        final msg = body['message']?.toString() ?? 'Login failed';
+        final msg = body['error']?.toString() ??
+            body['message']?.toString() ??
+            'Login failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );

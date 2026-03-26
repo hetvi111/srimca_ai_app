@@ -114,6 +114,10 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
         return Icons.access_time;
       case 'update':
         return Icons.update;
+      case 'notice':
+        return Icons.notifications;
+      case 'assignment':
+        return Icons.assignment_turned_in;
       default:
         return Icons.notifications;
     }
@@ -129,6 +133,10 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
         return Colors.orange;
       case 'update':
         return Colors.blue;
+      case 'notice':
+        return Colors.green;
+      case 'assignment':
+        return Colors.deepPurple;
       default:
         return accentBlue;
     }
@@ -137,7 +145,10 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
   @override
   Widget build(BuildContext context) {
     // Count unread notifications
-    final unreadCount = notifications.where((n) => n['isRead'] == false).length;
+    final unreadCount = notifications.where((n) {
+      final v = n['is_read'] ?? n['isRead'];
+      return v == false;
+    }).length;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -223,8 +234,9 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
     final type = notification['type'] ?? 'update';
     final title = notification['title'] ?? '';
     final message = notification['message'] ?? '';
-    final timestamp = notification['timestamp'] ?? '';
-    final isRead = notification['isRead'] ?? true;
+    final timestamp =
+        (notification['created_at'] ?? notification['timestamp'] ?? '').toString();
+    final isRead = (notification['is_read'] ?? notification['isRead'] ?? true);
 
     // Format timestamp
     String formattedDate = '';
@@ -233,7 +245,7 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
         final dateTime = DateTime.parse(timestamp);
         formattedDate = _formatDate(dateTime);
       }
-    } catch (e) {
+    } catch (_) {
       formattedDate = timestamp;
     }
 
@@ -257,9 +269,16 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // Mark as read and show details
-            _showNotificationDetails(title, message, type);
+          onTap: () async {
+            final notifId = notification['_id']?.toString();
+            if (!isRead && notifId != null && notifId.isNotEmpty) {
+              await ApiService.markNotificationAsRead(notifId);
+              await _loadNotifications();
+            }
+
+            if (mounted) {
+              _showNotificationDetails(title, message, type);
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
