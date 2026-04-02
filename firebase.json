@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"srimcaai","appId":"1:815096047486:android:408cfde9c5f2d36a76352f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"srimcaai","configurations":{"android":"1:815096047486:android:408cfde9c5f2d36a76352f","ios":"1:815096047486:ios:d5d4866027d009db76352f","web":"1:815096047486:web:c636bda4f583b3f276352f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "srimcaai",
+          "appId": "1:815096047486:android:408cfde9c5f2d36a76352f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "srimcaai",
+          "configurations": {
+            "android": "1:815096047486:android:408cfde9c5f2d36a76352f",
+            "ios": "1:815096047486:ios:d5d4866027d009db76352f",
+            "web": "1:815096047486:web:c636bda4f583b3f276352f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

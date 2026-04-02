@@ -1,137 +1,92 @@
-# SRIMCA AI - College Project
+# SRIMCA AI
 
-## Overview
-This is a Flutter mobile app with a Flask backend for AI content management, user management, and more. The backend uses MongoDB Atlas for data storage.
+Flutter app with Firebase (Auth + Firestore) and a Python backend API.
 
-## Backend Deployment Guide
+## Goal
 
-### Option 1: Deploy to Render (Recommended)
+Use Firebase for free live hosting and avoid Render-specific URLs.
 
-#### Prerequisites
-- Python 3.8+
-- GitHub account
-- Render account (free tier available)
-- MongoDB Atlas account
+## Free Hosting Setup (Firebase)
 
-#### Steps to Deploy Backend to Render
+### 1) Install tools
 
-1. **Push Your Flask Project to GitHub**:
-   - Create a new GitHub repository
-   - Push all files including: `app.py`, `requirements.txt`, `Procfile`, `render.yaml`, `runtime.txt`
+```bash
+npm install -g firebase-tools
+firebase login
+```
 
-2. **Create a New Web Service on Render**:
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New" → "Web Service"
-   - Connect your GitHub account and select your repository
+### 2) Select Firebase project
 
-3. **Configure the Web Service**:
-   - Name: `srimca-ai-backend`
-   - Runtime: Python
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `python app.py`
+```bash
+firebase use srimcaai
+```
 
-4. **Set Environment Variables**:
-   - Click "Advanced" → "Add Environment Variables`
-   - Add the following:
-     - `MONGODB_URI` = Your MongoDB Atlas connection string (e.g., `mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority`)
-     - `DB_NAME` = `srimca_ai`
-     - `PORT` = `10000` (Render will override this, but it's fine)
+If this is your first time setting up Hosting, also run:
 
-5. **Deploy the Service**:
-   - Click "Create Web Service"
-   - Wait for the build to complete
-   - Once deployed, you'll get your API URL (e.g., `https://srimca-ai-backend.onrender.com`)
+```bash
+firebase init hosting
+```
 
----
+### 3) Build Flutter web app for this project
 
-### Option 2: Deploy to Railway
+```bash
+flutter build web --release
+```
 
-#### Prerequisites
-- Python 3.8+
-- Railway account (free tier available for students)
-- MongoDB Atlas account
+Note: `firebase.json` is already configured to deploy `build/web`.
 
-### Steps to Deploy Backend
+### 4) Deploy to Firebase Hosting (free tier)
 
-1. **Install Railway CLI** (if not installed):
-   ```
-   npm install -g @railway/cli
-   ```
+```bash
+firebase deploy --only hosting
+```
 
-2. **Login to Railway**:
-   ```
-   railway login
-   ```
+After deploy, your live app URL will be:
+- `https://srimcaai.web.app`
+- `https://srimcaai.firebaseapp.com`
 
-3. **Initialize Railway Project**:
-   ```
-   railway init
-   ```
-   - Choose "Empty Project"
-   - Name it "srimca-ai-backend"
+## Data Store (Firebase Firestore)
 
-4. **Link to Existing Code**:
-   ```
-   railway link
-   ```
-   - Select your project
+Firebase client code is already present in:
+- `lib/firebase_service.dart`
 
-5. **Set Environment Variables**:
-   ```
-   railway variables set MONGO_URI=your_mongodb_atlas_uri
-   ```
+Collections currently used:
+- `users`
+- `notices`
+- `assignments`
+- `materials`
+- `faqs`
 
-6. **Deploy**:
-   ```
-   railway up
-   ```
+## Backend URL Configuration (no Render hardcoding)
 
-7. **Get Deployed URL**:
-   ```
-   railway domain
-   ```
-   - Copy the URL (e.g., https://srimca-ai-backend.up.railway.app)
-
-### Update Flutter App
-After deployment, update the `baseUrl` in all Flutter files to the deployed URL:
-- lib/admin_dashboard.dart
-- lib/user_management.dart
-- lib/content_control_page.dart
-- lib/ai_monitoring_page.dart
-- lib/security_page.dart
-- lib/reports_analytics_page.dart
-- lib/login_register_screen.dart
+API base URL now comes from compile-time define:
+- `API_PROD_URL`
 
 Example:
-```dart
-const String baseUrl = 'https://srimca-ai-backend.onrender.com';
+
+```bash
+flutter run --dart-define=API_PROD_URL=https://your-backend-url
 ```
 
-### Testing
-- Test the backend health check: `GET /`
-- Test user registration/login
-- Ensure all API endpoints work
+For visitor QR/register link:
+
+```bash
+flutter run --dart-define=VISITOR_REG_URL=https://srimcaai.web.app/register
+```
 
 ## Local Development
-To run locally:
-```
+
+Backend:
+
+```bash
+cd backend
 pip install -r requirements.txt
 python app.py
 ```
 
-The backend will run on http://localhost:5000
+Flutter:
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter run
+```

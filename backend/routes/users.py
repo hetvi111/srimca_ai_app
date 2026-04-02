@@ -459,7 +459,22 @@ def get_password_requests_admin():
             .limit(limit)
         )
 
-        result = [PasswordResetRequestModel.to_dict(r) for r in reqs]
+        users_collection = get_collection(Collections.USERS)
+        result = []
+        for r in reqs:
+            d = PasswordResetRequestModel.to_dict(r)
+            email = (d.get('email') or '').strip().lower()
+            if email:
+                user_doc = users_collection.find_one({'email': email})
+                if user_doc:
+                    d['user_role'] = user_doc.get('role', '')
+                    d['user_name'] = user_doc.get('name', '')
+                    role_l = (user_doc.get('role') or '').lower()
+                    if role_l == 'student':
+                        d['enrollment'] = user_doc.get('enrollment') or ''
+                    else:
+                        d['enrollment'] = None
+            result.append(d)
         return jsonify({'requests': result, 'count': len(result)}), 200
     except Exception as e:
         print(f"Get password requests error: {e}")
@@ -491,9 +506,17 @@ def reset_password_admin(request_id):
         if not user_doc:
             return jsonify({'error': 'User not found for this email'}), 404
 
-        # Generate a random temporary password (admin will share with user)
-        alphabet = string.ascii_letters + string.digits
-        new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
+        data = request.get_json() or {}
+        role_l = (user_doc.get('role') or '').lower()
+
+        # Prefer admin-provided password, fallback to random
+        new_password = data.get('new_password')
+        if new_password and len(new_password) >= 6:
+            print(f"Using admin-provided password for {email}")
+        else:
+            alphabet = string.ascii_letters + string.digits
+            new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
+            print(f"Generated random password for {email}")
 
         hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
         users_collection.update_one(
@@ -504,9 +527,9 @@ def reset_password_admin(request_id):
         requests_collection.update_one(
             {'_id': ObjectId(request_id)},
             {'$set': {
-                'status': 'approved',
+                'status': 'reset',
                 'updated_at': datetime.utcnow(),
-                'reset_password': new_password
+                'reset_password': new_password  # store plain for record
             }}
         )
 
@@ -514,7 +537,6 @@ def reset_password_admin(request_id):
             'success': True,
             'message': 'Password reset successfully',
             'email': email,
-            'new_password': new_password,
             'request_id': request_id,
         }), 200
     except Exception as e:

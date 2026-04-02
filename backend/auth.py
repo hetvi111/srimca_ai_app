@@ -187,21 +187,8 @@ def register():
         result = users.insert_one(user_doc)
         user_doc['_id'] = result.inserted_id
         
-        # NORMALIZED: Also create faculty record in faculty collection
-        if role == 'faculty':
-            faculty_collection = get_collection(Collections.FACULTIES)
-            faculty_doc = FacultyModel.create_faculty(
-                user_id=str(user_doc['_id']),
-                department=department,
-                designation=designation
-            )
-            try:
-                faculty_collection.insert_one(faculty_doc)
-                print(f"✅ Faculty record created for user {user_doc['_id']}")
-            except Exception as faculty_error:
-                print(f"Warning: Could not create faculty record: {faculty_error}")
-                # Continue anyway - user is created, admin can fix faculty record later
-        
+        # Faculty fields are already stored directly in users collection.
+        # Keep registration single-write here to avoid dependency on a separate model.
         
         # NOTE: Removed notification on registration for performance
         # If you need registration notifications, enable separately

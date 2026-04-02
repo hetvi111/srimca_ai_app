@@ -14,7 +14,8 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 //   - iOS Simulator: Use 'http://localhost:5000'
 //
 // For PRODUCTION (deployed backend):
-//   - Use your Render.com URL (e.g., 'https://srimca-ai-app.onrender.com')
+//   - Use your Firebase-hosted backend URL (Cloud Run/Functions)
+//   - Example: https://<region>-<project-id>.cloudfunctions.net/api
 //
 // ============================================
 
@@ -25,7 +26,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
-  defaultValue: 'https://srimca-ai-app.onrender.com',
+  defaultValue: 'http://10.195.231.181:5000',
 );
 
 /// API base URL - uses local URL in debug mode, production URL in release mode
@@ -966,16 +967,37 @@ class ApiService {
     }
   }
 
-  /// Admin Reset Password for request
-  static Future<Map<String, dynamic>?> adminResetPassword(String requestId) async {
+  /// Admin Reset Password for request.
+  /// Students: pass [studentEnrollment] matching DB. Faculty: pass [facultyEmail] matching request.
+  /// Other roles: pass [confirmEmail] matching the account email.
+  static Future<Map<String, dynamic>?> adminResetPassword(
+    String requestId, {
+    String? studentEnrollment,
+    String? facultyEmail,
+    String? confirmEmail,
+    String? newPassword,
+  }) async {
     try {
-      final response = await post('/api/users/admin/reset-password/$requestId');
-      
+      final body = <String, dynamic>{};
+      if (newPassword != null && newPassword.isNotEmpty) {
+        body['new_password'] = newPassword;
+      }
+      if (studentEnrollment != null && studentEnrollment.isNotEmpty) {
+        body['student_enrollment'] = studentEnrollment;
+      }
+      if (facultyEmail != null && facultyEmail.isNotEmpty) {
+        body['faculty_email'] = facultyEmail;
+      }
+      if (confirmEmail != null && confirmEmail.isNotEmpty) {
+        body['confirm_email'] = confirmEmail;
+      }
+      final response = await post('/api/users/admin/reset-password/$requestId', body: body.isEmpty ? null : body);
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data;
       }
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       return {'success': false, 'error': data['error'] ?? 'Reset failed'};
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};

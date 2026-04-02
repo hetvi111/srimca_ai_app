@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'dart:convert';
+import 'package:srimca_ai/admin_password_reset_detail_page.dart';
 
 class PasswordResetRequestsPage extends StatefulWidget {
   const PasswordResetRequestsPage({super.key});
@@ -42,43 +42,14 @@ class _PasswordResetRequestsPageState extends State<PasswordResetRequestsPage> {
     });
   }
 
-  Future<void> _resetPassword(String requestId) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+  Future<void> _openDetail(Map<String, dynamic> request) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminPasswordResetDetailPage(request: request),
+      ),
     );
-
-    final result = await ApiService.adminResetPassword(requestId);
-    Navigator.pop(context); // Close loading
-
-    if (result != null && result['message'] == 'Password reset successful') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.security, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Password reset: ${result['new_password']}')),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'OK',
-            onPressed: () {},
-          ),
-        ),
-      );
-      _loadRequests(); // Refresh list
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result?['error'] ?? 'Reset failed'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    if (changed == true && mounted) await _loadRequests();
   }
 
   String _formatDate(String? isoString) {
@@ -163,16 +134,9 @@ class _PasswordResetRequestsPageState extends State<PasswordResetRequestsPage> {
                             ],
                           ),
                           trailing: status.toLowerCase() == 'pending'
-                              ? ElevatedButton(
-                                  onPressed: () => _resetPassword(request['_id']),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red[400],
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Reset PW'),
-                                )
+                              ? const Icon(Icons.chevron_right)
                               : const Icon(Icons.check_circle, color: Colors.green),
-                          onTap: status.toLowerCase() == 'pending' ? () => _resetPassword(request['_id']) : null,
+                          onTap: () => _openDetail(request),
                         ),
                       );
                     },

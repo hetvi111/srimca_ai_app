@@ -336,15 +336,15 @@ class VisitorModel:
 
 
 class PasswordResetRequestModel:
-    \"\"\"Password reset request model for admin-controlled forgot password\"\"\"
+    """Password reset request model for admin-controlled forgot password"""
     
     collection_name = Collections.PASSWORD_RESET_REQUESTS
     
     @staticmethod
     def create_request(email: str):
-        \"\"\"
+        """
         Create a new password reset request document
-        \"\"\"
+        """
         return {
             'email': email.lower(),
             'status': 'pending',
@@ -355,7 +355,7 @@ class PasswordResetRequestModel:
     
     @staticmethod
     def to_dict(request_doc):
-        \"\"\"Convert request document to dictionary\"\"\"
+        """Convert request document to dictionary"""
         if request_doc is None:
             return None
         

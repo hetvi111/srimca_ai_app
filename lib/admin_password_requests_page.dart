@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/admin_password_reset_detail_page.dart';
 
 class AdminPasswordRequestsPage extends StatefulWidget {
   const AdminPasswordRequestsPage({super.key});
@@ -31,34 +32,14 @@ class _AdminPasswordRequestsPageState extends State<AdminPasswordRequestsPage> {
     }
   }
 
-  Future<void> _resetPassword(String requestId) async {
-    final res = await ApiService.adminResetPassword(requestId);
-    if (!mounted) return;
-
-    if (res != null && res['success'] == true) {
-      final newPassword = res['new_password']?.toString() ?? '';
-      await _load();
-
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('New Password'),
-          content: SelectableText(newPassword.isEmpty ? 'Generated' : newPassword),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res?['error']?.toString() ?? 'Reset failed')),
+  Future<void> _openDetail(Map<String, dynamic> r) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminPasswordResetDetailPage(request: r),
+      ),
     );
+    if (changed == true && mounted) await _load();
   }
 
   @override
@@ -81,19 +62,25 @@ class _AdminPasswordRequestsPageState extends State<AdminPasswordRequestsPage> {
                   itemCount: _requests.length,
                   itemBuilder: (context, index) {
                     final r = _requests[index];
-                    final id = r['_id']?.toString() ?? '';
                     final email = r['email']?.toString() ?? '';
                     final status = (r['status'] ?? 'pending').toString();
-                    final approved = status.toLowerCase() == 'approved';
+                    final role = r['user_role']?.toString() ?? '';
+                    final name = r['user_name']?.toString() ?? '';
 
                     return Card(
                       child: ListTile(
                         title: Text(email),
-                        subtitle: Text('Status: $status'),
-                        trailing: ElevatedButton(
-                          onPressed: approved || id.isEmpty ? null : () => _resetPassword(id),
-                          child: const Text('Reset Password'),
+                        subtitle: Text(
+                          [
+                            if (name.isNotEmpty) name,
+                            if (role.isNotEmpty) 'Role: $role',
+                            if (role.toLowerCase() == 'student' && r['enrollment'] != null && r['enrollment'].toString().isNotEmpty) 'Enrollment: ${r['enrollment']}',
+                            if (role.toLowerCase() != 'student') 'Email: $email',
+                            'Status: $status',
+                          ].join(' · '),
                         ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openDetail(r),
                       ),
                     );
                   },
