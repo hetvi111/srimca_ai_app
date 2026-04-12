@@ -21,10 +21,11 @@ Question: {question}
 Answer:"""
 
             response = openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
+                timeout=20,
                 temperature=0.3,
-                max_tokens=300
+                max_tokens=200
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
