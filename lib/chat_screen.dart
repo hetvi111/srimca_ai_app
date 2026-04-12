@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'dart:async';
 import 'package:srimca_ai/api_service.dart';
 
 // Navy Blue Theme Colors
@@ -16,16 +18,45 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final TextEditingController messageController = TextEditingController();
   final List<Map<String, dynamic>> messages = [];
+  final ScrollController _scrollController = ScrollController();
   bool isSending = false;
+  late AnimationController _typingController;
+  late Animation<double> _typingAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Add welcome message
+    _typingController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _typingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _typingController, curve: Curves.easeInOut),
+    );
+    _typingController.repeat();
     _addWelcomeMessage();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  @override
+  void dispose() {
+    _typingController.dispose();
+    _scrollController.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   void _addWelcomeMessage() {
@@ -40,8 +71,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> sendMessage() async {
     if (messageController.text.trim().isEmpty) return;
+    if (isSending) return;
 
-    final userMessage = messageController.text;
+    final userMessage = messageController.text.trim();
     final timestamp = DateTime.now().toIso8601String();
 
     setState(() {
@@ -50,66 +82,65 @@ class _ChatScreenState extends State<ChatScreen> {
         "isUser": true,
         "timestamp": timestamp,
       });
+      // Add typing indicator
+      messages.add({
+        "isTyping": true,
+        "isUser": false,
+      });
       isSending = true;
     });
 
+    messageController.clear();
+    _scrollToBottom();
+
+    String? response;
     try {
-      // Get AI response from backend
-      final response = await _getAIResponse(userMessage);
-      
-      if (mounted) {
-        setState(() {
-          messages.add({
-            "text": response,
-            "isUser": false,
-            "timestamp": DateTime.now().toIso8601String(),
-          });
-        });
-        
-        // Save to chat history
-        if (widget.userId != null) {
-          await ApiService.saveChatMessage(
-            userId: widget.userId!,
-            question: userMessage,
-            answer: response,
-          );
-        }
-      }
+      response = await _getAIResponse(userMessage);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          messages.add({
-            "text": "I apologize, but I'm having trouble processing your request right now. Please try again later.",
-            "isUser": false,
-            "timestamp": DateTime.now().toIso8601String(),
-          });
-        });
-      }
+      response = "Sorry, I encountered an error. Please try again. ($e)";
     }
 
-    messageController.clear();
     if (mounted) {
-      setState(() => isSending = false);
+      setState(() {
+        // Remove typing
+        if (messages.isNotEmpty && messages.last['isTyping'] == true) {
+          messages.removeLast();
+        }
+        // Add real response
+        messages.add({
+          "text": response,
+          "isUser": false,
+          "timestamp": DateTime.now().toIso8601String(),
+        });
+        isSending = false;
+      });
+      _scrollToBottom();
+
+      // Save to chat history
+      if (widget.userId != null && response != null) {
+        await ApiService.saveChatMessage(
+          userId: widget.userId!,
+          question: userMessage,
+          answer: response,
+        );
+      }
     }
   }
 
   Future<String> _getAIResponse(String question) async {
-    // Use the real SRIMCA AI backend
     try {
       final response = await ApiService.askAI(question);
       return response;
     } catch (e) {
-      // Fallback to simulated responses if API fails
       return _getFallbackResponse(question);
     }
   }
 
-  /// Fallback responses when API is unavailable
-  String _getFallbackResponse(String question) {
+String _getFallbackResponse(String question) {
     final lowerQuestion = question.toLowerCase();
     
     if (lowerQuestion.contains('exam') || lowerQuestion.contains('schedule')) {
-      return "The mid-term examination schedule will be announced soon. Typically, exams begin after the completion of each unit. Please check the notice board regularly for updates.";
+      return "The mid-term examination schedule will be announced soon. Please check the notice board regularly for updates.";
     } else if (lowerQuestion.contains('assignment') || lowerQuestion.contains('submit')) {
       return "To submit an assignment, log in to the student portal, go to 'Assignments' section, select the relevant assignment, and upload your work before the deadline.";
     } else if (lowerQuestion.contains('syllabus') || lowerQuestion.contains('course')) {
@@ -118,16 +149,8 @@ class _ChatScreenState extends State<ChatScreen> {
       return "For fee-related queries, please contact the accounts department or visit the administration office. You can also check your fee status through the student portal.";
     } else if (lowerQuestion.contains('library') || lowerQuestion.contains('book')) {
       return "The library is open from 9:00 AM to 6:00 PM on weekdays. You can issue books using your student ID card. Maximum 5 books can be issued at a time.";
-    } else if (lowerQuestion.contains('hostel') || lowerQuestion.contains('room')) {
-      return "For hostel accommodation, please contact the hostel warden. Rooms are allocated based on availability and first-come-first-served basis.";
-    } else if (lowerQuestion.contains('result') || lowerQuestion.contains('grade')) {
-      return "Results are typically announced within 2 weeks after examinations. You can check your results through the student portal using your enrollment number.";
-    } else if (lowerQuestion.contains('holiday') || lowerQuestion.contains('vacation')) {
-      return "College holidays follow the academic calendar. Major holidays include Diwali break (usually 1 week), Winter break (2 weeks), and Summer break (1 month).";
-    } else if (lowerQuestion.contains('contact') || lowerQuestion.contains('faculty') || lowerQuestion.contains('teacher')) {
-      return "You can contact faculty members through their official email IDs available on the college website, or meet them during their designated office hours.";
     } else {
-      return "Thank you for your question! I'm learning to provide better answers. For detailed information, please check the notice board or contact your faculty advisor.";
+      return "Thank you for your question! Please check the notice board or contact your faculty advisor.";
     }
   }
 
@@ -137,11 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFF5F9FF),
-              Color(0xFFE8EEF7),
-              Color(0xFFE3F2FD),
-            ],
+            colors: [Color(0xFFF5F9FF), Color(0xFFE8EEF7), Color(0xFFE3F2FD)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -149,19 +168,12 @@ class _ChatScreenState extends State<ChatScreen> {
         child: SafeArea(
           child: Column(
             children: [
-
-              /// ================= TOP BAR =================
+              // TOP BAR (unchanged)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: const BoxDecoration(
                   color: navyBlue,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -179,100 +191,54 @@ class _ChatScreenState extends State<ChatScreen> {
                         const SizedBox(width: 12),
                         const Text(
                           "SAI",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.history, color: Colors.white),
-                          onPressed: () {
-                            // Navigate to chat history
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
-                          onPressed: () {},
-                        ),
+                        IconButton(icon: const Icon(Icons.history, color: Colors.white), onPressed: () {}),
+                        IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
                       ],
                     ),
                   ],
                 ),
               ),
-
+              // ... greeting and quick actions unchanged ...
               const SizedBox(height: 10),
-
-              /// ================= GREETING =================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
                     const Text(
                       "Hello 👋",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: navyBlue,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: navyBlue),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: accentBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.green,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
                           const SizedBox(width: 4),
-                          const Text(
-                            "Online",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          const Text("Online", style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 4),
-
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    "How can I help you today?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  child: Text("How can I help you today?", style: TextStyle(fontSize: 14, color: Colors.grey)),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              /// ================= QUICK ACTIONS =================
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -286,12 +252,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              /// ================= CHAT LIST =================
               Expanded(
                 child: ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
@@ -300,54 +264,34 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                 ),
               ),
-
-              /// ================= INPUT BAR =================
               Container(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: Offset(0, -2))],
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: lightGrey,
-                          borderRadius: BorderRadius.circular(25),
-                        ),
+                        decoration: BoxDecoration(color: lightGrey, borderRadius: BorderRadius.circular(25)),
                         child: TextField(
                           controller: messageController,
-                          decoration: const InputDecoration(
-                            hintText: "Ask me anything...",
-                            border: InputBorder.none,
-                          ),
+                          decoration: const InputDecoration(hintText: "Ask me anything...", border: InputBorder.none),
                           maxLines: null,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      decoration: const BoxDecoration(
-                        color: accentBlue,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(color: accentBlue, shape: BoxShape.circle),
                       child: IconButton(
                         icon: isSending
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(Colors.white),
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                               )
                             : const Icon(Icons.send, color: Colors.white),
                         onPressed: isSending ? null : sendMessage,
@@ -364,9 +308,47 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> msg) {
-    final isUser = msg["isUser"] as bool;
+    final isUser = msg["isUser"] as bool?;
+    final isTyping = msg["isTyping"] as bool? ?? false;
+
+    if (isTyping) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: Offset(0, 2))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.smart_toy, size: 14, color: accentBlue),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text("SAI", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: accentBlue)),
+                  ],
+                ),
+              ),
+              _typingIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser! ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.all(14),
@@ -374,13 +356,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: isUser ? accentBlue : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,14 +389,38 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             Text(
               msg["text"],
-              style: TextStyle(
-                color: isUser ? Colors.white : Colors.black87,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 14),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _typingIndicator() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedBuilder(
+          animation: _typingAnimation,
+          builder: (context, child) {
+            return Column(
+              children: List.generate(3, (index) => Container(
+                height: 8,
+                width: 8,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  shape: BoxShape.circle,
+                ),
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                transform: Matrix4.identity()..translate(0, _typingAnimation.value * 20 * (index == 0 ? 1 : index == 1 ? 0.5 : -0.5)),
+              )),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        Text("Typing...", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+      ],
     );
   }
 
@@ -434,14 +434,10 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         onPressed: () {
           messageController.text = "Tell me about $text";
+          _scrollToBottom();
         },
       ),
     );
   }
-
-  @override
-  void dispose() {
-    messageController.dispose();
-    super.dispose();
-  }
 }
+

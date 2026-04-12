@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:flutter/foundation.dart';
+
 
 /// Push Notification Service - Handles Firebase Cloud Messaging
 class PushNotificationService {
@@ -9,26 +11,30 @@ class PushNotificationService {
   
   /// Initialize push notifications
   static Future<void> initialize() async {
-    // Request permission for iOS
-    await _firebaseMessaging.requestPermission();
-    
-    // Get FCM token
-    final token = await _firebaseMessaging.getToken();
-    print('FCM Token: $token');
-    
-    // Save token to backend for push notifications
-    if (token != null) {
-      await _saveTokenToBackend(token);
+    try {
+      // Request permission for iOS/mobile
+      if (!kIsWeb) {
+        await _firebaseMessaging.requestPermission();
+      }
+      
+      // Get FCM token (works on web too)
+      final token = await _firebaseMessaging.getToken();
+      debugPrint('FCM Token: $token');
+      
+      // Save token to backend for push notifications
+      if (token != null) {
+        await _saveTokenToBackend(token);
+      }
+      
+      // Initialize local notifications - mobile only
+      if (!kIsWeb) {
+        await _initializeLocalNotifications();
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+      }
+    } catch (e) {
+      debugPrint('PushNotificationService init error: $e');
     }
-    
-    // Initialize local notifications
-    await _initializeLocalNotifications();
-    
-    // Handle foreground notifications
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    
-    // Handle notification when app is in background
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
   }
   
   /// Initialize local notifications

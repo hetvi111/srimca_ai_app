@@ -87,6 +87,14 @@ def create_app(config_name=None):
             'database': 'connected'
         })
     
+    @app.route('/api/health')
+    def api_health():
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'api': 'ok'
+        })
+    
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):

@@ -29,7 +29,7 @@ const String kProductionUrl = String.fromEnvironment(
   defaultValue: 'https://srimca-ai-app-y828.onrender.com',
 );
 
-/// API base URL - uses local URL in debug mode, production URL in release mode
+
 String get kApiBaseUrl {
   if (kDebugMode) {
     return kProductionUrl; // Change this to your local backend URL
@@ -121,7 +121,7 @@ class AuthService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -170,7 +170,7 @@ class ApiService {
       uri = uri.replace(queryParameters: queryParams);
     }
     
-    return _client.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    return _client.get(uri, headers: headers).timeout(const Duration(seconds: 60));
   }
 
   /// POST request
@@ -182,7 +182,7 @@ class ApiService {
       uri,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(const Duration(seconds: 60));
   }
 
   /// PUT request
@@ -194,7 +194,7 @@ class ApiService {
       uri,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(const Duration(seconds: 60));
   }
 
   /// DELETE request

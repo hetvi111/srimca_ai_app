@@ -5,7 +5,17 @@ Date: $(date)
 
 ## Completed: 0/8
 
-### 1. [ ] Verify/Setup GitHub Repo
+### 1. ✅ GitHub Repo Ready - Pushed to branch blackboxai/fix-backend-import-error
+### 9. [ ] Add FlutterFire Config Step
+   - FlutterFire CLI running
+   - Select platforms (web ✔) Enter
+   - main.dart fixed for firebase_options.dart
+   - flutter clean & flutter pub get & flutter build web & firebase deploy --only hosting
+   - Live: https://srimcaai.web.app
+   ```bash
+   git commit -m "Migration prep" ^& git push
+   ```
+   - Repo: https://github.com/hetvi111/srimca_ai_app.git
    ```bash
    git remote -v
    ```
