@@ -26,7 +26,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
-  defaultValue: 'http://10.195.231.181:5000',
+  defaultValue: 'https://srimca-ai-app-y828.onrender.com',
 );
 
 /// API base URL - uses local URL in debug mode, production URL in release mode
