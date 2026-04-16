@@ -1060,6 +1060,28 @@ class ApiService {
   static Future<Map<String, dynamic>> registerUser({
     required Map<String, dynamic> body,
   }) async {
+
+  /// Get visitor profile
+  static Future<Map<String, dynamic>?> getVisitorProfile(String visitorId) async {
+    try {
+      final response = await get('/api/visitor/profile/$visitorId');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['profile'] as Map<String, dynamic>? ?? data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get visitor profile error: $e');
+      return null;
+    }
+  }
+
+  /// Update visitor profile
+  static Future<Map<String, dynamic>> updateVisitorProfile({
+    required String visitorId,
+    required Map<String, dynamic> data,
+  }) async {
     try {
       final response = await post('/api/register', body: body);
       
@@ -1069,6 +1091,57 @@ class ApiService {
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return {'success': false, 'error': data['error'] ?? data['message'] ?? 'Registration failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Get visitor history/logs
+  static Future<Map<String, dynamic>> getVisitorHistory(String visitorId) async {
+    try {
+      final response = await get('/api/visitor/history/$visitorId');
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'success': false, 'history': [], 'total': 0};
+    } catch (e) {
+      debugPrint('Get visitor history error: $e');
+      return {'success': false, 'history': [], 'total': 0};
+    }
+  }
+
+  /// Generate visitor QR pass
+  static Future<Map<String, dynamic>?> generateVisitorQR(String visitorId) async {
+    try {
+      final response = await get('/api/visitor/qr/$visitorId');
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Generate visitor QR error: $e');
+      return null;
+    }
+  }
+
+  /// Check-in from QR scan
+  static Future<Map<String, dynamic>> visitorCheckin({
+    required String visitorId,
+    required String token,
+  }) async {
+    try {
+      final response = await post('/api/visitor/checkin', body: {
+        'vid': visitorId,
+        'token': token,
+      });
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Check-in failed'};
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};
     }

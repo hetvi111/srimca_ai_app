@@ -106,6 +106,7 @@ class Collections:
     QUERIES = 'queries'
     SYSTEM_META = 'system_meta'
     PASSWORD_RESET_REQUESTS = 'password_requests'
+    VISITOR_LOGS = 'visitor_logs'
 
 
 def close_mongodb_connection():

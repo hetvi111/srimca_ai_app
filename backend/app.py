@@ -27,6 +27,7 @@ from routes.users import users_bp
 from routes.admin import admin_bp
 from routes.ai import ai_bp
 from routes.notifications import notifications_bp
+from routes.visitor import visitor_bp
 
 
 def initialize_database_async():
@@ -81,6 +82,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(visitor_bp)
     
     # Health check route
     @app.route('/')

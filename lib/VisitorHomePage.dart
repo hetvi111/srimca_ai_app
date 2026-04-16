@@ -114,6 +114,74 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
 
                     const SizedBox(height: 24),
 
+                    // Login/Register Buttons for Visitors
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: lightGrey,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Welcome Visitor! Login or Register',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: navyBlue,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                                  icon: const Icon(Icons.login, size: 20),
+                                  label: const Text('Login'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: accentBlue,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                                  icon: const Icon(Icons.person_add, size: 20),
+                                  label: const Text('Register'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: navyBlue,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
                     // Quick Info
                     Row(
                       children: [

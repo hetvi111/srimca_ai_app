@@ -118,44 +118,76 @@ class VisitorQRPage extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Manual Registration Button
+              // Login / Register Buttons
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    // Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: navyBlue,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        icon: const Icon(Icons.login, color: Colors.white),
+                        label: const Text(
+                          "Login",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Register Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: accentBlue),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        icon: const Icon(Icons.person_add, color: accentBlue),
+                        label: const Text(
+                          "Register Visitor",
+                          style: TextStyle(
+                            color: accentBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+
+              // QR Link Info
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: accentBlue),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const VisitorRegistrationPage()),
-                    );
-                  },
-                  icon: const Icon(Icons.edit, color: accentBlue),
-                  label: const Text("Register Manually", style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // View Link Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentBlue,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Colors.grey),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("QR Code links to: $kVisitorRegistrationUrl")),
+                      SnackBar(content: Text("QR opens web registration: $kVisitorRegistrationUrl")),
                     );
                   },
-                  icon: const Icon(Icons.link, color: Colors.white),
-                  label: const Text("View Registration Link", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.link, color: Colors.grey),
+                  label: const Text(
+                    "QR Links to Web Register",
+                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ],

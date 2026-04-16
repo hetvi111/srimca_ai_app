@@ -331,7 +331,39 @@ class VisitorModel:
             'phone': visitor_doc.get('phone', ''),
             'purpose': visitor_doc.get('purpose', ''),
             'status': visitor_doc.get('status', 'pending'),
-            'created_at': visitor_doc.get('created_at').isoformat() if visitor_doc.get('created_at') else None
+        'created_at': visitor_doc.get('created_at').isoformat() if visitor_doc.get('created_at') else None
+
+        }
+
+
+class VisitorLogModel:
+    \"\"\"Visitor log model for check-in/out tracking\"\"\"
+    
+    collection_name = Collections.VISITOR_LOGS
+    
+    @staticmethod
+    def create_log(visitor_id: str, purpose: str = '', status: str = 'checked_in'):
+        return {
+            'visitor_id': visitor_id,
+            'purpose': purpose,
+            'status': status,
+            'check_in_time': datetime.utcnow(),
+            'check_out_time': None,
+            'created_at': datetime.utcnow()
+        }
+    
+    @staticmethod
+    def to_dict(log_doc):
+        if log_doc is None:
+            return None
+        return {
+            '_id': str(log_doc.get('_id', '')),
+            'visitor_id': str(log_doc.get('visitor_id', '')),
+            'purpose': log_doc.get('purpose', ''),
+            'status': log_doc.get('status', 'checked_in'),
+            'check_in_time': log_doc.get('check_in_time').isoformat() if log_doc.get('check_in_time') else None,
+            'check_out_time': log_doc.get('check_out_time').isoformat() if log_doc.get('check_out_time') else None,
+            'created_at': log_doc.get('created_at').isoformat() if log_doc.get('created_at') else None
         }
 
 
