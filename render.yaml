@@ -14,7 +14,7 @@ services:
       - key: SMTP_USER
         value: 2025mca006@gmail.com
       - key: SMTP_PASS
-        value: ocgqypybbfuudsiz
+        value: ocgq ypyb bfuu dsiz
       - key: SMTP_FROM
         value: 2025mca006@gmail.com
       - key: SMTP_HOST

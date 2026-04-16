@@ -1,0 +1,195 @@
+SRIMCA AI ASSISTANT - Presentation Script
+Group IDs: 202504104610006, 202504104610008, 202504104610020, 202504104610022
+
+---
+
+Presenter 1: Introduction, Problem Statement, and Project Overview
+
+"Good morning, respected examiner. We are presenting the SRIMCA AI Assistant.
+
+Our project solves existing issues in Shrimad Rajchandra Institute of Management and Computer Application.
+Currently, most student and visitor queries are handled manually by office staff and faculty.
+This creates many problems:
+- students cannot get information 24×7,
+- office staff have too much manual work,
+- important notices are not always delivered on time,
+- there is no AI-based system to answer questions instantly,
+- visitor registration is done manually and takes time,
+- communication between students, faculty, and administration is slow.
+
+To solve this, we developed the SRIMCA AI Assistant, a mobile app that offers:
+- instant AI-based answers,
+- 24×7 access to college information,
+- real-time notifications for notices, events, and approvals,
+- secure login with role-based access,
+- QR-based visitor registration and visitor management.
+
+This project is built with:
+- Flutter for the frontend mobile app,
+- Python Flask for the backend REST API,
+- MongoDB Atlas for the database,
+- JWT for authentication,
+- Firebase services for push notifications and optional auth integration.
+
+The purpose is to provide instant, secure, and reliable access to information for students, faculty, and visitors, while reducing manual workload and improving communication.
+
+The main project goal is to create a smart SRIMCA AI system that helps users find answers faster, manage visitors smoothly, and deliver notices effectively." 
+
+---
+
+Presenter 2: System Scope, Functional Modules, and Limitations
+
+"Thank you. I will explain the system scope, the functional modules, and the limitations.
+
+The system scope includes these major capabilities:
+1. 24×7 internet-based access for all users.
+2. Role-based login and dashboards for students, faculty, admin, and visitors.
+3. Visitor management, including QR-based registration, visitor inquiry, and approval.
+4. AI features such as chat assistance, voice-based AI, and text/image generation.
+5. Real-time notifications through Firebase and email.
+6. Content management for uploading notices, assignments, materials, and FAQs.
+7. Database management and reporting tools for admin.
+
+The system has the following functional modules:
+- Admin module: user management, notices, faculty, students, visitors, AI monitoring, reports, notifications.
+- Student module: registration, login, profile, AI chat, notices, notifications, history.
+- Faculty module: login, profile, notice posting, AI review, visitor inquiry, event management.
+- Visitor module: registration, login, QR access, AI chat, profile, visit status.
+
+The system also supports important smaller features:
+- email OTP registration and verification,
+- secure password hashing with bcrypt,
+- role-based access control,
+- content upload and organization,
+- student and faculty search,
+- notification scheduling,
+- audit-friendly data management.
+
+Limitations:
+1. Internet is required for all features.
+2. AI may occasionally deliver incomplete or incorrect responses.
+3. Data needs regular updates from admin and faculty.
+4. The system depends on server availability.
+5. The application is custom-designed for SRIMCA users only.
+
+These limitations define the realistic deployment boundaries and help manage expectations for examiners." 
+
+---
+
+Presenter 3: Data Pipeline, Backend Architecture, and Technology Details
+
+"Now I will describe the technical architecture, data pipeline, and all small backend details.
+
+Data preprocessing starts from `backend/srimca/data/sample_srimca_info.txt`, where official SRIMCA content is collected.
+The loader scripts in `backend/srimca/loader.py` use Python `requests` and `BeautifulSoup` to fetch website pages and parse content.
+Then the backend loads and cleans the text data from `.txt` files and combines them into a single knowledge set.
+
+Text chunking is handled in `backend/srimca/build_db.py`.
+We split content by newlines and create knowledge chunks. Each chunk becomes a separate searchable item.
+This results in about 30 or more text segments stored in MongoDB.
+
+Embedding generation is configured in `backend/srimca/config.py`.
+The model used is `sentence-transformers/all-MiniLM-L6-v2`, which creates 384-dimensional vectors locally.
+This approach has no extra API cost and uses the open-source sentence-transformers library.
+
+Vector storage and retrieval:
+- We store each chunk with `text`, `embedding`, and metadata in the `knowledge` MongoDB collection.
+- Vector search is enabled in MongoDB to perform similarity calculations.
+- `backend/srimca/retriever.py` performs semantic search using cosine similarity.
+- The top-k relevant chunks are retrieved as context for answer generation.
+
+Answer generation happens in `backend/srimca/gpt_answer.py`.
+It can use the OpenAI GPT API when available, otherwise it uses template-based fallback responses.
+The response pipeline is:
+- user submits question,
+- backend receives API request,
+- question is embedded,
+- vector search returns relevant knowledge chunks,
+- GPT or fallback generates the final answer,
+- backend sends the response back to the app.
+
+Backend technical stack and files:
+- `backend/app.py` initializes Flask, CORS, and route blueprints.
+- `backend/auth.py` handles registration, OTP, login, JWT generation, and email sending.
+- `backend/database.py` initializes MongoDB connections and collections.
+- `backend/config.py` loads `.env` variables and config values.
+- Route files include `routes/notices.py`, `routes/assignments.py`, `routes/materials.py`, `routes/faqs.py`, `routes/users.py`, `routes/admin.py`, `routes/ai.py`, and `routes/notifications.py`.
+
+Important API endpoints:
+- `/api/send-registration-otp`
+- `/api/verify-registration-otp`
+- `/api/register`
+- `/api/login`
+- `/api/notices`
+- `/api/ai/chat`
+- `/api/users`, `/api/admin/users`
+- notification and content management endpoints.
+
+Frontend technical details:
+- `lib/api_service.dart` manages all REST calls, including OTP, register, login, notices, AI queries, and user data.
+- `lib/registration_otp_page.dart` handles OTP sending, verification, resend cooldown, and registration completion.
+- Important UI files: `login_register_screen.dart`, `chat_screen.dart`, `faculty_dashboard.dart`, `admin_main_dashboard.dart`, `visitor_inquiry_page.dart`, `faculty_upload_notice_page.dart`, and `faculty_notifications_page.dart`.
+- Flutter packages used:
+  - `firebase_core`, `firebase_auth`, `cloud_firestore`, `firebase_messaging`, `flutter_local_notifications`,
+  - `http`, `shared_preferences`, `app_links`, `fl_chart`, `intl`, `file_picker`.
+
+Development tooling and environment:
+- Flutter SDK and Dart 3.10.8
+- Python 3 backend with Flask 3.0.0
+- MongoDB Atlas database
+- Git and GitHub for version control
+- Postman for API testing
+- Android Studio and VS Code for development
+- Deployment via Render and Firebase Hosting.
+
+Small but important files:
+- `backend/requirements.txt` lists backend dependencies like Flask, pymongo, bcrypt, PyJWT, firebase-admin, sentence-transformers, and OpenAI.
+- `backend/.env.example` defines environment variables for MongoDB, JWT, Flask, Firebase, and SMTP.
+- `pubspec.yaml` defines Flutter dependencies and assets.
+- `README.md`, `TODO.md`, and `table.txt` are documentation and project reference files.
+
+This architecture combines AI, mobile, backend, and database technologies to deliver a complete SRIMCA assistant experience." 
+
+---
+
+Presenter 4: Functional Requirements, Testing, Deployment, and Future Enhancements
+
+"Finally, I will explain the functional requirements in detail, testing and deployment, and future improvements.
+
+Functional modules:
+- Admin: login, student management, faculty management, visitor management, content management, AI monitoring, reports, notifications, security, database maintenance.
+- Student: registration, login, profile, AI chat, notices, notifications, history, dashboard.
+- Faculty: login, profile, notice creation, event management, AI answer review, visitor inquiry handling.
+- Visitor: registration, login, QR access, AI chat, profile, visitor history.
+
+Non-functional requirements:
+- System availability at 99% during academic hours.
+- Core screens load in under 3 seconds on normal campus internet.
+- Secure API calls and encrypted data storage.
+- User sessions protected with JWT.
+- Fast AI responses from the retrieval and embedding pipeline.
+
+Testing and deployment:
+- Backend uses `Flask` and can be deployed with `gunicorn`.
+- Frontend is built with Flutter for Android, iOS, and web.
+- Firebase Messaging handles push notifications.
+- Render and Firebase are used for cloud deployment.
+- Environment variables are stored in `.env` for secure configuration.
+
+Future technical enhancements:
+- Add GPT-4o or advanced LLM integration for better answer quality.
+- Add multimodal RAG that can process text, PDF, images, and study materials.
+- Build a Progressive Web App (PWA) version for browser install 
+- Add advanced analytics with real-time charts and usage trends.
+- Improve security with 2FA or MFA and audit logs in MongoDB.
+- Scale backend with Kubernetes, load balancing, and MongoDB sharding.
+- Add new modules such as event ticketing, AI-based assignment auto-grading, visitor heatmaps, and notifications scheduling.
+
+Small project details and daily work:
+- We fixed backend import issues and cleaned package organization.
+- We optimized Flutter Android build caches and dependency versions.
+- We added email OTP verification and replaced phone OTP flows.
+- We implemented role-based dashboards for students, faculty, admin, and visitors.
+- We improved error handling for OTP, registration, and login flows.
+
+In conclusion, SRIMCA AI Assistant is a complete, technically robust project with mobile UI, backend services, AI retrieval, database storage, security, and notifications. It supports key SRIMCA needs and is designed for future expansion. Thank you."

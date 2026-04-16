@@ -82,15 +82,24 @@ def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[
         os.getenv("SMTP_SENDER_EMAIL", "")
         or os.getenv("SMTP_FROM", "")
         or os.getenv("SMTP_USER", "")
+        or os.getenv("SMTP_USERNAME", "")
     ).strip()
     sender_password = (
         os.getenv("SMTP_SENDER_PASSWORD", "")
         or os.getenv("SMTP_PASS", "")
+        or os.getenv("SMTP_PASSWORD", "")
     ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
     if not sender_email or not sender_password:
+        print(
+            "SMTP config missing:",
+            f"host={smtp_host}",
+            f"port={smtp_port}",
+            f"sender_email_set={bool(sender_email)}",
+            f"sender_password_set={bool(sender_password)}",
+        )
         return False, "Email service not configured on server"
 
     greeting_name = name.strip() or "User"
@@ -125,15 +134,24 @@ def _send_verification_email(email: str, verification_link: str, name: str = "")
         os.getenv("SMTP_SENDER_EMAIL", "")
         or os.getenv("SMTP_FROM", "")
         or os.getenv("SMTP_USER", "")
+        or os.getenv("SMTP_USERNAME", "")
     ).strip()
     sender_password = (
         os.getenv("SMTP_SENDER_PASSWORD", "")
         or os.getenv("SMTP_PASS", "")
+        or os.getenv("SMTP_PASSWORD", "")
     ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
     if not sender_email or not sender_password:
+        print(
+            "SMTP config missing (verification email):",
+            f"host={smtp_host}",
+            f"port={smtp_port}",
+            f"sender_email_set={bool(sender_email)}",
+            f"sender_password_set={bool(sender_password)}",
+        )
         return False, "Email service not configured on server"
 
     greeting_name = name.strip() or "User"
