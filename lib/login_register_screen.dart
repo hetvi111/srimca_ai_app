@@ -6,7 +6,7 @@ import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_screen.dart';
-import 'package:srimca_ai/registration_otp_page.dart';
+// REMOVED: registration_otp_page.dart - direct registration
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -202,6 +202,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -324,6 +325,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -380,6 +382,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedSemester.isEmpty ? null : _selectedSemester,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Semester"),
                     items: _semesters
@@ -396,8 +399,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Department / Course"),
+                    decoration: _inputDecoration("Course"),
                     items: _departments
                         .map((d) => DropdownMenuItem(
                               value: d,
@@ -415,6 +419,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedPurpose.isEmpty ? null : _selectedPurpose,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Purpose of Visit"),
                     items: _purposes
@@ -434,6 +439,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Department / Course"),
                     items: _departments
@@ -787,85 +793,89 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       requestBody['designation'] = _designationController.text.trim();
     }
 
-    // Show loading dialog for OTP send
+    // Direct registration - no OTP needed
+    final result = await ApiService.registerUser(body: requestBody);
+    
     if (!mounted) return;
-    final navigator = Navigator.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
-    );
+    
+    if (result['success'] == true) {
+      final responseData = result['data'] as Map<String, dynamic>?;
+      final token = responseData?['token'] as String?;
+      final user = responseData?['user'] as Map<String, dynamic>?;
 
-    try {
-      final uri = Uri.parse('$kApiBaseUrl/api/send-registration-otp');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email.toLowerCase(),
-          'name': name,
-        }),
+      if (token != null && token.isNotEmpty) {
+        await AuthService.saveToken(token);
+      }
+      if (user != null) {
+        await AuthService.saveUser(user);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Registration successful! Logging in...')),
       );
 
-      if (!mounted) return;
-      // Close dialog if still open
-      if (navigator.canPop()) {
-        navigator.pop();
-      }
+      if (user != null) {
+        final String role = (user['role'] as String? ?? _selectedRole).toLowerCase();
+        try {
+          if (role.isNotEmpty) {
+            await PushNotificationService.subscribeToRoleTopics(role);
+          }
+        } catch (e) {
+          debugPrint('FCM topic subscription failed: $e');
+        }
 
-      if (res.statusCode == 200) {
-        final bool? registered = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RegistrationOtpPage(
-              email: email.toLowerCase(),
-              name: name,
-              registrationBody: requestBody,
-            ),
-          ),
-        );
-        if (!mounted) return;
-        if (registered == true) {
-          _emailController.clear();
-          _passwordController.clear();
-          _confirmPasswordController.clear();
-          _nameController.clear();
-          _mobileController.clear();
-          _enrollmentController.clear();
-          _dobController.clear();
-          _designationController.clear();
-          _selectedSemester = '';
-          _selectedDepartment = '';
-          _selectedPurpose = '';
-          _tabController.animateTo(0);
+        switch (role) {
+          case 'admin':
+            Navigator.pushReplacementNamed(context, '/admin');
+            break;
+          case 'faculty':
+            Navigator.pushReplacementNamed(context, '/faculty');
+            break;
+          case 'student':
+            Navigator.pushReplacementNamed(
+              context,
+              '/student',
+              arguments: {
+                'studentName': user['name'] ?? 'student',
+                'semester': user['semester'] ?? 'semester',
+                'userId': user['_id'] ?? '',
+                'email': user['email'] ?? '',
+              },
+            );
+            break;
+          case 'visitor':
+            Navigator.pushReplacementNamed(context, '/visitor');
+            break;
+          default:
+            Navigator.pushReplacementNamed(
+              context,
+              '/welcome',
+              arguments: {
+                'role': role.isNotEmpty ? role[0].toUpperCase() + role.substring(1) : 'User',
+                'userId': user['_id'] ?? '',
+                'userName': user['name'] ?? 'User',
+                'email': user['email'] ?? '',
+              },
+            );
         }
       } else {
-        // Print error for debugging
-        print('Registration failed with status: ${res.statusCode}');
-        print('Response body: ${res.body}');
-
-        Map<String, dynamic> body = {};
-        try {
-          body = jsonDecode(res.body) as Map<String, dynamic>;
-        } catch (_) {
-          body = {};
-        }
-        final msg = body['error'] ?? body['message'] ?? 'Registration failed';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg.toString())),
-        );
+        // Fall back to login tab if user data is missing.
+        _emailController.clear();
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+        _nameController.clear();
+        _mobileController.clear();
+        _enrollmentController.clear();
+        _dobController.clear();
+        _designationController.clear();
+        _selectedSemester = '';
+        _selectedDepartment = '';
+        _selectedPurpose = '';
+        _tabController.animateTo(0);
       }
-} catch (e) {
-      if (!mounted) return;
-      // Close dialog if still open
-      final navigator = Navigator.of(context);
-      if (navigator.canPop()) {
-        navigator.pop();
-      }
-      // Print error for debugging
-      print('Registration exception: $e');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(result['error'] ?? 'Registration failed')),
       );
     }
   }
