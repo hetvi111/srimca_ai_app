@@ -337,7 +337,7 @@ class VisitorModel:
 
 
 class VisitorLogModel:
-    \"\"\"Visitor log model for check-in/out tracking\"\"\"
+ 
     
     collection_name = Collections.VISITOR_LOGS
     

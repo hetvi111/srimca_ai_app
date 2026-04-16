@@ -29,7 +29,6 @@ const String kProductionUrl = String.fromEnvironment(
   defaultValue: 'https://srimca-ai-app-y828.onrender.com',
 );
 
-
 String get kApiBaseUrl {
   if (kDebugMode) {
     return kProductionUrl; // Change this to your local backend URL
@@ -98,12 +97,16 @@ class AuthService {
 
       if (exp is num) {
         final expMillis = exp * 1000;
-        return DateTime.fromMillisecondsSinceEpoch(expMillis.toInt()).isBefore(DateTime.now());
+        return DateTime.fromMillisecondsSinceEpoch(
+          expMillis.toInt(),
+        ).isBefore(DateTime.now());
       }
       if (exp is String) {
         final parsed = int.tryParse(exp);
         if (parsed == null) return false;
-        return DateTime.fromMillisecondsSinceEpoch(parsed * 1000).isBefore(DateTime.now());
+        return DateTime.fromMillisecondsSinceEpoch(
+          parsed * 1000,
+        ).isBefore(DateTime.now());
       }
       return false;
     } catch (_) {
@@ -115,13 +118,15 @@ class AuthService {
   /// Get user profile from backend
   static Future<Map<String, dynamic>?> getUserProfile() async {
     try {
-      final response = await http.get(
-        Uri.parse('$kApiBaseUrl/api/users/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .get(
+            Uri.parse('$kApiBaseUrl/api/users/profile'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -162,54 +167,88 @@ class ApiService {
   }
 
   /// GET request
-  static Future<http.Response> get(String endpoint, {Map<String, String>? queryParams}) async {
+  static Future<http.Response> get(
+    String endpoint, {
+    Map<String, String>? queryParams,
+  }) async {
     final headers = await _getHeaders();
     var uri = Uri.parse('$kApiBaseUrl$endpoint');
-    
+
     if (queryParams != null && queryParams.isNotEmpty) {
       uri = uri.replace(queryParameters: queryParams);
     }
-    
-    return _client.get(uri, headers: headers).timeout(const Duration(seconds: 60));
+
+    return _client
+        .get(uri, headers: headers)
+        .timeout(const Duration(seconds: 60));
   }
 
   /// POST request
-  static Future<http.Response> post(String endpoint, {Map<String, dynamic>? body}) async {
+  static Future<http.Response> post(
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
     final headers = await _getHeaders();
     final uri = Uri.parse('$kApiBaseUrl$endpoint');
-    
-    return _client.post(
-      uri,
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 60));
+
+    return _client
+        .post(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(const Duration(seconds: 60));
   }
 
   /// PUT request
-  static Future<http.Response> put(String endpoint, {Map<String, dynamic>? body}) async {
+  static Future<http.Response> put(
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
     final headers = await _getHeaders();
     final uri = Uri.parse('$kApiBaseUrl$endpoint');
-    
-    return _client.put(
-      uri,
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 60));
+
+    return _client
+        .put(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(const Duration(seconds: 60));
+  }
+
+  /// PATCH request
+  static Future<http.Response> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
+    final headers = await _getHeaders();
+    final uri = Uri.parse('$kApiBaseUrl$endpoint');
+
+    return _client
+        .patch(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(const Duration(seconds: 60));
   }
 
   /// DELETE request
   static Future<http.Response> delete(String endpoint) async {
     final headers = await _getHeaders();
     final uri = Uri.parse('$kApiBaseUrl$endpoint');
-    
-    return _client.delete(uri, headers: headers).timeout(const Duration(seconds: 30));
+
+    return _client
+        .delete(uri, headers: headers)
+        .timeout(const Duration(seconds: 30));
   }
 
   /// Admin Dashboard Stats - returns total counts for students, faculty, visitors, and active users
   static Future<Map<String, dynamic>> getAdminStats() async {
     try {
       final response = await get('/api/admin/stats');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         // Backend returns stats inside 'stats' key
@@ -242,16 +281,20 @@ class ApiService {
   }
 
   /// Get all users (admin only)
-  static Future<List<Map<String, dynamic>>> getUsers({String? role, int limit = 50, int offset = 0}) async {
+  static Future<List<Map<String, dynamic>>> getUsers({
+    String? role,
+    int limit = 50,
+    int offset = 0,
+  }) async {
     try {
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
         if (role != null) 'role': role,
       };
-      
+
       final response = await get('/api/users/', queryParams: queryParams);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final users = data['users'] as List<dynamic>? ?? [];
@@ -277,9 +320,9 @@ class ApiService {
         if (subject != null) 'subject': subject,
         if (type != null) 'type': type,
       };
-      
+
       final response = await get('/api/materials/', queryParams: queryParams);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final materials = data['materials'] as List<dynamic>? ?? [];
@@ -292,15 +335,18 @@ class ApiService {
   }
 
   /// Get all notices
-  static Future<List<Map<String, dynamic>>> getNotices({int limit = 50, int offset = 0}) async {
+  static Future<List<Map<String, dynamic>>> getNotices({
+    int limit = 50,
+    int offset = 0,
+  }) async {
     try {
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
       };
-      
+
       final response = await get('/api/notices/', queryParams: queryParams);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final notices = data['notices'] as List<dynamic>? ?? [];
@@ -313,15 +359,18 @@ class ApiService {
   }
 
   /// Get all assignments
-  static Future<List<Map<String, dynamic>>> getAssignments({int limit = 50, int offset = 0}) async {
+  static Future<List<Map<String, dynamic>>> getAssignments({
+    int limit = 50,
+    int offset = 0,
+  }) async {
     try {
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
       };
-      
+
       final response = await get('/api/assignments/', queryParams: queryParams);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final assignments = data['assignments'] as List<dynamic>? ?? [];
@@ -334,15 +383,18 @@ class ApiService {
   }
 
   /// Get all FAQs
-  static Future<List<Map<String, dynamic>>> getFaqs({int limit = 50, int offset = 0}) async {
+  static Future<List<Map<String, dynamic>>> getFaqs({
+    int limit = 50,
+    int offset = 0,
+  }) async {
     try {
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
       };
-      
+
       final response = await get('/api/faqs/', queryParams: queryParams);
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final faqs = data['faqs'] as List<dynamic>? ?? [];
@@ -361,12 +413,11 @@ class ApiService {
     String priority = 'normal',
   }) async {
     try {
-      final response = await post('/api/notices/', body: {
-        'title': title,
-        'content': content,
-        'priority': priority,
-      });
-      
+      final response = await post(
+        '/api/notices/',
+        body: {'title': title, 'content': content, 'priority': priority},
+      );
+
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['notice'] as Map<String, dynamic>?;
@@ -384,12 +435,11 @@ class ApiService {
     required String dueDate,
   }) async {
     try {
-      final response = await post('/api/assignments/', body: {
-        'title': title,
-        'description': description,
-        'due_date': dueDate,
-      });
-      
+      final response = await post(
+        '/api/assignments/',
+        body: {'title': title, 'description': description, 'due_date': dueDate},
+      );
+
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['assignment'] as Map<String, dynamic>?;
@@ -409,14 +459,17 @@ class ApiService {
     String description = '',
   }) async {
     try {
-      final response = await post('/api/materials/', body: {
-        'title': title,
-        'subject': subject,
-        'type': type,
-        'file_url': fileUrl,
-        'description': description,
-      });
-      
+      final response = await post(
+        '/api/materials/',
+        body: {
+          'title': title,
+          'subject': subject,
+          'type': type,
+          'file_url': fileUrl,
+          'description': description,
+        },
+      );
+
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['material'] as Map<String, dynamic>?;
@@ -486,10 +539,12 @@ class ApiService {
   }
 
   /// Get notifications for admin dashboard
-  static Future<List<Map<String, dynamic>>> getNotifications({int limit = 50}) async {
+  static Future<List<Map<String, dynamic>>> getNotifications({
+    int limit = 50,
+  }) async {
     try {
       final response = await get('/api/notifications?limit=$limit');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final notifications = data['notifications'] as List<dynamic>? ?? [];
@@ -505,7 +560,7 @@ class ApiService {
   static Future<int> getUnreadNotificationsCount() async {
     try {
       final response = await get('/api/notifications/unread-count');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['unread_count'] as int? ?? 0;
@@ -537,10 +592,12 @@ class ApiService {
   }
 
   /// Get notifications for current user (role-based)
-  static Future<List<Map<String, dynamic>>> getMyNotifications({int limit = 50}) async {
+  static Future<List<Map<String, dynamic>>> getMyNotifications({
+    int limit = 50,
+  }) async {
     try {
       final response = await get('/api/notifications/my?limit=$limit');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final notifications = data['notifications'] as List<dynamic>? ?? [];
@@ -557,7 +614,7 @@ class ApiService {
   static Future<int> getMyUnreadNotificationsCount() async {
     try {
       final response = await get('/api/notifications/unread-count/my');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['unread_count'] as int? ?? 0;
@@ -580,16 +637,19 @@ class ApiService {
     String? relatedType,
   }) async {
     try {
-      final response = await post('/api/notifications', body: {
-        'title': title,
-        'message': message,
-        'type': type,
-        'target_role': targetRole,
-        'target_courses': targetCourses,
-        'target_semesters': targetSemesters,
-        'related_id': relatedId,
-        'related_type': relatedType,
-      });
+      final response = await post(
+        '/api/notifications',
+        body: {
+          'title': title,
+          'message': message,
+          'type': type,
+          'target_role': targetRole,
+          'target_courses': targetCourses,
+          'target_semesters': targetSemesters,
+          'related_id': relatedId,
+          'related_type': relatedType,
+        },
+      );
       return response.statusCode == 201;
     } catch (e) {
       return false;
@@ -597,9 +657,15 @@ class ApiService {
   }
 
   /// Update material (admin only)
-  static Future<bool> updateMaterialStatus(String materialId, String status) async {
+  static Future<bool> updateMaterialStatus(
+    String materialId,
+    String status,
+  ) async {
     try {
-      final response = await put('/api/materials/$materialId/', body: {'status': status});
+      final response = await put(
+        '/api/materials/$materialId/',
+        body: {'status': status},
+      );
       return response.statusCode == 200;
     } catch (e) {
       return false;
@@ -607,10 +673,12 @@ class ApiService {
   }
 
   /// Get chat history for a specific user
-  static Future<List<Map<String, dynamic>>> getChatHistory(String userId) async {
+  static Future<List<Map<String, dynamic>>> getChatHistory(
+    String userId,
+  ) async {
     try {
       final response = await get('/api/chat/history/$userId');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final history = data['history'] as List<dynamic>? ?? [];
@@ -629,11 +697,10 @@ class ApiService {
     required String answer,
   }) async {
     try {
-      final response = await post('/api/chat/save', body: {
-        'user_id': userId,
-        'question': question,
-        'answer': answer,
-      });
+      final response = await post(
+        '/api/chat/save',
+        body: {'user_id': userId, 'question': question, 'answer': answer},
+      );
       return response.statusCode == 201;
     } catch (e) {
       return false;
@@ -645,22 +712,26 @@ class ApiService {
     try {
       debugPrint('Sending question to AI: $question');
       final user = await AuthService.getUser();
-      final response = await post('/api/ai/chat', body: {
-        'question': question,
-        if (user != null && (user['_id']?.toString().isNotEmpty ?? false))
-          'user_id': user['_id'].toString(),
-      });
-      
+      final response = await post(
+        '/api/ai/chat',
+        body: {
+          'question': question,
+          if (user != null && (user['_id']?.toString().isNotEmpty ?? false))
+            'user_id': user['_id'].toString(),
+        },
+      );
+
       debugPrint('AI Response status: ${response.statusCode}');
       debugPrint('AI Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         if (data['status'] == 'success') {
-          return data['answer'] as String? ?? "I apologize, but I couldn't generate a response.";
+          return data['answer'] as String? ??
+              "I apologize, but I couldn't generate a response.";
         }
       }
-      
+
       // Return fallback message on error
       return "I apologize, but I'm having trouble processing your request right now. Please try again later.";
     } catch (e) {
@@ -670,14 +741,14 @@ class ApiService {
   }
 
   /// Get AI monitoring queries and stats
-  static Future<Map<String, dynamic>> getAiMonitoringData({String period = 'all', int limit = 100}) async {
+  static Future<Map<String, dynamic>> getAiMonitoringData({
+    String period = 'all',
+    int limit = 100,
+  }) async {
     try {
       final response = await get(
         '/api/ai/queries',
-        queryParams: {
-          'period': period,
-          'limit': limit.toString(),
-        },
+        queryParams: {'period': period, 'limit': limit.toString()},
       );
 
       if (response.statusCode == 200) {
@@ -851,7 +922,9 @@ class ApiService {
   }
 
   /// Get visitor inquiries for faculty page
-  static Future<List<Map<String, dynamic>>> getFacultyVisitorInquiries({int limit = 100}) async {
+  static Future<List<Map<String, dynamic>>> getFacultyVisitorInquiries({
+    int limit = 100,
+  }) async {
     try {
       final response = await get(
         '/api/users/faculty/visitor-inquiries',
@@ -878,10 +951,7 @@ class ApiService {
     try {
       final response = await put(
         '/api/users/faculty/visitor-inquiries/$visitorId/respond',
-        body: {
-          'status': status,
-          'faculty_reply': facultyReply,
-        },
+        body: {'status': status, 'faculty_reply': facultyReply},
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -891,10 +961,12 @@ class ApiService {
   }
 
   /// Get notifications for a specific user
-  static Future<List<Map<String, dynamic>>> getUserNotifications(String userId) async {
+  static Future<List<Map<String, dynamic>>> getUserNotifications(
+    String userId,
+  ) async {
     try {
       final response = await get('/api/notifications/user/$userId');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final notifications = data['notifications'] as List<dynamic>? ?? [];
@@ -910,7 +982,7 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getVisitors() async {
     try {
       final response = await get('/api/admin/visitors');
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final visitors = data['visitors'] as List<dynamic>? ?? [];
@@ -924,9 +996,15 @@ class ApiService {
   }
 
   /// Update visitor status (admin only)
-  static Future<bool> updateVisitorStatus(String visitorId, String status) async {
+  static Future<bool> updateVisitorStatus(
+    String visitorId,
+    String status,
+  ) async {
     try {
-      final response = await put('/api/admin/visitors/$visitorId', body: {'status': status});
+      final response = await put(
+        '/api/admin/visitors/$visitorId',
+        body: {'status': status},
+      );
       return response.statusCode == 200;
     } catch (e) {
       debugPrint('Update Visitor Status Error: $e');
@@ -937,24 +1015,38 @@ class ApiService {
   /// Forgot Password - Student submits email request
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
-      final response = await post('/api/users/forgot-password', body: {'email': email});
-      
+      final response = await post(
+        '/api/users/forgot-password',
+        body: {'email': email},
+      );
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return {'success': true, 'message': data['message'] ?? 'Request sent successfully'};
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Request sent successfully',
+        };
       }
       final data = jsonDecode(response.body);
-      return {'success': false, 'error': data['error'] ?? 'Failed to send request'};
+      return {
+        'success': false,
+        'error': data['error'] ?? 'Failed to send request',
+      };
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
 
   /// Get Password Reset Requests (admin only)
-  static Future<List<Map<String, dynamic>>> getPasswordRequests({int limit = 100}) async {
+  static Future<List<Map<String, dynamic>>> getPasswordRequests({
+    int limit = 100,
+  }) async {
     try {
-      final response = await get('/api/users/admin/password-requests', queryParams: {'limit': limit.toString()});
-      
+      final response = await get(
+        '/api/users/admin/password-requests',
+        queryParams: {'limit': limit.toString()},
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final requests = data['requests'] as List<dynamic>? ?? [];
@@ -991,7 +1083,10 @@ class ApiService {
       if (confirmEmail != null && confirmEmail.isNotEmpty) {
         body['confirm_email'] = confirmEmail;
       }
-      final response = await post('/api/users/admin/reset-password/$requestId', body: body.isEmpty ? null : body);
+      final response = await post(
+        '/api/users/admin/reset-password/$requestId',
+        body: body.isEmpty ? null : body,
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -1056,16 +1151,89 @@ class ApiService {
 
   // REMOVED: OTP methods - direct registration now used
 
+  /// Register a new visitor
+  static Future<Map<String, dynamic>> registerVisitor({
+    required String name,
+    required String email,
+    required String phone,
+    required String purpose,
+  }) async {
+    return registerUser(
+      body: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'purpose': purpose,
+        'role': 'visitor',
+      },
+    );
+  }
+
   /// Complete user registration after OTP verification
   static Future<Map<String, dynamic>> registerUser({
-    required Map<String, dynamic> body,
+    Map<String, dynamic>? body,
   }) async {
+    try {
+      final response = await post('/api/register', body: body);
 
-  /// Get visitor profile
-  static Future<Map<String, dynamic>?> getVisitorProfile(String visitorId) async {
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Registration successful',
+          'data': data,
+        };
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': false,
+        'error': data['error'] ?? data['message'] ?? 'Registration failed',
+      };
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Get visitor profile (static wrapper)
+  static Future<Map<String, dynamic>?> getProfile(
+    String token,
+    String visitorId,
+  ) async {
     try {
       final response = await get('/api/visitor/profile/$visitorId');
-      
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['profile'] as Map<String, dynamic>? ?? data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get visitor profile error: $e');
+      return null;
+    }
+  }
+
+  /// Get visitor visit history
+  static Future<List> getHistory(String token, String visitorId) async {
+    try {
+      final response = await get('/api/visitor/history/$visitorId');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['history'] as List? ?? [];
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Get visitor history error: $e');
+      return [];
+    }
+  }
+
+  /// Get visitor profile
+  Future<Map<String, dynamic>?> getVisitorProfile(String visitorId) async {
+    try {
+      final response = await get('/api/visitor/profile/$visitorId');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['profile'] as Map<String, dynamic>? ?? data;
@@ -1083,24 +1251,39 @@ class ApiService {
     required Map<String, dynamic> data,
   }) async {
     try {
-      final response = await post('/api/register', body: body);
-      
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return {'success': true, 'message': data['message'] ?? 'Registration successful', 'data': data};
+      final response = await patch(
+        '/api/visitor/profile/$visitorId',
+        body: data,
+      );
+
+      if (response.statusCode == 200) {
+        final dataResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': true,
+          'message': dataResponse['message'] ?? 'Profile updated',
+          'data': dataResponse,
+        };
       }
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return {'success': false, 'error': data['error'] ?? data['message'] ?? 'Registration failed'};
+      final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': false,
+        'error':
+            errorData['error'] ??
+            errorData['message'] ??
+            'Profile update failed',
+      };
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
 
   /// Get visitor history/logs
-  static Future<Map<String, dynamic>> getVisitorHistory(String visitorId) async {
+  static Future<Map<String, dynamic>> getVisitorHistory(
+    String visitorId,
+  ) async {
     try {
       final response = await get('/api/visitor/history/$visitorId');
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
@@ -1112,10 +1295,12 @@ class ApiService {
   }
 
   /// Generate visitor QR pass
-  static Future<Map<String, dynamic>?> generateVisitorQR(String visitorId) async {
+  static Future<Map<String, dynamic>?> generateVisitorQR(
+    String visitorId,
+  ) async {
     try {
       final response = await get('/api/visitor/qr/$visitorId');
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
@@ -1126,17 +1311,35 @@ class ApiService {
     }
   }
 
-  /// Check-in from QR scan
+  /// Check-in from QR scan - accepts raw QR code string
+  static Future<Map<String, dynamic>?> checkInFromQR(String qrCode) async {
+    try {
+      final response = await post(
+        '/api/visitor/qr/checkin',
+        body: {'qr_code': qrCode},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('QR check-in error: $e');
+      return null;
+    }
+  }
+
+  /// Visitor check-in with explicit visitor ID and token
   static Future<Map<String, dynamic>> visitorCheckin({
     required String visitorId,
     required String token,
   }) async {
     try {
-      final response = await post('/api/visitor/checkin', body: {
-        'vid': visitorId,
-        'token': token,
-      });
-      
+      final response = await post(
+        '/api/visitor/checkin',
+        body: {'vid': visitorId, 'token': token},
+      );
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
@@ -1147,5 +1350,3 @@ class ApiService {
     }
   }
 }
-
-

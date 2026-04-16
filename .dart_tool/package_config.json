@@ -308,6 +308,12 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "mobile_scanner",
+      "rootUri": "file:///C:/Users/malav/AppData/Local/Pub/Cache/hosted/pub.dev/mobile_scanner-7.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
       "name": "path",
       "rootUri": "file:///C:/Users/malav/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.1",
       "packageUri": "lib/",
@@ -348,6 +354,18 @@
       "rootUri": "file:///C:/Users/malav/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "qr",
+      "rootUri": "file:///C:/Users/malav/AppData/Local/Pub/Cache/hosted/pub.dev/qr-3.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "qr_flutter",
+      "rootUri": "file:///C:/Users/malav/AppData/Local/Pub/Cache/hosted/pub.dev/qr_flutter-4.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
     },
     {
       "name": "shared_preferences",

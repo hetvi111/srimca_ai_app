@@ -10,9 +10,10 @@ const Color accentBlue = Color(0xFF1E88E5);
 const Color lightGrey = Color(0xFFF5F5F5);
 
 class ChatScreen extends StatefulWidget {
+  final String? token;
   final String? userId;
-  
-  const ChatScreen({super.key, this.userId});
+
+  const ChatScreen({super.key, this.token, this.userId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -62,7 +63,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _addWelcomeMessage() {
     setState(() {
       messages.add({
-        "text": "Hello! I'm SAI, your SRIMCA AI Assistant. I'm here to help you with any academic or college-related questions. How can I assist you today?",
+        "text":
+            "Hello! I'm SAI, your SRIMCA AI Assistant. I'm here to help you with any academic or college-related questions. How can I assist you today?",
         "isUser": false,
         "timestamp": DateTime.now().toIso8601String(),
       });
@@ -83,11 +85,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         "timestamp": timestamp,
       });
       // Add typing indicator
-      messages.add({
-        "text": "",
-        "isTyping": true,
-        "isUser": false,
-      });
+      messages.add({"text": "", "isTyping": true, "isUser": false});
       isSending = true;
     });
 
@@ -96,15 +94,20 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     String response;
     try {
-      response = await _getAIResponse(userMessage).timeout(const Duration(seconds: 15));
+      response = await _getAIResponse(
+        userMessage,
+      ).timeout(const Duration(seconds: 15));
     } catch (e) {
-      response = "Sorry, I couldn't process your request right now. Please try again later.";
+      response =
+          "Sorry, I couldn't process your request right now. Please try again later.";
     }
 
     if (mounted) {
       setState(() {
         // Remove typing indicator safely
-        final typingIndex = messages.lastIndexWhere((msg) => msg['isTyping'] == true);
+        final typingIndex = messages.lastIndexWhere(
+          (msg) => msg['isTyping'] == true,
+        );
         if (typingIndex != -1) {
           messages.removeAt(typingIndex);
         }
@@ -138,18 +141,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-String _getFallbackResponse(String question) {
+  String _getFallbackResponse(String question) {
     final lowerQuestion = question.toLowerCase();
-    
+
     if (lowerQuestion.contains('exam') || lowerQuestion.contains('schedule')) {
       return "The mid-term examination schedule will be announced soon. Please check the notice board regularly for updates.";
-    } else if (lowerQuestion.contains('assignment') || lowerQuestion.contains('submit')) {
+    } else if (lowerQuestion.contains('assignment') ||
+        lowerQuestion.contains('submit')) {
       return "To submit an assignment, log in to the student portal, go to 'Assignments' section, select the relevant assignment, and upload your work before the deadline.";
-    } else if (lowerQuestion.contains('syllabus') || lowerQuestion.contains('course')) {
+    } else if (lowerQuestion.contains('syllabus') ||
+        lowerQuestion.contains('course')) {
       return "The course syllabus typically includes: Data Structures, Database Management, Operating Systems, Computer Networks, Web Technologies, and AI/ML fundamentals. You can find detailed syllabus in your course handbook.";
-    } else if (lowerQuestion.contains('fee') || lowerQuestion.contains('payment')) {
+    } else if (lowerQuestion.contains('fee') ||
+        lowerQuestion.contains('payment')) {
       return "For fee-related queries, please contact the accounts department or visit the administration office. You can also check your fee status through the student portal.";
-    } else if (lowerQuestion.contains('library') || lowerQuestion.contains('book')) {
+    } else if (lowerQuestion.contains('library') ||
+        lowerQuestion.contains('book')) {
       return "The library is open from 9:00 AM to 6:00 PM on weekdays. You can issue books using your student ID card. Maximum 5 books can be issued at a time.";
     } else {
       return "Thank you for your question! Please check the notice board or contact your faculty advisor.";
@@ -172,10 +179,19 @@ String _getFallbackResponse(String question) {
             children: [
               // TOP BAR (unchanged)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: const BoxDecoration(
                   color: navyBlue,
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -188,19 +204,36 @@ String _getFallbackResponse(String question) {
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.smart_toy, color: Colors.white, size: 24),
+                          child: const Icon(
+                            Icons.smart_toy,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Text(
                           "SAI",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        IconButton(icon: const Icon(Icons.history, color: Colors.white), onPressed: () {}),
-                        IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
+                        IconButton(
+                          icon: const Icon(Icons.history, color: Colors.white),
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {},
+                        ),
                       ],
                     ),
                   ],
@@ -214,18 +247,42 @@ String _getFallbackResponse(String question) {
                   children: [
                     const Text(
                       "Hello 👋",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: navyBlue),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: navyBlue,
+                      ),
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accentBlue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                           const SizedBox(width: 4),
-                          const Text("Online", style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600)),
+                          const Text(
+                            "Online",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -237,7 +294,10 @@ String _getFallbackResponse(String question) {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text("How can I help you today?", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  child: Text(
+                    "How can I help you today?",
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -270,30 +330,50 @@ String _getFallbackResponse(String question) {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: Offset(0, -2))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(color: lightGrey, borderRadius: BorderRadius.circular(25)),
+                        decoration: BoxDecoration(
+                          color: lightGrey,
+                          borderRadius: BorderRadius.circular(25),
+                        ),
                         child: TextField(
                           controller: messageController,
-                          decoration: const InputDecoration(hintText: "Ask me anything...", border: InputBorder.none),
+                          decoration: const InputDecoration(
+                            hintText: "Ask me anything...",
+                            border: InputBorder.none,
+                          ),
                           maxLines: null,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      decoration: const BoxDecoration(color: accentBlue, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: accentBlue,
+                        shape: BoxShape.circle,
+                      ),
                       child: IconButton(
                         icon: isSending
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
+                                ),
                               )
                             : const Icon(Icons.send, color: Colors.white),
                         onPressed: isSending ? null : sendMessage,
@@ -323,7 +403,13 @@ String _getFallbackResponse(String question) {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,11 +421,25 @@ String _getFallbackResponse(String question) {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), shape: BoxShape.circle),
-                      child: const Icon(Icons.smart_toy, size: 14, color: accentBlue),
+                      decoration: BoxDecoration(
+                        color: accentBlue.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.smart_toy,
+                        size: 14,
+                        color: accentBlue,
+                      ),
                     ),
                     const SizedBox(width: 6),
-                    const Text("SAI", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: accentBlue)),
+                    const Text(
+                      "SAI",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: accentBlue,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -359,7 +459,13 @@ String _getFallbackResponse(String question) {
         decoration: BoxDecoration(
           color: isUser ? accentBlue : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,7 +482,11 @@ String _getFallbackResponse(String question) {
                         color: accentBlue.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.smart_toy, size: 14, color: accentBlue),
+                      child: const Icon(
+                        Icons.smart_toy,
+                        size: 14,
+                        color: accentBlue,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     const Text(
@@ -392,7 +502,10 @@ String _getFallbackResponse(String question) {
               ),
             Text(
               msg["text"],
-              style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 14),
+              style: TextStyle(
+                color: isUser ? Colors.white : Colors.black87,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -408,21 +521,37 @@ String _getFallbackResponse(String question) {
           animation: _typingAnimation,
           builder: (context, child) {
             return Column(
-              children: List.generate(3, (index) => Container(
-                height: 8,
-                width: 8,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  shape: BoxShape.circle,
+              children: List.generate(
+                3,
+                (index) => Container(
+                  height: 8,
+                  width: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    shape: BoxShape.circle,
+                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  transform: Matrix4.identity()
+                    ..translate(
+                      0,
+                      _typingAnimation.value *
+                          20 *
+                          (index == 0
+                              ? 1
+                              : index == 1
+                              ? 0.5
+                              : -0.5),
+                    ),
                 ),
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                transform: Matrix4.identity()..translate(0, _typingAnimation.value * 20 * (index == 0 ? 1 : index == 1 ? 0.5 : -0.5)),
-              )),
+              ),
             );
           },
         ),
         const SizedBox(width: 8),
-        Text("Typing...", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+        Text(
+          "Typing...",
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+        ),
       ],
     );
   }
@@ -433,7 +562,10 @@ String _getFallbackResponse(String question) {
       child: ActionChip(
         backgroundColor: Colors.white,
         avatar: Icon(icon, size: 16, color: accentBlue),
-        label: Text(text, style: const TextStyle(fontSize: 12, color: navyBlue)),
+        label: Text(
+          text,
+          style: const TextStyle(fontSize: 12, color: navyBlue),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         onPressed: () {
           messageController.text = "Tell me about $text";
@@ -443,4 +575,3 @@ String _getFallbackResponse(String question) {
     );
   }
 }
-

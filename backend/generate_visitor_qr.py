@@ -6,7 +6,7 @@ import hashlib
 import time
 
 def generate_gate_qr():
-    \"\"\"Generate static gate QR for registration page.\"\"\"
+
     url = "https://srimcaai.web.app/register"
     qr = qrcode.QRCode(
         version=1,
@@ -23,7 +23,7 @@ def generate_gate_qr():
     return "assets/images/visitor_qr.png"
 
 def generate_dynamic_qr(visitor_id: str, frontend_url: str = "https://srimcaai.web.app"):
-    \"\"\"Generate dynamic visitor pass QR (used by API).\"\"\"
+    
     # Token: vid + ts + secret[:16]
     secret = "srimca-secret-key-123"  # Use config.JWT_SECRET_KEY in prod
     payload = f"{visitor_id}:{int(time.time())}:{secret}"

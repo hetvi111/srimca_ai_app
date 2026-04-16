@@ -1,327 +1,70 @@
 import 'package:flutter/material.dart';
 import 'chat_screen.dart';
-import 'visitor_qr_page.dart';
 import 'visitor_profile_page.dart';
+import 'visitor_qr_page.dart';
 
-// Navy Blue Theme Colors
-const Color navyBlue = Color(0xFF001F3F);
-const Color navyBlueLight = Color(0xFF1A237E);
-const Color accentBlue = Color(0xFF1E88E5);
-const Color lightGrey = Color(0xFFF5F5F5);
+class VisitorHomePage extends StatelessWidget {
+  final String token;
+  final String userId;
 
-class VisitorHomePage extends StatefulWidget {
-  const VisitorHomePage({super.key});
-
-  @override
-  State<VisitorHomePage> createState() => _VisitorHomePageState();
-}
-
-class _VisitorHomePageState extends State<VisitorHomePage> {
-  int _currentIndex = 0;
-  bool _isLoggedIn = false;
-  String _userName = 'Visitor';
-  
-  final List<Map<String, dynamic>> faqs = [
-    {'question': 'What courses does SRIMCA offer?', 'answer': 'SRIMCA offers BCA, MCA , MBA courses in Computer Science.'},
-    {'question': 'What are the college timings?', 'answer': 'College is open from 9:00 AM to 5:00 PM, Monday to Saturday.'},
-    {'question': 'How can I get admission?', 'answer': 'You can apply online through our website or visit the admission office directly.'},
-    {'question': 'What is the contact number?', 'answer': 'You can reach us at +91 1234567890 or email at info@srimca.edu'},
-    {'question': 'Where is SRIMCA located?', 'answer': 'SRIMCA is located in Kalol, Gandhinagar district, Gujarat.'},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAuthStatus();
-  }
-
-  Future<void> _checkAuthStatus() async {
-    final isLoggedIn = await AuthService.isLoggedIn();
-    if (isLoggedIn) {
-      final user = await AuthService.getUser();
-      if (user != null) {
-        setState(() {
-          _isLoggedIn = true;
-          _userName = user['name'] ?? 'Visitor';
-        });
-      }
-    }
-    setState(() {}); // trigger rebuild
-  }
-
-  void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
-    
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ChatScreen()),
-      );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const VisitorProfilePage()),
-      );
-    }
-  }
+  const VisitorHomePage({required this.token, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
+      appBar: AppBar(title: Text("Visitor Home")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Top Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [navyBlue, navyBlueLight],
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.school, color: Colors.white, size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      "SRIMCA AI Assistant",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+
+            // 🔹 Chat Button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(token: token),
+                  ),
+                );
+              },
+              child: Text("Open AI Chat"),
+            ),
+
+            SizedBox(height: 20),
+
+            // 🔹 Profile Button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VisitorProfilePage(
+                      token: token,
+                      userId: userId,
                     ),
                   ),
-                ],
-              ),
+                );
+              },
+              child: Text("View Profile"),
             ),
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-                    // Welcome Icon
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), shape: BoxShape.circle),
-                      child: const Icon(Icons.people, size: 60, color: accentBlue),
+            // 🔹 QR Button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VisitorQRPage(
+                      token: token,
+                      userId: userId,
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Welcome Text
-                    Text(
-                      "Welcome, $_userName! 👋",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navyBlue),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isLoggedIn ? "Dashboard Ready" : "SRIMCA AI Assistant",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        "Your smart college assistant.\nAsk questions about courses, departments, and more.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    if (!_isLoggedIn)
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: lightGrey,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Welcome Visitor! Login or Register',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: navyBlue,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => Navigator.pushNamed(context, '/login'),
-                                    icon: const Icon(Icons.login, size: 20),
-                                    label: const Text('Login'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: accentBlue,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => Navigator.pushNamed(context, '/login'),
-                                    icon: const Icon(Icons.person_add, size: 20),
-                                    label: const Text('Register'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: navyBlue,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: accentBlue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(Icons.check_circle, color: accentBlue, size: 48),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Welcome back, $_userName!',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: navyBlue),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-
-                    // Quick Info
-                    Row(
-                      children: [
-                        _quickInfo(Icons.school, "Courses", "BCA, MCA, MBA"),
-                        _quickInfo(Icons.access_time, "Timing", "8:30AM-3:30PM"),
-                        _quickInfo(Icons.location_on, "Location", "Tarsadi"),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    const SizedBox(height: 24),
-
-                    // Questions & Answers
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text("Questions & Answers", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: navyBlue)),
-                    ),
-                    const SizedBox(height: 12),
-
-                    _buildFaqItem("What courses does SRIMCA offer?", "SRIMCA offers BCA, B.Sc (IT), B.Com, and M.Sc courses in Computer Science."),
-                    _buildFaqItem("What are the college timings?", "College is open from 9:00 AM to 5:00 PM, Monday to Saturday."),
-                    _buildFaqItem("How can I get admission?", "You can apply online through our website or visit the admission office directly."),
-                    _buildFaqItem("What is the contact number?", "You can reach us at +91 1234567890 or email at info@srimca.edu"),
-                    _buildFaqItem("Where is SRIMCA located?", "SRIMCA is located in Kalol, Gandhinagar district, Gujarat."),
-
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom Navigation
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -2))],
-              ),
-              child: BottomNavigationBar(
-                currentIndex: 0,
-                onTap: _onNavTap,
-                selectedItemColor: accentBlue,
-                unselectedItemColor: Colors.grey,
-                backgroundColor: Colors.white,
-                items: const [
-                  BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-                  BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Chat"),
-                  BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _quickInfo(IconData icon, String title, String value) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: lightGrey, borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          children: [
-            Icon(icon, color: accentBlue, size: 24),
-            const SizedBox(height: 8),
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: navyBlue), textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFaqItem(String question, String answer) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: lightGrey,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-          iconColor: accentBlue,
-          collapsedIconColor: accentBlue,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.help_outline, color: accentBlue, size: 20),
-          ),
-          title: Text(question, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: navyBlue)),
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 44, top: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(answer, style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4)),
-              ),
+                  ),
+                );
+              },
+              child: Text("Show QR Pass"),
             ),
           ],
         ),

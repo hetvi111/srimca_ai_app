@@ -19,13 +19,12 @@ import 'package:srimca_ai/security_page.dart';
 import 'package:srimca_ai/VisitorHomePage.dart';
 import 'package:srimca_ai/visitor_registration_page.dart';
 import 'package:srimca_ai/visitor_qr_page.dart';
-import 'package:srimca_ai/student_page.dart';
+import 'package:srimca_ai/student_page.dart' as student;
 import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_page.dart';
 import 'package:srimca_ai/admin_password_requests_page.dart';
-
 
 // App Theme Colors
 class AppColors {
@@ -57,12 +56,15 @@ void main() async {
   };
 
   // Global error zone for uncaught async errors
-  runZonedGuarded(() {
-    runApp(const MyApp());
-  }, (error, stack) {
-    debugPrint('Uncaught async error: $error');
-    debugPrint('Stack: $stack');
-  });
+  runZonedGuarded(
+    () {
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      debugPrint('Uncaught async error: $error');
+      debugPrint('Stack: $stack');
+    },
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -111,9 +113,7 @@ class _MyAppState extends State<MyApp> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        drawerTheme: const DrawerThemeData(
-          backgroundColor: AppColors.drawer,
-        ),
+        drawerTheme: const DrawerThemeData(backgroundColor: AppColors.drawer),
         cardTheme: CardThemeData(
           color: AppColors.card,
           elevation: 2,
@@ -149,45 +149,50 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
-builder: (context, child) {
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 80, color: AppColors.button),
-              const SizedBox(height: 16),
-              Text(
-                'Something went wrong',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
+      builder: (context, child) {
+        ErrorWidget.builder = (FlutterErrorDetails details) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 80,
+                      color: AppColors.button,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Something went wrong',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Please reload the page or contact support.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => SystemNavigator.pop(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reload App'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Please reload the page or contact support.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => SystemNavigator.pop(),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reload App'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  };
+            ),
+          );
+        };
 
-  return child!;
-},
+        return child!;
+      },
       home: const SplashScreen(),
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
@@ -201,7 +206,8 @@ builder: (context, child) {
                   Text('Page not found: ${settings.name}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/login'),
                     child: const Text('Go to Login'),
                   ),
                 ],
@@ -218,19 +224,30 @@ builder: (context, child) {
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
-        '/admin-password-requests': (context) => const AdminPasswordRequestsPage(),
+        '/admin-password-requests': (context) =>
+            const AdminPasswordRequestsPage(),
         '/content-knowledge': (context) => const ContentManagementPage(),
         '/monitoring': (context) => const AIMonitoringPage(),
         '/reports': (context) => ReportsAnalyticsPage(),
         '/security': (context) => const SecurityMaintenancePage(),
         '/faculty': (context) => const FacultyHomePage(),
-        '/visitor': (context) => VisitorHomePage(),
+        '/visitor': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          return VisitorHomePage(
+            token: args?['token'] ?? '',
+            userId: args?['userId'] ?? '',
+          );
+        },
         '/register': (context) => const VisitorRegistrationPage(),
         '/qr-scan': (context) => const VisitorQRPage(),
         '/visitor-register': (context) => const VisitorRegistrationPage(),
         '/student': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-          return StudentHomePage(
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          return student.StudentHomePage(
             studentName: args?['studentName'] ?? 'Student',
             semester: args?['semester'] ?? 'N/A',
             userId: args?['userId']?.toString() ?? '',
@@ -240,13 +257,17 @@ builder: (context, child) {
           );
         },
         '/student-notifications': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
           return StudentNotificationsPage(
             userId: args?['userId']?.toString() ?? '',
           );
         },
         '/student-chat-history': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
           return StudentChatHistoryPage(
             userId: args?['userId']?.toString() ?? '',
           );
@@ -255,4 +276,3 @@ builder: (context, child) {
     );
   }
 }
-
