@@ -14,16 +14,14 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
-import hashlib
-import os
-import random
-import smtplib
-from email.mime.text import MIMEText
+# No email/OTP imports needed after removal
 
 from database import get_collection, Collections
 from models import UserModel
 from config import get_config
 from notification_helper import create_notification  # Optional: Enable if needed
+from firebase import get_firebase_app
+from firebase_admin import auth as firebase_auth
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -76,12 +74,28 @@ def _hash_otp(otp: str) -> str:
 
 def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[bool, str]:
     """Send OTP email using SMTP credentials from environment."""
-    sender_email = os.getenv("SMTP_SENDER_EMAIL", "").strip()
-    sender_password = os.getenv("SMTP_SENDER_PASSWORD", "").strip()
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+        or os.getenv("SMTP_USERNAME", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+        or os.getenv("SMTP_PASSWORD", "")
+    ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
     if not sender_email or not sender_password:
+        print(
+            "SMTP config missing:",
+            f"host={smtp_host}",
+            f"port={smtp_port}",
+            f"sender_email_set={bool(sender_email)}",
+            f"sender_password_set={bool(sender_password)}",
+        )
         return False, "Email service not configured on server"
 
     greeting_name = name.strip() or "User"
@@ -110,233 +124,183 @@ def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[
         return False, "Failed to send OTP email"
 
 
-@auth_bp.route('/send-registration-otp', methods=['POST'])
-def send_registration_otp():
-    """
-    Send OTP to email before registration.
-    Expected JSON: { "email": "", "name": "" }
-    """
-    try:
-        data = request.get_json() or {}
-        email = (data.get('email') or '').strip().lower()
-        name = (data.get('name') or '').strip()
+def _send_verification_email(email: str, verification_link: str, name: str = "") -> tuple[bool, str]:
+    """Send Firebase email verification link using SMTP credentials from environment."""
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+        or os.getenv("SMTP_USERNAME", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+        or os.getenv("SMTP_PASSWORD", "")
+    ).strip()
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
-        if not email:
-            return jsonify({'error': 'Email is required'}), 400
-
-        users = get_collection(Collections.USERS)
-        if users.find_one({'email': email}):
-            return jsonify({'error': 'Email already registered'}), 409
-
-        otp = _generate_otp()
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
-
-        otp_codes.update_one(
-            {'type': 'registration_otp', 'email': email},
-            {'$set': {
-                'type': 'registration_otp',
-                'email': email,
-                'otp_hash': _hash_otp(otp),
-                'expires_at': expires_at,
-                'verified': False,
-                'updated_at': datetime.utcnow(),
-            }},
-            upsert=True
+    if not sender_email or not sender_password:
+        print(
+            "SMTP config missing (verification email):",
+            f"host={smtp_host}",
+            f"port={smtp_port}",
+            f"sender_email_set={bool(sender_email)}",
+            f"sender_password_set={bool(sender_password)}",
         )
+        return False, "Email service not configured on server"
 
-        sent, message = _send_registration_otp_email(email=email, otp=otp, name=name)
-        if not sent:
-            return jsonify({'error': message}), 500
+    greeting_name = name.strip() or "User"
+    msg = MIMEText(
+        (
+            f"Hello {greeting_name},\n\n"
+            "Welcome to SRIMCA AI.\n"
+            "Please verify your email by clicking the link below:\n\n"
+            f"{verification_link}\n\n"
+            "If you did not create this account, you can ignore this email.\n\n"
+            "Regards,\nSRIMCA AI Team"
+        ),
+        "plain",
+    )
+    msg["Subject"] = "Verify your SRIMCA AI email"
+    msg["From"] = sender_email
+    msg["To"] = email
 
-        return jsonify({'message': message}), 200
-    except Exception as e:
-        print(f"Send registration OTP error: {e}")
-        return jsonify({'error': 'Failed to send OTP'}), 500
-
-
-@auth_bp.route('/verify-registration-otp', methods=['POST'])
-def verify_registration_otp():
-    """
-    Verify registration OTP.
-    Expected JSON: { "email": "", "otp": "" }
-    """
     try:
-        data = request.get_json() or {}
-        email = (data.get('email') or '').strip().lower()
-        otp = (data.get('otp') or '').strip()
-
-        if not email or not otp:
-            return jsonify({'error': 'Email and OTP are required'}), 400
-
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
-        if not otp_doc:
-            return jsonify({'error': 'OTP not found. Please request a new OTP'}), 404
-
-        expires_at = otp_doc.get('expires_at')
-        if not expires_at or datetime.utcnow() > expires_at:
-            return jsonify({'error': 'OTP expired. Please request a new OTP'}), 400
-
-        if otp_doc.get('otp_hash') != _hash_otp(otp):
-            return jsonify({'error': 'Invalid OTP'}), 400
-
-        otp_codes.update_one(
-            {'_id': otp_doc['_id']},
-            {'$set': {'verified': True, 'verified_at': datetime.utcnow()}}
-        )
-
-        return jsonify({'message': 'OTP verified successfully'}), 200
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        return True, "Verification email sent successfully"
     except Exception as e:
-        print(f"Verify registration OTP error: {e}")
-        return jsonify({'error': 'Failed to verify OTP'}), 500
+        print(f"Verification email sending error: {e}")
+        return False, "Failed to send verification email"
+
+
+def _get_firebase_user_by_email(email: str):
+    """Fetch Firebase user by email if Firebase is enabled."""
+    app = get_firebase_app()
+    if app is None:
+        return None
+    try:
+        return firebase_auth.get_user_by_email(email, app=app)
+    except firebase_auth.UserNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Firebase get_user_by_email error: {e}")
+        return None
+
+
+# REMOVED: OTP endpoints - direct registration now allowed
 
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """
-    Register a new user (student, faculty, or visitor)
-    
-    NORMALIZED: This function now inserts data into multiple collections:
-    - Users: Authentication data (name, email, password, role)
-    - User_Profiles: Personal info (phone, address)
-    - Students: Academic data (semester, department, enrollment)
-    - Faculty: Professional data (department, designation)
-    
-    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
-    Faculty fields: name, email, password, role, mobile, department, designation
-    Visitor fields: name, email, password, role, mobile, purpose
-    """
     try:
         data = request.get_json()
-        
+
         # Validate required fields
         required_fields = ['name', 'email', 'password', 'role']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({'error': f'{field} is required'}), 400
-        
+
         name = data['name'].strip()
         email = data['email'].strip().lower()
         password = data['password']
         role = data.get('role', 'student').lower()
         mobile = data.get('mobile', '').strip()
         address = data.get('address', '').strip()
-        
-        # For students, get academic fields
+
+        # Student fields
         enrollment = data.get('enrollment', '').strip()
         dob = data.get('dob', '').strip()
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
-        
-        # For faculty, get professional fields
+
+        # Faculty fields
         designation = data.get('designation', '').strip()
-        
-        # For visitors, get purpose
+
+        # Visitor fields
         purpose = data.get('purpose', '').strip()
-        
-        # Validate based on role
-        if role == 'student':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for students'}), 400
-            if not enrollment:
-                return jsonify({'error': 'Enrollment number is required for students'}), 400
-            if not dob:
-                return jsonify({'error': 'Date of birth is required for students'}), 400
-            if not semester:
-                return jsonify({'error': 'Semester is required for students'}), 400
-            if not department:
-                return jsonify({'error': 'Department is required for students'}), 400
-        elif role == 'faculty':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for faculty'}), 400
-            if not department:
-                return jsonify({'error': 'Department is required for faculty'}), 400
-            if not designation:
-                return jsonify({'error': 'Designation is required for faculty'}), 400
-        elif role == 'visitor':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for visitors'}), 400
-            if not purpose:
-                return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
-        
-        # Validate role
+
+        # Role validation
         valid_roles = ['student', 'faculty', 'visitor', 'admin']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
-        
-        # Validate password length
+
+        # Role-based validation
+        if role == 'student':
+            if not all([mobile, enrollment, dob, semester, department]):
+                return jsonify({'error': 'All student fields are required'}), 400
+
+        elif role == 'faculty':
+            if not all([mobile, department, designation]):
+                return jsonify({'error': 'All faculty fields are required'}), 400
+
+        elif role == 'visitor':
+            if not all([mobile, purpose]):
+                return jsonify({'error': 'All visitor fields are required'}), 400
+
+        # Password validation
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
-        # Get users collection only (store all data in single collection)
+
         users = get_collection(Collections.USERS)
-        
-        # Check if user already exists
-        existing_user = users.find_one({'email': email})
-        if existing_user:
+
+        # Check existing email
+        if users.find_one({'email': email}):
             return jsonify({'error': 'Email already registered'}), 409
 
-        # Require OTP verification before allowing registration
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
-        if not otp_doc or not otp_doc.get('verified'):
-            return jsonify({'error': 'Please verify OTP before registration'}), 400
-        
-        # Check enrollment number for students
+        # Check enrollment (student)
         if role == 'student' and enrollment:
-            existing_enrollment = users.find_one({'enrollment': enrollment})
-            if existing_enrollment:
-                return jsonify({'error': 'Enrollment number already registered'}), 409
-        
+            if users.find_one({'enrollment': enrollment}):
+                return jsonify({'error': 'Enrollment already exists'}), 409
+
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Create user document with ALL data in users collection
+
+        # Base user
         user_doc = UserModel.create_user(
             name=name,
             email=email,
             password=hashed_password.decode('utf-8'),
             role=role
         )
-        
-        # Add ALL fields to the user document (single collection)
+
+        # Common fields
         user_doc['mobile'] = mobile
         user_doc['address'] = address
-        
-        # Add student-specific fields
+
+        # Role-specific fields
         if role == 'student':
-            user_doc['enrollment'] = enrollment
-            user_doc['dob'] = dob
-            user_doc['semester'] = semester
-            user_doc['department'] = department
-        
-        # Add faculty-specific fields
+            user_doc.update({
+                'enrollment': enrollment,
+                'dob': dob,
+                'semester': semester,
+                'department': department
+            })
+
         elif role == 'faculty':
-            user_doc['department'] = department
-            user_doc['designation'] = designation
-        
-        # Add visitor-specific fields
+            user_doc.update({
+                'department': department,
+                'designation': designation
+            })
+
         elif role == 'visitor':
-            user_doc['purpose'] = purpose
-            user_doc['visit_date'] = datetime.utcnow().isoformat()
-            user_doc['approval_status'] = 'pending'
-        
-        # Insert user into database (single collection)
+            user_doc.update({
+                'purpose': purpose,
+                'visit_date': datetime.utcnow().isoformat(),
+                'approval_status': 'pending'
+            })
+
+        # Insert into DB
         result = users.insert_one(user_doc)
         user_doc['_id'] = result.inserted_id
-        
-        # Faculty fields are already stored directly in users collection.
-        # Keep registration single-write here to avoid dependency on a separate model.
-        
-        # NOTE: Removed notification on registration for performance
-        # If you need registration notifications, enable separately
-        
-        # Generate token
+
+        # Generate JWT
         token = generate_jwt_token(user_doc)
-        
-        # Return success response (with backward compatible user data)
-        otp_codes.delete_one({'type': 'registration_otp', 'email': email})
+
         return jsonify({
             'message': 'Registration successful',
             'token': token,
@@ -346,8 +310,7 @@ def register():
     except Exception as e:
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
-
-
+    
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
@@ -382,6 +345,13 @@ def login():
         # Check if user is active
         if not user_doc.get('is_active', True):
             return jsonify({'error': 'Account is deactivated'}), 401
+
+        # ✅ Backend OTP verification used. Skip Firebase email verification check.
+        # Always trust backend-verified users
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'email_verified': True}}
+        )
         
         # Verify password
         stored_password = user_doc.get('password', '')
@@ -547,3 +517,106 @@ def change_password():
     except Exception as e:
         print(f"Change password error: {e}")
         return jsonify({'error': 'Failed to change password'}), 500
+
+
+@auth_bp.route('/resend-verification-email', methods=['POST'])
+def resend_verification_email():
+    """
+    Resend Firebase verification email.
+    Expected JSON: { "email": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users = get_collection(Collections.USERS)
+        user_doc = users.find_one({'email': email})
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+
+        firebase_app = get_firebase_app()
+        if firebase_app is None:
+            return jsonify({'error': 'Firebase email verification is not enabled on server'}), 503
+
+        firebase_user = _get_firebase_user_by_email(email)
+        if firebase_user is None:
+            return jsonify({'error': 'Firebase user not found for this email'}), 404
+        
+        # Rate limiting: 1 email per 60 seconds
+        now = datetime.utcnow()
+        last_sent = user_doc.get('last_verification_email_sent')
+        if last_sent and (now - last_sent).seconds < 60:
+            return jsonify({'error': 'Please wait 60 seconds before requesting again'}), 429
+        
+        if firebase_user.email_verified:
+            users.update_one({'_id': user_doc['_id']}, {'$set': {'email_verified': True}})
+            return jsonify({'message': 'Email already verified'}), 200
+
+        verification_link = firebase_auth.generate_email_verification_link(
+            email, 
+            app=firebase_app,
+            action_code_settings={
+                'url': 'https://srimca-ai-app-y828.onrender.com/email-verified',
+                'handle_code_in_app': True
+            }
+        )
+        sent, message = _send_verification_email(
+            email=email,
+            verification_link=verification_link,
+            name=user_doc.get('name', '')
+        )
+        if not sent:
+            return jsonify({'error': message}), 500
+
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {
+                'verification_email_sent_at': datetime.utcnow(),
+                'last_verification_email_sent': datetime.utcnow()
+            }}
+        )
+        return jsonify({'message': message}), 200
+    except Exception as e:
+        print(f"Resend verification email error: {e}")
+        return jsonify({'error': 'Failed to resend verification email'}), 500
+
+
+@auth_bp.route('/email-verification-status', methods=['POST'])
+def email_verification_status():
+    """
+    Check whether a user's Firebase email is verified.
+    Expected JSON: { "email": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users = get_collection(Collections.USERS)
+        user_doc = users.find_one({'email': email})
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+
+        firebase_app = get_firebase_app()
+        if firebase_app is None:
+            return jsonify({
+                'email_verified': bool(user_doc.get('email_verified', True)),
+                'source': 'local'
+            }), 200
+
+        firebase_user = _get_firebase_user_by_email(email)
+        if firebase_user is None:
+            return jsonify({'error': 'Firebase user not found for this email'}), 404
+
+        verified = bool(firebase_user.email_verified)
+        users.update_one({'_id': user_doc['_id']}, {'$set': {'email_verified': verified}})
+        return jsonify({
+            'email_verified': verified,
+            'source': 'firebase'
+        }), 200
+    except Exception as e:
+        print(f"Email verification status error: {e}")
+        return jsonify({'error': 'Failed to check verification status'}), 500
