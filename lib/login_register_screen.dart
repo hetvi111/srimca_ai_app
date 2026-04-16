@@ -6,7 +6,7 @@ import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_screen.dart';
-import 'package:srimca_ai/registration_otp_page.dart';
+// REMOVED: registration_otp_page.dart - direct registration
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -793,21 +793,16 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       requestBody['designation'] = _designationController.text.trim();
     }
 
-    final String emailForOtp = email.toLowerCase().trim();
-
-    final bool? registered = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RegistrationOtpPage(
-          email: emailForOtp,
-          name: name,
-          registrationBody: requestBody,
-        ),
-      ),
-    );
-
+    // Direct registration - no OTP needed
+    final result = await ApiService.registerUser(body: requestBody);
+    
     if (!mounted) return;
-    if (registered == true) {
+    
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Registration successful! Please login.')),
+      );
+      // Clear form & switch to login tab
       _emailController.clear();
       _passwordController.clear();
       _confirmPasswordController.clear();
@@ -820,6 +815,10 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       _selectedDepartment = '';
       _selectedPurpose = '';
       _tabController.animateTo(0);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Registration failed')),
+      );
     }
   }
 

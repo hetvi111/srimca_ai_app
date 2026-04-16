@@ -14,11 +14,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
-import hashlib
-import os
-import random
-import smtplib
-from email.mime.text import MIMEText
+# No email/OTP imports needed after removal
 
 from database import get_collection, Collections
 from models import UserModel
@@ -195,86 +191,7 @@ def _get_firebase_user_by_email(email: str):
         return None
 
 
-@auth_bp.route('/send-registration-otp', methods=['POST'])
-def send_registration_otp():
-    """
-    Send OTP to email before registration.
-    Expected JSON: { "email": "", "name": "" }
-    """
-    try:
-        data = request.get_json() or {}
-        email = (data.get('email') or '').strip().lower()
-        name = (data.get('name') or '').strip()
-
-        if not email:
-            return jsonify({'error': 'Email is required'}), 400
-
-        users = get_collection(Collections.USERS)
-        if users.find_one({'email': email}):
-            return jsonify({'error': 'Email already registered'}), 409
-
-        otp = _generate_otp()
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
-
-        otp_codes.update_one(
-            {'type': 'registration_otp', 'email': email},
-            {'$set': {
-                'type': 'registration_otp',
-                'email': email,
-                'otp_hash': _hash_otp(otp),
-                'expires_at': expires_at,
-                'verified': False,
-                'updated_at': datetime.utcnow(),
-            }},
-            upsert=True
-        )
-
-        sent, message = _send_registration_otp_email(email=email, otp=otp, name=name)
-        if not sent:
-            return jsonify({'error': message}), 500
-
-        return jsonify({'message': message}), 200
-    except Exception as e:
-        print(f"Send registration OTP error: {e}")
-        return jsonify({'error': 'Failed to send OTP'}), 500
-
-
-@auth_bp.route('/verify-registration-otp', methods=['POST'])
-def verify_registration_otp():
-    """
-    Verify registration OTP.
-    Expected JSON: { "email": "", "otp": "" }
-    """
-    try:
-        data = request.get_json() or {}
-        email = (data.get('email') or '').strip().lower()
-        otp = (data.get('otp') or '').strip()
-
-        if not email or not otp:
-            return jsonify({'error': 'Email and OTP are required'}), 400
-
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
-        if not otp_doc:
-            return jsonify({'error': 'OTP not found. Please request a new OTP'}), 404
-
-        expires_at = otp_doc.get('expires_at')
-        if not expires_at or datetime.utcnow() > expires_at:
-            return jsonify({'error': 'OTP expired. Please request a new OTP'}), 400
-
-        if otp_doc.get('otp_hash') != _hash_otp(otp):
-            return jsonify({'error': 'Invalid OTP'}), 400
-
-        otp_codes.update_one(
-            {'_id': otp_doc['_id']},
-            {'$set': {'verified': True, 'verified_at': datetime.utcnow()}}
-        )
-
-        return jsonify({'message': 'OTP verified successfully'}), 200
-    except Exception as e:
-        print(f"Verify registration OTP error: {e}")
-        return jsonify({'error': 'Failed to verify OTP'}), 500
+# REMOVED: OTP endpoints - direct registration now allowed
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -362,12 +279,7 @@ def register():
         if existing_user:
             return jsonify({'error': 'Email already registered'}), 409
 
-        # Require OTP verification before allowing registration
-        otp_codes = get_collection(Collections.SYSTEM_META)
-        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
-        if not otp_doc or not otp_doc.get('verified'):
-            return jsonify({'error': 'Please verify OTP before registration'}), 400
-        
+        # Direct registration - no OTP check needed
         # Check enrollment number for students
         if role == 'student' and enrollment:
             existing_enrollment = users.find_one({'enrollment': enrollment})
