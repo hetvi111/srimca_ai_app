@@ -78,8 +78,15 @@ def _hash_otp(otp: str) -> str:
 
 def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[bool, str]:
     """Send OTP email using SMTP credentials from environment."""
-    sender_email = os.getenv("SMTP_SENDER_EMAIL", "").strip()
-    sender_password = os.getenv("SMTP_SENDER_PASSWORD", "").strip()
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+    ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
@@ -95,7 +102,7 @@ def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[
             "If you did not request this, please ignore this email.\n\n"
             "Regards,\nSRIMCA AI Team"
         ),
-        "html",
+        "plain",
     )
     msg["Subject"] = "SRIMCA AI Registration OTP"
     msg["From"] = sender_email
@@ -114,8 +121,15 @@ def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[
 
 def _send_verification_email(email: str, verification_link: str, name: str = "") -> tuple[bool, str]:
     """Send Firebase email verification link using SMTP credentials from environment."""
-    sender_email = os.getenv("SMTP_SENDER_EMAIL", "").strip()
-    sender_password = os.getenv("SMTP_SENDER_PASSWORD", "").strip()
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+    ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 

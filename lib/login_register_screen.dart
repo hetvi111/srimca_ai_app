@@ -202,6 +202,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -324,6 +325,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -380,6 +382,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedSemester.isEmpty ? null : _selectedSemester,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Semester"),
                     items: _semesters
@@ -396,8 +399,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Department / Course"),
+                    decoration: _inputDecoration("Course"),
                     items: _departments
                         .map((d) => DropdownMenuItem(
                               value: d,
@@ -415,6 +419,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedPurpose.isEmpty ? null : _selectedPurpose,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Purpose of Visit"),
                     items: _purposes
@@ -434,6 +439,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Department / Course"),
                     items: _departments
