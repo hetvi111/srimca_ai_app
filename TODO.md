@@ -1,30 +1,32 @@
-# Email Verification Improvements - Approved Plan
-Status: 🚀 In Progress
+# Flutter Email OTP Verification Migration TODO
 
-## Breakdown of Steps (Sequential)
+## Status: In Progress ✅
 
-### 1. ✅ Create this TODO.md (Current)
-### 2. ✅ Edit backend/auth.py
-   - Add rate limiting to `/resend-verification-email` (60s cooldown) ✅
-   - Add custom continue_url to `generate_email_verification_link` ✅
-   - Upgrade `_send_verification_email` to HTML template ✅
-### 3. 🧪 Test Backend Endpoints
-   ```bash
-   # Test rate limit (should fail within 60s)
-   curl -X POST http://localhost:5000/api/resend-verification-email -H "Content-Type: application/json" -d '{"email":"test@example.com"}'
-   
-   # Test status sync
-   curl -X POST http://localhost:5000/api/email-verification-status -H "Content-Type: application/json" -d '{"email":"test@example.com"}'
-   ```
-### 4. 🔄 Optional: Flutter API Integration
-   - Add backend API calls in `lib/api_service.dart`
-   - Update `lib/email_verification_page.dart` to use backend
-### 5. ✅ Test Full Flow
-   - Register → Verify email → Login
-   - Resend (rate limited) → Status check
-### 6. 🚀 Complete & Demo
-   - Update TODO with [x]
-   - Run `attempt_completion`
+### 1. [x] Update lib/api_service.dart
+   - Add `registerUser(Map<String, dynamic> body)` method using POST /api/register ✅
+   - Ensure email normalization everywhere ✅
+   - Fix any syntax issues (trailing }) ✅
 
-**Next Step: 🧪 Test Backend Endpoints**
+### 2. [x] Update lib/registration_otp_page.dart  
+   - Change resend cooldown: 60s → 30s ✅
+   - Replace direct http.post with ApiService.registerUser() ✅
+   - Enhance error handling (invalid/expired/network) ✅
+   - Improve UI: Auto-focus, loading text, explicit "OTP sent" message ✅
+   - Ensure success navigates to login/home ✅
 
+### 3. [x] Cleanup lib/firebase_service.dart
+   - Comment out Firebase Auth code (legacy, REST flow primary)
+   - Referenced in email_verification_page.dart, forgot_password_screen.dart, splash_screen.dart - kept for compatibility ✅
+
+### 4. [ ] Test Complete Flow
+   - Register form → Send OTP → Verify OTP → Register → Login success
+   - Test resend (30s cooldown), errors, loading states
+   - Run `flutter pub get &amp;&amp; flutter run`
+
+### 5. [ ] Final Validation
+   - No Firebase phoneAuth remnants
+   - Email normalized (trim/lowercase)
+   - Clean modular code
+   - Ready for attempt_completion
+
+**Backend Assumption:** /api/register accepts full registration JSON post-OTP verify, returns {success, message}

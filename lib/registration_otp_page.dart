@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:srimca_ai/static_data.dart';
 
 class RegistrationOtpPage extends StatefulWidget {
@@ -68,7 +67,7 @@ class _RegistrationOtpPageState extends State<RegistrationOtpPage> {
 
   void _startResendTimer() {
     _canResend = false;
-    Future.delayed(const Duration(seconds: 60), () {
+    Future.delayed(const Duration(seconds: 30), () {
       if (mounted) {
         setState(() => _canResend = true);
       }
@@ -124,38 +123,36 @@ class _RegistrationOtpPageState extends State<RegistrationOtpPage> {
 
     setState(() => _isLoading = true);
     try {
-      final uri = Uri.parse('$kApiBaseUrl/api/register');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(widget.registrationBody),
-      );
-
-      if (!mounted) return;
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
-      if (res.statusCode == 201) {
+      final result = await ApiService.registerUser(body: widget.registrationBody);
+      setState(() => _isLoading = false);
+      
+      if (result['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please login.')),
+          SnackBar(content: Text(result['message'] ?? 'Registration successful! Please login.')),
         );
         Navigator.of(context).pop(true);
       } else {
+        String errorMsg = result['error'] ?? 'Registration failed';
+        if (errorMsg.toLowerCase().contains('expired')) {
+          errorMsg = 'OTP expired. Please request a new one.';
+        } else if (errorMsg.toLowerCase().contains('invalid')) {
+          errorMsg = 'Invalid registration data. Please try again.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text((body['error'] ?? 'Registration failed').toString())),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     } catch (e) {
-      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        const SnackBar(content: Text('Network error. Please check your connection.')),
       );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   String _getResendText() {
     if (_canResend) return 'Resend OTP';
-    final secondsLeft = 60 - DateTime.now().difference(_lastResendTime!).inSeconds;
+    final secondsLeft = 30 - DateTime.now().difference(_lastResendTime!).inSeconds;
     return 'Resend in ${secondsLeft}s';
   }
 

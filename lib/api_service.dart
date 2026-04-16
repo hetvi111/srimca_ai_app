@@ -1097,6 +1097,24 @@ class ApiService {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
+
+  /// Complete user registration after OTP verification
+  static Future<Map<String, dynamic>> registerUser({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      final response = await post('/api/register', body: body);
+      
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'message': data['message'] ?? 'Registration successful', 'data': data};
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? data['message'] ?? 'Registration failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
   }
+}
 
 
