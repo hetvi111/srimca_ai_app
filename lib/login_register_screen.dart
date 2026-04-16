@@ -6,6 +6,7 @@ import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_screen.dart';
+import 'package:srimca_ai/registration_otp_page.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -758,15 +759,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       return;
     }
 
-    // Show loading dialog
-    if (!mounted) return;
-    final navigator = Navigator.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
-    );
-
     // Build request body based on role
     final Map<String, dynamic> requestBody = {
       'name': name,
@@ -795,12 +787,24 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       requestBody['designation'] = _designationController.text.trim();
     }
 
+    // Show loading dialog for OTP send
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      final uri = Uri.parse('$kApiBaseUrl/api/register');
+      final uri = Uri.parse('$kApiBaseUrl/api/send-registration-otp');
       final res = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
+        body: jsonEncode({
+          'email': email.toLowerCase(),
+          'name': name,
+        }),
       );
 
       if (!mounted) return;
@@ -809,17 +813,32 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         navigator.pop();
       }
 
-if (res.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful! Please login.")),
+      if (res.statusCode == 200) {
+        final bool? registered = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RegistrationOtpPage(
+              email: email.toLowerCase(),
+              name: name,
+              registrationBody: requestBody,
+            ),
+          ),
         );
-
-        _emailController.clear();
-        _passwordController.clear();
-        _confirmPasswordController.clear();
-        _nameController.clear();
-
-        _tabController.animateTo(0);
+        if (!mounted) return;
+        if (registered == true) {
+          _emailController.clear();
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+          _nameController.clear();
+          _mobileController.clear();
+          _enrollmentController.clear();
+          _dobController.clear();
+          _designationController.clear();
+          _selectedSemester = '';
+          _selectedDepartment = '';
+          _selectedPurpose = '';
+          _tabController.animateTo(0);
+        }
       } else {
         // Print error for debugging
         print('Registration failed with status: ${res.statusCode}');
