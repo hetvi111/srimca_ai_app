@@ -44,33 +44,9 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       if (!mounted) return;
 
-      // Handle Firebase email verification link (app opened from email) - mobile only
-      if (!kIsWeb) {
-        try {
-          final appLinks = AppLinks();
-          final uri = await appLinks.getInitialLink();
-          if (uri != null && FirebaseService.isSignInWithEmailLink(uri.toString())) {
-            final prefs = await SharedPreferences.getInstance();
-            final email = prefs.getString('email_for_sign_in_link');
-            if (email != null && email.isNotEmpty) {
-              final result = await FirebaseService.signInWithEmailLink(
-                email: email,
-                link: uri.toString(),
-              );
-              if (result['success'] == true) {
-                await prefs.remove('email_for_sign_in_link');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email verified successfully!')),
-                  );
-                }
-              }
-            }
-          }
-        } catch (e) {
-          debugPrint('Deep link handling error: $e');
-        }
-      }
+      // REMOVED: Firebase email link handling (OTP migration complete)
+      // Deep links no longer used for verification
+
 
       final isLoggedIn = await AuthService.isLoggedIn();
       final savedUser = await AuthService.getUser();
