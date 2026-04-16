@@ -84,6 +84,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       });
       // Add typing indicator
       messages.add({
+        "text": "",
         "isTyping": true,
         "isUser": false,
       });
@@ -93,18 +94,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     messageController.clear();
     _scrollToBottom();
 
-    String? response;
+    String response;
     try {
-      response = await _getAIResponse(userMessage);
+      response = await _getAIResponse(userMessage).timeout(const Duration(seconds: 15));
     } catch (e) {
-      response = "Sorry, I encountered an error. Please try again. ($e)";
+      response = "Sorry, I couldn't process your request right now. Please try again later.";
     }
 
     if (mounted) {
       setState(() {
-        // Remove typing
-        if (messages.isNotEmpty && messages.last['isTyping'] == true) {
-          messages.removeLast();
+        // Remove typing indicator safely
+        final typingIndex = messages.lastIndexWhere((msg) => msg['isTyping'] == true);
+        if (typingIndex != -1) {
+          messages.removeAt(typingIndex);
         }
         // Add real response
         messages.add({
@@ -116,9 +118,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       });
       _scrollToBottom();
 
-      // Save to chat history
-      if (widget.userId != null && response != null) {
-        await ApiService.saveChatMessage(
+      // Save to chat history without blocking the UI.
+      if (widget.userId != null) {
+        ApiService.saveChatMessage(
           userId: widget.userId!,
           question: userMessage,
           answer: response,
@@ -308,8 +310,9 @@ String _getFallbackResponse(String question) {
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> msg) {
-    final isUser = msg["isUser"] as bool?;
-    final isTyping = msg["isTyping"] as bool? ?? false;
+    final bool isTyping = msg["isTyping"] as bool? ?? false;
+    final bool isUser = msg["isUser"] as bool? ?? false;
+    final String text = msg["text"]?.toString() ?? '';
 
     if (isTyping) {
       return Align(

@@ -196,100 +196,71 @@ def _get_firebase_user_by_email(email: str):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """
-    Register a new user (student, faculty, or visitor)
-    
-    NORMALIZED: This function now inserts data into multiple collections:
-    - Users: Authentication data (name, email, password, role)
-    - User_Profiles: Personal info (phone, address)
-    - Students: Academic data (semester, department, enrollment)
-    - Faculty: Professional data (department, designation)
-    
-    Student fields: name, email, password, role, mobile, enrollment, dob, semester, department
-    Faculty fields: name, email, password, role, mobile, department, designation
-    Visitor fields: name, email, password, role, mobile, purpose
-    """
     try:
         data = request.get_json()
-        
+
         # Validate required fields
         required_fields = ['name', 'email', 'password', 'role']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({'error': f'{field} is required'}), 400
-        
+
         name = data['name'].strip()
         email = data['email'].strip().lower()
         password = data['password']
         role = data.get('role', 'student').lower()
         mobile = data.get('mobile', '').strip()
         address = data.get('address', '').strip()
-        
-        # For students, get academic fields
+
+        # Student fields
         enrollment = data.get('enrollment', '').strip()
         dob = data.get('dob', '').strip()
         semester = data.get('semester', '').strip()
         department = data.get('department', '').strip()
-        
-        # For faculty, get professional fields
+
+        # Faculty fields
         designation = data.get('designation', '').strip()
-        
-        # For visitors, get purpose
+
+        # Visitor fields
         purpose = data.get('purpose', '').strip()
-        
-        # Validate based on role
-        if role == 'student':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for students'}), 400
-            if not enrollment:
-                return jsonify({'error': 'Enrollment number is required for students'}), 400
-            if not dob:
-                return jsonify({'error': 'Date of birth is required for students'}), 400
-            if not semester:
-                return jsonify({'error': 'Semester is required for students'}), 400
-            if not department:
-                return jsonify({'error': 'Department is required for students'}), 400
-        elif role == 'faculty':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for faculty'}), 400
-            if not department:
-                return jsonify({'error': 'Department is required for faculty'}), 400
-            if not designation:
-                return jsonify({'error': 'Designation is required for faculty'}), 400
-        elif role == 'visitor':
-            if not mobile:
-                return jsonify({'error': 'Mobile number is required for visitors'}), 400
-            if not purpose:
-                return jsonify({'error': 'Purpose of visit is required for visitors'}), 400
-        
-        # Validate role
+
+        # Role validation
         valid_roles = ['student', 'faculty', 'visitor', 'admin']
         if role not in valid_roles:
             return jsonify({'error': f'Invalid role. Must be one of: {valid_roles}'}), 400
-        
-        # Validate password length
+
+        # Role-based validation
+        if role == 'student':
+            if not all([mobile, enrollment, dob, semester, department]):
+                return jsonify({'error': 'All student fields are required'}), 400
+
+        elif role == 'faculty':
+            if not all([mobile, department, designation]):
+                return jsonify({'error': 'All faculty fields are required'}), 400
+
+        elif role == 'visitor':
+            if not all([mobile, purpose]):
+                return jsonify({'error': 'All visitor fields are required'}), 400
+
+        # Password validation
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
-        # Get users collection only (store all data in single collection)
+
         users = get_collection(Collections.USERS)
-        
-        # Check if user already exists
-        existing_user = users.find_one({'email': email})
-        if existing_user:
+
+        # Check existing email
+        if users.find_one({'email': email}):
             return jsonify({'error': 'Email already registered'}), 409
 
-        # Direct registration - no OTP check needed
-        # Check enrollment number for students
+        # Check enrollment (student)
         if role == 'student' and enrollment:
-            existing_enrollment = users.find_one({'enrollment': enrollment})
-            if existing_enrollment:
-                return jsonify({'error': 'Enrollment number already registered'}), 409
-        
+            if users.find_one({'enrollment': enrollment}):
+                return jsonify({'error': 'Enrollment already exists'}), 409
+
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Create user document with ALL data in users collection
+
+        # Base user
         user_doc = UserModel.create_user(
             name=name,
             email=email,
@@ -297,64 +268,39 @@ def register():
             role=role
         )
 
-        # Optional Firebase account + email verification link.
-        # This runs only when Firebase Admin SDK is configured.
-        firebase_app = get_firebase_app()
-        if firebase_app is not None:
-            firebase_user = _get_firebase_user_by_email(email)
-            created_in_firebase = False
-            if firebase_user is None:
-                firebase_user = firebase_auth.create_user(
-                    email=email,
-                    password=password,
-                    display_name=name,
-                    app=firebase_app
-                )
-                created_in_firebase = True
-
-            # Skip Firebase verification link - backend OTP is sufficient
-            user_doc['firebase_uid'] = firebase_user.uid
-            user_doc['email_verified'] = True  # Backend OTP verified = email verified
-        else:
-            user_doc['email_verified'] = True
-        
-        # Add ALL fields to the user document (single collection)
+        # Common fields
         user_doc['mobile'] = mobile
         user_doc['address'] = address
-        
-        # Add student-specific fields
+
+        # Role-specific fields
         if role == 'student':
-            user_doc['enrollment'] = enrollment
-            user_doc['dob'] = dob
-            user_doc['semester'] = semester
-            user_doc['department'] = department
-        
-        # Add faculty-specific fields
+            user_doc.update({
+                'enrollment': enrollment,
+                'dob': dob,
+                'semester': semester,
+                'department': department
+            })
+
         elif role == 'faculty':
-            user_doc['department'] = department
-            user_doc['designation'] = designation
-        
-        # Add visitor-specific fields
+            user_doc.update({
+                'department': department,
+                'designation': designation
+            })
+
         elif role == 'visitor':
-            user_doc['purpose'] = purpose
-            user_doc['visit_date'] = datetime.utcnow().isoformat()
-            user_doc['approval_status'] = 'pending'
-        
-        # Insert user into database (single collection)
+            user_doc.update({
+                'purpose': purpose,
+                'visit_date': datetime.utcnow().isoformat(),
+                'approval_status': 'pending'
+            })
+
+        # Insert into DB
         result = users.insert_one(user_doc)
         user_doc['_id'] = result.inserted_id
-        
-        # Faculty fields are already stored directly in users collection.
-        # Keep registration single-write here to avoid dependency on a separate model.
-        
-        # NOTE: Removed notification on registration for performance
-        # If you need registration notifications, enable separately
-        
-        # Generate token
+
+        # Generate JWT
         token = generate_jwt_token(user_doc)
-        
-        # Return success response (with backward compatible user data)
-        otp_codes.delete_one({'type': 'registration_otp', 'email': email})
+
         return jsonify({
             'message': 'Registration successful',
             'token': token,
@@ -364,8 +310,7 @@ def register():
     except Exception as e:
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
-
-
+    
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
