@@ -66,6 +66,49 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   String _selectedRole = 'student';
   final List<String> _roles = ['student', 'faculty', 'admin', 'visitor'];
 
+  Future<bool> _submitRegistrationWithoutOtp(
+    Map<String, dynamic> requestBody,
+  ) async {
+    try {
+      final uri = Uri.parse('$kApiBaseUrl/api/register');
+      final res = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      );
+
+      if (!mounted) return false;
+
+      Map<String, dynamic> body = {};
+      try {
+        body = jsonDecode(res.body) as Map<String, dynamic>;
+      } catch (_) {
+        body = {};
+      }
+
+      if (res.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration successful! Please login.")),
+        );
+        return true;
+      }
+
+      final msg = body['error']?.toString() ??
+          body['message']?.toString() ??
+          'Registration failed';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      return false;
+    } catch (e) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+      return false;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -839,12 +882,35 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           _selectedPurpose = '';
           _tabController.animateTo(0);
         }
+      } else if (res.statusCode == 404) {
+        // Backward compatibility: older backend versions may not have OTP routes.
+        final bool registered = await _submitRegistrationWithoutOtp(requestBody);
+        if (!mounted) return;
+        if (registered) {
+          _emailController.clear();
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+          _nameController.clear();
+          _mobileController.clear();
+          _enrollmentController.clear();
+          _dobController.clear();
+          _designationController.clear();
+          _selectedSemester = '';
+          _selectedDepartment = '';
+          _selectedPurpose = '';
+          _tabController.animateTo(0);
+        }
       } else {
         // Print error for debugging
         print('Registration failed with status: ${res.statusCode}');
         print('Response body: ${res.body}');
-        
-        final Map<String, dynamic> body = jsonDecode(res.body);
+
+        Map<String, dynamic> body = {};
+        try {
+          body = jsonDecode(res.body) as Map<String, dynamic>;
+        } catch (_) {
+          body = {};
+        }
         final msg = body['error'] ?? body['message'] ?? 'Registration failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg.toString())),
