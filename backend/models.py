@@ -333,3 +333,37 @@ class VisitorModel:
             'status': visitor_doc.get('status', 'pending'),
             'created_at': visitor_doc.get('created_at').isoformat() if visitor_doc.get('created_at') else None
         }
+
+
+class PasswordResetRequestModel:
+    """Password reset request model for admin-controlled forgot password"""
+    
+    collection_name = Collections.PASSWORD_RESET_REQUESTS
+    
+    @staticmethod
+    def create_request(email: str):
+        """
+        Create a new password reset request document
+        """
+        return {
+            'email': email.lower(),
+            'status': 'pending',
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow(),
+            'reset_password': None  # Set after admin reset
+        }
+    
+    @staticmethod
+    def to_dict(request_doc):
+        """Convert request document to dictionary"""
+        if request_doc is None:
+            return None
+        
+        return {
+            '_id': str(request_doc.get('_id', '')),
+            'email': request_doc.get('email', ''),
+            'status': request_doc.get('status', 'pending'),
+            'created_at': request_doc.get('created_at').isoformat() if request_doc.get('created_at') else None,
+            'updated_at': request_doc.get('updated_at').isoformat() if request_doc.get('updated_at') else None,
+            'reset_password': request_doc.get('reset_password', None)  # Temp PW for admin
+        }

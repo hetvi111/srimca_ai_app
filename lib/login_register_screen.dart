@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:srimca_ai/static_data.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
+import 'package:srimca_ai/push_notification_service.dart';
+import 'package:srimca_ai/forgot_password_screen.dart';
+import 'package:srimca_ai/registration_otp_page.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -253,13 +255,40 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
 
-                const Text(
-                  "If you forgot your password, please contact administrator.",
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
-                  textAlign: TextAlign.center,
-                )
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lock_reset, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -490,7 +519,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
   // ================= API LOGIN (PYTHON + MONGODB) =================
   Future<void> _apiLogin() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -513,7 +542,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         body: jsonEncode({
           'email': email,
           'password': password,
-          'role': _selectedRole.toLowerCase(),
         }),
       );
       if (!mounted) return;
@@ -533,6 +561,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         );
         await Future.delayed(const Duration(milliseconds: 300));
         final String role = (user['role'] as String? ?? '').toLowerCase();
+        // Subscribe this device to role-based FCM topics for push notifications.
+        try {
+          if (role.isNotEmpty) {
+            await PushNotificationService.subscribeToRoleTopics(role);
+          }
+        } catch (e) {
+          debugPrint('FCM topic subscription failed: $e');
+        }
         switch (role) {
           case 'admin':
             Navigator.pushReplacementNamed(context, '/admin');
@@ -569,7 +605,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         }
       } else {
         final Map<String, dynamic> body = jsonDecode(res.body) as Map<String, dynamic>;
-        final msg = body['message']?.toString() ?? 'Login failed';
+        final msg = body['error']?.toString() ??
+            body['message']?.toString() ??
+            'Login failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -721,15 +759,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       return;
     }
 
-    // Show loading dialog
-    if (!mounted) return;
-    final navigator = Navigator.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
-    );
-
     // Build request body based on role
     final Map<String, dynamic> requestBody = {
       'name': name,
@@ -758,12 +787,24 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       requestBody['designation'] = _designationController.text.trim();
     }
 
+    // Show loading dialog for OTP send
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      final uri = Uri.parse('$kApiBaseUrl/api/register');
+      final uri = Uri.parse('$kApiBaseUrl/api/send-registration-otp');
       final res = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
+        body: jsonEncode({
+          'email': email.toLowerCase(),
+          'name': name,
+        }),
       );
 
       if (!mounted) return;
@@ -772,23 +813,43 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
         navigator.pop();
       }
 
-if (res.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful! Please login.")),
+      if (res.statusCode == 200) {
+        final bool? registered = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RegistrationOtpPage(
+              email: email.toLowerCase(),
+              name: name,
+              registrationBody: requestBody,
+            ),
+          ),
         );
-
-        _emailController.clear();
-        _passwordController.clear();
-        _confirmPasswordController.clear();
-        _nameController.clear();
-
-        _tabController.animateTo(0);
+        if (!mounted) return;
+        if (registered == true) {
+          _emailController.clear();
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+          _nameController.clear();
+          _mobileController.clear();
+          _enrollmentController.clear();
+          _dobController.clear();
+          _designationController.clear();
+          _selectedSemester = '';
+          _selectedDepartment = '';
+          _selectedPurpose = '';
+          _tabController.animateTo(0);
+        }
       } else {
         // Print error for debugging
         print('Registration failed with status: ${res.statusCode}');
         print('Response body: ${res.body}');
-        
-        final Map<String, dynamic> body = jsonDecode(res.body);
+
+        Map<String, dynamic> body = {};
+        try {
+          body = jsonDecode(res.body) as Map<String, dynamic>;
+        } catch (_) {
+          body = {};
+        }
         final msg = body['error'] ?? body['message'] ?? 'Registration failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg.toString())),

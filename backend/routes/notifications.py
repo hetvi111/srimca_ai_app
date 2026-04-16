@@ -106,11 +106,11 @@ def get_my_notifications():
             user_semesters=user_semesters
         )
 
-        # Faculty should only see admin-sent notices.
+        # Faculty should see notice notifications (whether posted by admin or faculty).
         if user_role == 'faculty':
             notifications = [
                 n for n in notifications
-                if n.get('sender_role') == 'admin' and n.get('type') == 'notice'
+                if n.get('type') == 'notice'
             ]
         
         return jsonify({

@@ -6,6 +6,10 @@ const Color navyBlue = Color(0xFF001F3F);
 const Color navyBlueLight = Color(0xFF1A237E);
 const Color accentBlue = Color(0xFF1E88E5);
 const Color lightGrey = Color(0xFFF5F5F5);
+const String kVisitorRegistrationUrl = String.fromEnvironment(
+  'VISITOR_REG_URL',
+  defaultValue: 'https://srimcaai.web.app/register',
+);
 
 class VisitorQRPage extends StatelessWidget {
   const VisitorQRPage({super.key});
@@ -147,7 +151,7 @@ class VisitorQRPage extends StatelessWidget {
                   ),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("QR Code links to: https://srimca-ai-app.onrender.com/register")),
+                      const SnackBar(content: Text("QR Code links to: $kVisitorRegistrationUrl")),
                     );
                   },
                   icon: const Icon(Icons.link, color: Colors.white),

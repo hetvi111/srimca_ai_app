@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
 import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_register_screen.dart';
@@ -17,6 +22,8 @@ import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/email_verification_page.dart';
+import 'package:srimca_ai/forgot_password_page.dart';
+import 'package:srimca_ai/admin_password_requests_page.dart';
 
 // App Theme Colors
 class AppColors {
@@ -31,12 +38,29 @@ class AppColors {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  
-  // Initialize push notifications
-  await PushNotificationService.initialize();
-  
-  runApp(const MyApp());
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    await PushNotificationService.initialize();
+  } catch (e) {
+    debugPrint('Firebase/Push notification initialization error: $e');
+  }
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
+
+  // Global error zone for uncaught async errors
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  }, (error, stack) {
+    debugPrint('Uncaught async error: $error');
+    debugPrint('Stack: $stack');
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -50,7 +74,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   ThemeMode _themeMode = ThemeMode.light;
 
   void changeTheme(bool isDark) {
@@ -64,9 +87,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'SRIMCA AI Assistant',
       debugShowCheckedModeBanner: false,
-
-      themeMode: _themeMode,   // ⭐ dynamic now
-
+      themeMode: _themeMode,
       theme: ThemeData(
         brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.background,
@@ -109,7 +130,6 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
-
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
@@ -127,7 +147,45 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
+builder: (context, child) {
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 80, color: AppColors.button),
+              const SizedBox(height: 16),
+              Text(
+                'Something went wrong',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Please reload the page or contact support.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => SystemNavigator.pop(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload App'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  };
 
+  return child!;
+},
       home: const SplashScreen(),
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
@@ -157,6 +215,8 @@ class _MyAppState extends State<MyApp> {
         '/welcome': (context) => const WelcomeScreen(),
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/admin-password-requests': (context) => const AdminPasswordRequestsPage(),
         '/content-knowledge': (context) => const ContentManagementPage(),
         '/monitoring': (context) => const AIMonitoringPage(),
         '/reports': (context) => ReportsAnalyticsPage(),
@@ -190,3 +250,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+

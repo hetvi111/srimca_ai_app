@@ -37,8 +37,14 @@ def get_fallback_answer(question):
             if 'programme' in line.lower():
                 return line.strip()
     
+    # BCA semester specific
+    if 'bca' in q:
+        for line in all_lines:
+            if 'bca' in line.lower() or '4th' in line.lower() and '6th' in line.lower():
+                return line.strip()
+    
     # Keyword scoring
-    stop = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba'}
+    stop = {'what', 'is', 'are', 'the', 'a', 'an', 'of', 'for', 'in', 'on', 'at', 'to', 'do', 'does', 'can', 'you', 'i', 'we', 'they', 'srimca', 'mca', 'mba', 'bca'}
     keywords = [w for w in q.split() if w not in stop and len(w) > 2]
     
     best = None

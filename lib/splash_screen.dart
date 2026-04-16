@@ -4,6 +4,9 @@ import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
+import 'package:srimca_ai/push_notification_service.dart';
+import 'package:flutter/foundation.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,70 +41,97 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateNext() async {
-    if (!mounted) return;
-
-    // Handle Firebase email verification link (app opened from email)
     try {
-      final appLinks = AppLinks();
-      final uri = await appLinks.getInitialLink();
-      if (uri != null && FirebaseService.isSignInWithEmailLink(uri.toString())) {
-        final prefs = await SharedPreferences.getInstance();
-        final email = prefs.getString('email_for_sign_in_link');
-        if (email != null && email.isNotEmpty) {
-          final result = await FirebaseService.signInWithEmailLink(
-            email: email,
-            link: uri.toString(),
-          );
-          if (result['success'] == true) {
-            await prefs.remove('email_for_sign_in_link');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Email verified successfully!')),
+      if (!mounted) return;
+
+      // Handle Firebase email verification link (app opened from email) - mobile only
+      if (!kIsWeb) {
+        try {
+          final appLinks = AppLinks();
+          final uri = await appLinks.getInitialLink();
+          if (uri != null && FirebaseService.isSignInWithEmailLink(uri.toString())) {
+            final prefs = await SharedPreferences.getInstance();
+            final email = prefs.getString('email_for_sign_in_link');
+            if (email != null && email.isNotEmpty) {
+              final result = await FirebaseService.signInWithEmailLink(
+                email: email,
+                link: uri.toString(),
               );
+              if (result['success'] == true) {
+                await prefs.remove('email_for_sign_in_link');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email verified successfully!')),
+                  );
+                }
+              }
             }
           }
+        } catch (e) {
+          debugPrint('Deep link handling error: $e');
         }
       }
-    } catch (_) {}
 
-    final isLoggedIn = await AuthService.isLoggedIn();
-    final savedUser = await AuthService.getUser();
+      final isLoggedIn = await AuthService.isLoggedIn();
+      final savedUser = await AuthService.getUser();
 
-    if (isLoggedIn && savedUser != null) {
-      final role = (savedUser['role'] ?? '').toString().toLowerCase();
-      switch (role) {
-        case 'admin':
-          Navigator.pushReplacementNamed(context, '/admin');
-          return;
-        case 'faculty':
-          Navigator.pushReplacementNamed(context, '/faculty');
-          return;
-        case 'student':
-          Navigator.pushReplacementNamed(
-            context,
-            '/student',
-            arguments: {
-              'studentName': savedUser['name'] ?? 'Student',
-              'semester': savedUser['semester'] ?? 'N/A',
-              'userId': savedUser['_id'] ?? '',
-              'email': savedUser['email'] ?? '',
-              'enrollmentNumber': savedUser['enrollment'] ?? '',
-              'course': savedUser['department'] ?? '',
-            },
-          );
-          return;
-        case 'visitor':
-          Navigator.pushReplacementNamed(context, '/visitor');
-          return;
-        default:
-          // Unknown role: clear stale session and go to login flow.
-          await AuthService.clearAuth();
-          Navigator.pushReplacementNamed(context, '/login');
-          return;
+      if (isLoggedIn && savedUser != null) {
+        final role = (savedUser['role'] ?? '').toString().toLowerCase();
+
+        // Subscribe push only if not web
+        if (!kIsWeb) {
+          try {
+            await PushNotificationService.subscribeToRoleTopics(role);
+          } catch (e) {
+            debugPrint('Push subscription error for $role: $e');
+          }
+        }
+
+        switch (role) {
+          case 'admin':
+            if (mounted) Navigator.pushReplacementNamed(context, '/admin');
+            return;
+          case 'faculty':
+            if (mounted) Navigator.pushReplacementNamed(context, '/faculty');
+            return;
+          case 'student':
+            if (mounted) Navigator.pushReplacementNamed(
+              context,
+              '/student',
+              arguments: {
+                'studentName': savedUser['name'] ?? 'Student',
+                'semester': savedUser['semester'] ?? 'N/A',
+                'userId': savedUser['_id'] ?? '',
+                'email': savedUser['email'] ?? '',
+                'enrollmentNumber': savedUser['enrollment'] ?? '',
+                'course': savedUser['department'] ?? '',
+              },
+            );
+            return;
+          case 'visitor':
+            if (mounted) Navigator.pushReplacementNamed(context, '/visitor');
+            return;
+          default:
+            await AuthService.clearAuth();
+            if (mounted) Navigator.pushReplacementNamed(context, '/login');
+            return;
+        }
+      }
+
+      if (mounted) Navigator.pushReplacementNamed(context, '/first');
+    } catch (e, stack) {
+      debugPrint('SplashScreen navigation error: $e');
+      debugPrint('Stack: $stack');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('App startup error. Redirecting to login.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
       }
     }
-
-    Navigator.pushReplacementNamed(context, '/first');
   }
 
   @override

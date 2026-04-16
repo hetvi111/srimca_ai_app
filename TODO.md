@@ -1,29 +1,11 @@
-# Visitor Data Fix - Steps to Complete
+# SRIMCA AI Error Fix TODO
 
-## Status: Planning [IN PROGRESS]
+## Task: Fix ErrorWidget.builder type error in main.dart
 
-### 1. [✅ COMPLETED] Fix Frontend Field Mapping
-- Edited lib/visitor_management_page.dart 
-- Visitor.fromMap now handles 'purpose' → visitPurpose
-- Added debug logging in _loadVisitors()
-- Verified with edit_file tool
+**Status: ✅ Completed**
 
-### 2. [✅ COMPLETED] Create Sample Visitor Data
-- Created backend/create_sample_visitors.py with 3 samples
-- Run `cd backend && python create_sample_visitors.py` to populate DB
-
-### 3. [PENDING] Test API Endpoint
-- Test https://srimca-ai-app.onrender.com/api/admin/visitors
-- Verify data returns correctly
-
-### 4. [PENDING] Backend Verification
-- Check if local backend running (port 5000)
-- Start `cd backend && python app.py` if needed
-
-### 5. [PENDING] Frontend Test
-- Run Flutter app
-- Navigate to Visitor Management page
-- Verify data displays
-
-### 6. [COMPLETED] Update TODO.md after each step
-
+### Steps:
+1. ✅ Understand error and files (search_files, read_file done)
+2. ✅ Edit lib/main.dart - Fix MaterialApp.builder to properly set ErrorWidget.builder and return child!
+3. ✅ Test the fix - Ran `flutter run -d chrome` (app launched successfully, spinner shows building/running normally - no compile error)
+4. ✅ Complete task

@@ -14,7 +14,8 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 //   - iOS Simulator: Use 'http://localhost:5000'
 //
 // For PRODUCTION (deployed backend):
-//   - Use your Render.com URL (e.g., 'https://srimca-ai-app.onrender.com')
+//   - Use your Firebase-hosted backend URL (Cloud Run/Functions)
+//   - Example: https://<region>-<project-id>.cloudfunctions.net/api
 //
 // ============================================
 
@@ -28,7 +29,7 @@ const String kProductionUrl = String.fromEnvironment(
   defaultValue: 'https://srimca-ai-app-y828.onrender.com',
 );
 
-/// API base URL - uses local URL in debug mode, production URL in release mode
+
 String get kApiBaseUrl {
   if (kDebugMode) {
     return kProductionUrl; // Change this to your local backend URL
@@ -79,7 +80,36 @@ class AuthService {
   /// Check if user is logged in
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
-    return token != null && token.isNotEmpty;
+    if (token == null || token.isEmpty) return false;
+    // Only force re-login if token is clearly expired.
+    return !_isJwtExpired(token);
+  }
+
+  static bool _isJwtExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+
+      final payloadJson = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final payload = jsonDecode(payloadJson);
+      final exp = payload['exp'];
+
+      if (exp is num) {
+        final expMillis = exp * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(expMillis.toInt()).isBefore(DateTime.now());
+      }
+      if (exp is String) {
+        final parsed = int.tryParse(exp);
+        if (parsed == null) return false;
+        return DateTime.fromMillisecondsSinceEpoch(parsed * 1000).isBefore(DateTime.now());
+      }
+      return false;
+    } catch (_) {
+      // If token can't be decoded, avoid forcing re-login.
+      return false;
+    }
   }
 
   /// Get user profile from backend
@@ -91,7 +121,7 @@ class AuthService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -140,7 +170,7 @@ class ApiService {
       uri = uri.replace(queryParameters: queryParams);
     }
     
-    return _client.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    return _client.get(uri, headers: headers).timeout(const Duration(seconds: 60));
   }
 
   /// POST request
@@ -152,7 +182,7 @@ class ApiService {
       uri,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(const Duration(seconds: 60));
   }
 
   /// PUT request
@@ -164,7 +194,7 @@ class ApiService {
       uri,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(const Duration(seconds: 60));
   }
 
   /// DELETE request
@@ -903,4 +933,125 @@ class ApiService {
       return false;
     }
   }
+
+  /// Forgot Password - Student submits email request
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await post('/api/users/forgot-password', body: {'email': email});
+      
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'message': data['message'] ?? 'Request sent successfully'};
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'error': data['error'] ?? 'Failed to send request'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Get Password Reset Requests (admin only)
+  static Future<List<Map<String, dynamic>>> getPasswordRequests({int limit = 100}) async {
+    try {
+      final response = await get('/api/users/admin/password-requests', queryParams: {'limit': limit.toString()});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final requests = data['requests'] as List<dynamic>? ?? [];
+        return requests.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Get password requests error: $e');
+      return [];
+    }
+  }
+
+  /// Admin Reset Password for request.
+  /// Students: pass [studentEnrollment] matching DB. Faculty: pass [facultyEmail] matching request.
+  /// Other roles: pass [confirmEmail] matching the account email.
+  static Future<Map<String, dynamic>?> adminResetPassword(
+    String requestId, {
+    String? studentEnrollment,
+    String? facultyEmail,
+    String? confirmEmail,
+    String? newPassword,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (newPassword != null && newPassword.isNotEmpty) {
+        body['new_password'] = newPassword;
+      }
+      if (studentEnrollment != null && studentEnrollment.isNotEmpty) {
+        body['student_enrollment'] = studentEnrollment;
+      }
+      if (facultyEmail != null && facultyEmail.isNotEmpty) {
+        body['faculty_email'] = facultyEmail;
+      }
+      if (confirmEmail != null && confirmEmail.isNotEmpty) {
+        body['confirm_email'] = confirmEmail;
+      }
+      final response = await post('/api/users/admin/reset-password/$requestId', body: body.isEmpty ? null : body);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data;
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Reset failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Admin: Get single user by ID
+  static Future<Map<String, dynamic>?> getAdminUserById(String userId) async {
+    try {
+      final response = await get('/api/admin/users/$userId');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['user'] as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Get admin user by id error: $e');
+      return null;
+    }
+  }
+
+  /// Admin: Update user with full fields
+  static Future<Map<String, dynamic>> adminUpdateUser({
+    required String userId,
+    required String name,
+    required String email,
+    required String role,
+    required String phone,
+    required String gender,
+    required bool isActive,
+  }) async {
+    try {
+      final response = await put(
+        '/api/admin/users/$userId',
+        body: {
+          'name': name,
+          'email': email,
+          'role': role,
+          'mobile': phone,
+          'gender': gender,
+          'is_active': isActive,
+          // Keep profile fields too for UI consistency
+          'profile_phone': phone,
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'data': data};
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Update failed'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
 }
+

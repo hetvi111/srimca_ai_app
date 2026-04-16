@@ -266,6 +266,21 @@ class FirebaseService {
   /// Check if current user's email is verified
   static bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
+  /// Send password reset email via Firebase Auth
+  static Future<Map<String, dynamic>> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
+      return {
+        'success': true,
+        'message': 'Password reset email sent. Check your inbox.',
+      };
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
+    } catch (e) {
+      return {'success': false, 'message': 'Failed to send reset email: $e'};
+    }
+  }
+
   // ==================== FIRESTORE OPERATIONS ====================
 
   /// Get all users (for admin)

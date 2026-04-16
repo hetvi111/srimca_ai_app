@@ -112,6 +112,7 @@ def require_admin(f):
 
 
 @admin_bp.route('/users', methods=['GET'], endpoint='get_users_by_role')
+@require_admin
 def get_users_by_role():
     """
     Get users filtered by role
@@ -145,6 +146,7 @@ def get_users_by_role():
 
 
 @admin_bp.route('/users/<user_id>', methods=['GET'], endpoint='get_user')
+@require_admin
 def get_user(user_id):
     """Get a specific user by ID"""
     try:
@@ -173,6 +175,7 @@ def get_user(user_id):
 
 
 @admin_bp.route('/users', methods=['POST'], endpoint='create_user_admin')
+@require_admin
 def create_user():
     """Create a new user"""
     try:
@@ -218,6 +221,7 @@ def create_user():
 
 
 @admin_bp.route('/users/<user_id>', methods=['PUT'], endpoint='update_user_admin')
+@require_admin
 def update_user(user_id):
     """Update a user - only Faculty and Student can be edited (Admin cannot be edited)"""
     try:
@@ -241,6 +245,13 @@ def update_user(user_id):
         if data.get('email'):
             update_data['email'] = data['email'].lower()
         
+        # Common contact fields (stored at top-level in this project)
+        if data.get('mobile') is not None:
+            update_data['mobile'] = str(data.get('mobile', '')).strip()
+        if data.get('phone') is not None:
+            # Accept `phone` too (some clients use this key)
+            update_data['mobile'] = str(data.get('phone', '')).strip()
+
         if data.get('is_active') is not None:
             update_data['is_active'] = data['is_active']
         
@@ -251,6 +262,17 @@ def update_user(user_id):
         
         if data.get('profile'):
             update_data['profile'] = data['profile']
+
+        # Allow updating gender even if client doesn't send full profile map
+        if data.get('gender') is not None:
+            profile = dict(target_user.get('profile') or {})
+            profile['gender'] = str(data.get('gender', '')).strip().lower()
+            update_data['profile'] = profile
+        # Allow updating phone under profile as well (for UI consistency)
+        if data.get('profile_phone') is not None:
+            profile = dict(update_data.get('profile') or target_user.get('profile') or {})
+            profile['phone'] = str(data.get('profile_phone', '')).strip()
+            update_data['profile'] = profile
         
         result = users_collection.update_one(
             {'_id': ObjectId(user_id)},
@@ -260,7 +282,8 @@ def update_user(user_id):
         if result.matched_count == 0:
             return jsonify({'error': 'User not found'}), 404
         
-        return jsonify({'message': 'User updated successfully'}), 200
+        updated_user = users_collection.find_one({'_id': ObjectId(user_id)})
+        return jsonify({'message': 'User updated successfully', 'user': updated_user}), 200
     
     except Exception as e:
         print(f"Update user error: {e}")
@@ -268,6 +291,7 @@ def update_user(user_id):
 
 
 @admin_bp.route('/users/<user_id>', methods=['DELETE'], endpoint='delete_user_admin')
+@require_admin
 def delete_user(user_id):
     """Delete a user"""
     try:

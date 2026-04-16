@@ -14,6 +14,11 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
+import hashlib
+import os
+import random
+import smtplib
+from email.mime.text import MIMEText
 
 from database import get_collection, Collections
 from models import UserModel
@@ -57,6 +62,134 @@ def verify_jwt_token(token: str) -> dict:
         return None
     except jwt.InvalidTokenError:
         return None
+
+
+def _generate_otp() -> str:
+    """Generate a 6-digit OTP."""
+    return f"{random.randint(100000, 999999)}"
+
+
+def _hash_otp(otp: str) -> str:
+    """Hash OTP before storing in DB."""
+    return hashlib.sha256(otp.encode("utf-8")).hexdigest()
+
+
+def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[bool, str]:
+    """Send OTP email using SMTP credentials from environment."""
+    sender_email = os.getenv("SMTP_SENDER_EMAIL", "").strip()
+    sender_password = os.getenv("SMTP_SENDER_PASSWORD", "").strip()
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+    if not sender_email or not sender_password:
+        return False, "Email service not configured on server"
+
+    greeting_name = name.strip() or "User"
+    msg = MIMEText(
+        (
+            f"Hello {greeting_name},\n\n"
+            f"Your SRIMCA AI registration OTP is: {otp}\n\n"
+            "This OTP will expire in 10 minutes.\n"
+            "If you did not request this, please ignore this email.\n\n"
+            "Regards,\nSRIMCA AI Team"
+        ),
+        "plain",
+    )
+    msg["Subject"] = "SRIMCA AI Registration OTP"
+    msg["From"] = sender_email
+    msg["To"] = email
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        return True, "OTP sent successfully"
+    except Exception as e:
+        print(f"OTP email sending error: {e}")
+        return False, "Failed to send OTP email"
+
+
+@auth_bp.route('/send-registration-otp', methods=['POST'])
+def send_registration_otp():
+    """
+    Send OTP to email before registration.
+    Expected JSON: { "email": "", "name": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        name = (data.get('name') or '').strip()
+
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users = get_collection(Collections.USERS)
+        if users.find_one({'email': email}):
+            return jsonify({'error': 'Email already registered'}), 409
+
+        otp = _generate_otp()
+        otp_codes = get_collection(Collections.SYSTEM_META)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+        otp_codes.update_one(
+            {'type': 'registration_otp', 'email': email},
+            {'$set': {
+                'type': 'registration_otp',
+                'email': email,
+                'otp_hash': _hash_otp(otp),
+                'expires_at': expires_at,
+                'verified': False,
+                'updated_at': datetime.utcnow(),
+            }},
+            upsert=True
+        )
+
+        sent, message = _send_registration_otp_email(email=email, otp=otp, name=name)
+        if not sent:
+            return jsonify({'error': message}), 500
+
+        return jsonify({'message': message}), 200
+    except Exception as e:
+        print(f"Send registration OTP error: {e}")
+        return jsonify({'error': 'Failed to send OTP'}), 500
+
+
+@auth_bp.route('/verify-registration-otp', methods=['POST'])
+def verify_registration_otp():
+    """
+    Verify registration OTP.
+    Expected JSON: { "email": "", "otp": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        otp = (data.get('otp') or '').strip()
+
+        if not email or not otp:
+            return jsonify({'error': 'Email and OTP are required'}), 400
+
+        otp_codes = get_collection(Collections.SYSTEM_META)
+        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
+        if not otp_doc:
+            return jsonify({'error': 'OTP not found. Please request a new OTP'}), 404
+
+        expires_at = otp_doc.get('expires_at')
+        if not expires_at or datetime.utcnow() > expires_at:
+            return jsonify({'error': 'OTP expired. Please request a new OTP'}), 400
+
+        if otp_doc.get('otp_hash') != _hash_otp(otp):
+            return jsonify({'error': 'Invalid OTP'}), 400
+
+        otp_codes.update_one(
+            {'_id': otp_doc['_id']},
+            {'$set': {'verified': True, 'verified_at': datetime.utcnow()}}
+        )
+
+        return jsonify({'message': 'OTP verified successfully'}), 200
+    except Exception as e:
+        print(f"Verify registration OTP error: {e}")
+        return jsonify({'error': 'Failed to verify OTP'}), 500
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -143,6 +276,12 @@ def register():
         existing_user = users.find_one({'email': email})
         if existing_user:
             return jsonify({'error': 'Email already registered'}), 409
+
+        # Require OTP verification before allowing registration
+        otp_codes = get_collection(Collections.SYSTEM_META)
+        otp_doc = otp_codes.find_one({'type': 'registration_otp', 'email': email})
+        if not otp_doc or not otp_doc.get('verified'):
+            return jsonify({'error': 'Please verify OTP before registration'}), 400
         
         # Check enrollment number for students
         if role == 'student' and enrollment:
@@ -187,21 +326,8 @@ def register():
         result = users.insert_one(user_doc)
         user_doc['_id'] = result.inserted_id
         
-        # NORMALIZED: Also create faculty record in faculty collection
-        if role == 'faculty':
-            faculty_collection = get_collection(Collections.FACULTIES)
-            faculty_doc = FacultyModel.create_faculty(
-                user_id=str(user_doc['_id']),
-                department=department,
-                designation=designation
-            )
-            try:
-                faculty_collection.insert_one(faculty_doc)
-                print(f"✅ Faculty record created for user {user_doc['_id']}")
-            except Exception as faculty_error:
-                print(f"Warning: Could not create faculty record: {faculty_error}")
-                # Continue anyway - user is created, admin can fix faculty record later
-        
+        # Faculty fields are already stored directly in users collection.
+        # Keep registration single-write here to avoid dependency on a separate model.
         
         # NOTE: Removed notification on registration for performance
         # If you need registration notifications, enable separately
@@ -210,6 +336,7 @@ def register():
         token = generate_jwt_token(user_doc)
         
         # Return success response (with backward compatible user data)
+        otp_codes.delete_one({'type': 'registration_otp', 'email': email})
         return jsonify({
             'message': 'Registration successful',
             'token': token,

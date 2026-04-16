@@ -31,15 +31,15 @@ def load_content() -> str:
         return ""
     
     for f in glob.glob(f"{data_dir}/*.txt"):
-        print(f"Reading file: {f}")
         with open(f, "r", encoding="utf-8") as file:
             content = file.read()
-            print(f"Loaded {len(content)} chars from {os.path.basename(f)}")
             all_parts.append(content)
     
     result = "\n".join(all_parts)
-    print(f"Total content loaded: {len(result)} chars")
     return result
+
+CONTEXT = load_content()
+print(f"✅ Global SRIMCA context cached: {len(CONTEXT)} chars (startup only)")
 
 
 # ---------- BUILD ----------
@@ -109,28 +109,27 @@ def get_gpt_answer(question: str) -> str:
     if not openai_client:
         return None
     
-    content = load_content()
-    
     system_prompt = """You are SRIMCA AI, a helpful assistant for Shrimad Rajchandra Institute of Management and Computer Application.
-
+    
 Answer the user's question based on the information below. Be friendly, accurate, and conversational.
-
+    
 Information about SRIMCA:
 {context}
-
+    
 User question: {question}
-
-Give a clear, helpful answer. If you don't know the answer, say so honestly.""".format(context=content, question=question)
+    
+Give a clear, helpful answer. If you don't know the answer, say so honestly.""".format(context=CONTEXT, question=question)
     
     try:
         response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
             ],
+            timeout=20,
             temperature=0.3,
-            max_tokens=300
+            max_tokens=200
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
