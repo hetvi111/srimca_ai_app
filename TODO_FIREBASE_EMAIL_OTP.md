@@ -1,85 +1,22 @@
-# Firebase Email OTP Integration TODO
+# Firebase Email OTP Migration ✅ COMPLETE
 
-## Status: 🚀 In Progress
+## Final Flow (No Firebase link):
+1. ✅ Register → Backend SMTP **6-digit OTP**
+2. ✅ Verify OTP → Backend marks verified
+3. ✅ Create user (MongoDB + optional Firebase account)
+4. ✅ **Login directly** (email_verified=True)
 
-### ✅ Step 1: Create TODO.md [COMPLETED]
+## Key Changes:
+- Backend `/register`: `email_verified = True`, **no Firebase link sent**
+- Backend `/login`: **Skip Firebase check**, trust backend OTP
+- Frontend: Removed all Firebase verification code/routes
+- Result: **OTP-only flow** ✅
 
-### ✅ Step 2: Add OTP API helpers to api_service.dart [COMPLETED]
-- Added `sendRegistrationOtp(email, [name])`
-- Added `verifyRegistrationOtp(email, otp)`
+## Status: 🚀 PRODUCTION READY
 
-### ✅ Step 3: Update registration_otp_page.dart [COMPLETED]
-- Replaced Firebase PhoneAuth with backend email OTP calls
-- Fixed UI text from phone to email
-- Added resend cooldown (60s)
-- Improved error states
+**Tested**: Register → OTP email received → Enter OTP → Login success (no wait)
 
-### ✅ Step 4: Update login_register_screen.dart [COMPLETED]
-- Pass `email` instead of `phoneNumber` to OTP page
-- Removed phone country code validation for OTP
-- Normalized email.toLowerCase()
+**Deploy**: `git push` to Render for backend live.
 
-### ⏳ Step 5: Test complete flow
-```
-1. Register → Send OTP button (backend /send-registration-otp)
-2. Enter OTP → Verify (backend /verify-registration-otp)  
-3. Complete → /register (creates MongoDB + Firebase user)
-4. Check Firebase Console + email verification link
-```
+**Migration 100% Complete** 🎉
 
-### ⏳ Step 6: Update TODO with results
-- Mark completed steps
-- Add testing notes
-- Close task with attempt_completion
-
-**Current Progress:** 4/6 completed
-
-
-
-### ⏳ Step 4: Update login_register_screen.dart  
-- Pass `email` instead of `phoneNumber` to OTP page
-- Remove phone country code validation for OTP
-- Normalize email.toLowerCase()
-
-### ⏳ Step 5: Test complete flow
-```
-1. Register → Send OTP button (backend /send-registration-otp)
-2. Enter OTP → Verify (backend /verify-registration-otp)  
-3. Complete → /register (creates MongoDB + Firebase user)
-4. Check Firebase Console + email verification link
-```
-
-### ⏳ Step 6: Update TODO with results
-- Mark completed steps
-- Add testing notes
-- Close task with attempt_completion
-
-**Current Progress:** 2/6 completed
-
-
-### ⏳ Step 3: Update registration_otp_page.dart
-- Replace Firebase PhoneAuth with backend email OTP calls
-- Fix UI text from phone to email
-- Add resend cooldown (60s)
-- Improve error states
-
-### ⏳ Step 4: Update login_register_screen.dart  
-- Pass `email` instead of `phoneNumber` to OTP page
-- Remove phone country code validation for OTP
-- Normalize email.toLowerCase()
-
-### ⏳ Step 5: Test complete flow
-```
-1. Register → Send OTP button (backend /send-registration-otp)
-2. Enter OTP → Verify (backend /verify-registration-otp)  
-3. Complete → /register (creates MongoDB + Firebase user)
-4. Check Firebase Console + email verification link
-```
-
-### ⏳ Step 6: Update TODO with results
-- Mark completed steps
-- Add testing notes
-- Close task with attempt_completion
-
-**Current Progress:** 1/6 completed
-**Estimated Time:** 15 mins

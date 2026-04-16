@@ -368,35 +368,9 @@ def register():
                 )
                 created_in_firebase = True
 
-            try:
-                verification_link = firebase_auth.generate_email_verification_link(
-                    email, 
-                    app=firebase_app,
-                    action_code_settings={
-                        'url': 'https://srimca-ai-app-y828.onrender.com/email-verified',
-                        'handle_code_in_app': True
-                    }
-                )
-                sent, message = _send_verification_email(email=email, verification_link=verification_link, name=name)
-                if not sent:
-                    if created_in_firebase:
-                        try:
-                            firebase_auth.delete_user(firebase_user.uid, app=firebase_app)
-                        except Exception as delete_err:
-                            print(f"Failed to cleanup Firebase user after email send failure: {delete_err}")
-                    return jsonify({'error': message}), 500
-            except Exception as firebase_err:
-                if created_in_firebase:
-                    try:
-                        firebase_auth.delete_user(firebase_user.uid, app=firebase_app)
-                    except Exception as delete_err:
-                        print(f"Failed to cleanup Firebase user after link generation failure: {delete_err}")
-                print(f"Firebase verification setup error: {firebase_err}")
-                return jsonify({'error': 'Failed to setup email verification'}), 500
-
+            # Skip Firebase verification link - backend OTP is sufficient
             user_doc['firebase_uid'] = firebase_user.uid
-            user_doc['email_verified'] = bool(firebase_user.email_verified)
-            user_doc['verification_email_sent_at'] = datetime.utcnow()
+            user_doc['email_verified'] = True  # Backend OTP verified = email verified
         else:
             user_doc['email_verified'] = True
         
@@ -483,21 +457,12 @@ def login():
         if not user_doc.get('is_active', True):
             return jsonify({'error': 'Account is deactivated'}), 401
 
-        # Enforce Firebase email verification when Firebase is configured.
-        firebase_app = get_firebase_app()
-        if firebase_app is not None:
-            firebase_user = _get_firebase_user_by_email(email)
-            if firebase_user and not firebase_user.email_verified:
-                users.update_one(
-                    {'_id': user_doc['_id']},
-                    {'$set': {'email_verified': False}}
-                )
-                return jsonify({'error': 'Please verify your email before login'}), 403
-            if firebase_user and firebase_user.email_verified and not user_doc.get('email_verified'):
-                users.update_one(
-                    {'_id': user_doc['_id']},
-                    {'$set': {'email_verified': True}}
-                )
+        # ✅ Backend OTP verification used. Skip Firebase email verification check.
+        # Always trust backend-verified users
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'email_verified': True}}
+        )
         
         # Verify password
         stored_password = user_doc.get('password', '')

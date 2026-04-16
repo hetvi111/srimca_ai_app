@@ -1,32 +1,44 @@
-# Flutter Email OTP Verification Migration TODO
+# SRIMCA AI - Firebase Email OTP Migration TODO
 
-## Status: In Progress ✅
+Status: 🚀 IN PROGRESS (User approved plan)
 
-### 1. [x] Update lib/api_service.dart
-   - Add `registerUser(Map<String, dynamic> body)` method using POST /api/register ✅
-   - Ensure email normalization everywhere ✅
-   - Fix any syntax issues (trailing }) ✅
+## Completed (from previous analysis):
+- [x] Steps 1-4 from TODO_FIREBASE_EMAIL_OTP.md (API helpers, OTP page, login_register updates)
 
-### 2. [x] Update lib/registration_otp_page.dart  
-   - Change resend cooldown: 60s → 30s ✅
-   - Replace direct http.post with ApiService.registerUser() ✅
-   - Enhance error handling (invalid/expired/network) ✅
-   - Improve UI: Auto-focus, loading text, explicit "OTP sent" message ✅
-   - Ensure success navigates to login/home ✅
+## Migration Plan Steps:
 
-### 3. [x] Cleanup lib/firebase_service.dart
-   - Comment out Firebase Auth code (legacy, REST flow primary)
-   - Referenced in email_verification_page.dart, forgot_password_screen.dart, splash_screen.dart - kept for compatibility ✅
+### Backend Changes (auth.py)
+1. [✅] Update `/register` endpoint:
+   - Set `email_verified: True` after OTP verification
+   - Skip Firebase verification link generation/sending
+   - Keep Firebase user creation (optional)
 
-### 4. [ ] Test Complete Flow
-   - Register form → Send OTP → Verify OTP → Register → Login success
-   - Test resend (30s cooldown), errors, loading states
-   - Run `flutter pub get &amp;&amp; flutter run`
+2. [✅] Update `/login` endpoint:
+   - Remove Firebase `email_verified` check
+   - Trust MongoDB `email_verified = True`
 
-### 5. [ ] Final Validation
-   - No Firebase phoneAuth remnants
-   - Email normalized (trim/lowercase)
-   - Clean modular code
-   - Ready for attempt_completion
 
-**Backend Assumption:** /api/register accepts full registration JSON post-OTP verify, returns {success, message}
+### Frontend Cleanups
+3. [✅] lib/firebase_service.dart:
+   - Deprecate/remove email verification methods
+
+4. [✅] lib/registration_otp_page.dart:
+   - Confirmed: Uses backend API only, no Firebase
+
+5. [✅] lib/email_verification_page.dart:
+   - Route & import removed (file can be deleted later)
+
+6. [✅] lib/main.dart:
+   - '/email-verification' route removed
+
+### Testing & Completion
+7. [ ] Test full flow: Register → OTP → Login (no Firebase link needed)
+8. [ ] Update TODO_FIREBASE_EMAIL_OTP.md → ✅ COMPLETE
+9. [ ] attempt_completion
+
+**Next Step:** Frontend cleanups (firebase_service.dart)
+
+**Backend Progress**: Steps 1-2 ✅ Backend now uses OTP only for verification.
+
+**Estimated Time:** 15 mins
+
