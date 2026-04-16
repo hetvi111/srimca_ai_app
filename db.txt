@@ -1,0 +1,60 @@
+SRIMCA AI — Sample DB Data (for testing)
+======================================
+
+These are 4 sample accounts (1 admin, 1 student, 1 faculty, 1 visitor).
+
+If you want these records inserted into MongoDB, run:
+  cd backend
+  python create_sample_users.py
+
+Inserted/confirmed in DB (example run):
+- admin@srimca.edu   _id=69e0828c1e4b4a101693a679
+- student@srimca.edu _id=69e0828e1e4b4a101693a67a
+- faculty2@srimca.edu _id=69e0828f1e4b4a101693a67b
+- visitor@srimca.edu _id=69e082901e4b4a101693a67c
+
+--------------------------------------
+ADMIN (users collection)
+--------------------------------------
+name: Admin User
+email: admin@srimca.edu
+password (plain for login): admin123
+role: admin
+mobile: 9999999999
+department: Administration
+
+--------------------------------------
+STUDENT (users collection)
+--------------------------------------
+name: Student User
+email: student@srimca.edu
+password (plain for login): student123
+role: student
+mobile: 8888888888
+enrollment: MCA2026SRIMCA001
+dob: 2004-01-15
+semester: 2
+department: mca
+
+--------------------------------------
+FACULTY (users collection)
+--------------------------------------
+name: Faculty User
+email: faculty2@srimca.edu
+password (plain for login): faculty123
+role: faculty
+mobile: 7777777777
+department: mca
+designation: Assistant Professor
+
+--------------------------------------
+VISITOR (users collection)
+--------------------------------------
+name: Visitor User
+email: visitor@srimca.edu
+password (plain for login): visitor123
+role: visitor
+mobile: 6666666666
+purpose: admission
+approval_status: pending
+
