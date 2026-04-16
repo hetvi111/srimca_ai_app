@@ -10,10 +10,7 @@ const Color accentBlue = Color(0xFF1E88E5);
 const Color lightGrey = Color(0xFFF5F5F5);
 
 class VisitorHomePage extends StatefulWidget {
-  final String? visitorId;
-  final String? visitorName;
-  
-  const VisitorHomePage({super.key, this.visitorId, this.visitorName});
+  const VisitorHomePage({super.key});
 
   @override
   State<VisitorHomePage> createState() => _VisitorHomePageState();
@@ -21,6 +18,8 @@ class VisitorHomePage extends StatefulWidget {
 
 class _VisitorHomePageState extends State<VisitorHomePage> {
   int _currentIndex = 0;
+  bool _isLoggedIn = false;
+  String _userName = 'Visitor';
   
   final List<Map<String, dynamic>> faqs = [
     {'question': 'What courses does SRIMCA offer?', 'answer': 'SRIMCA offers BCA, MCA , MBA courses in Computer Science.'},
@@ -29,6 +28,26 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     {'question': 'What is the contact number?', 'answer': 'You can reach us at +91 1234567890 or email at info@srimca.edu'},
     {'question': 'Where is SRIMCA located?', 'answer': 'SRIMCA is located in Kalol, Gandhinagar district, Gujarat.'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (isLoggedIn) {
+      final user = await AuthService.getUser();
+      if (user != null) {
+        setState(() {
+          _isLoggedIn = true;
+          _userName = user['name'] ?? 'Visitor';
+        });
+      }
+    }
+    setState(() {}); // trigger rebuild
+  }
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
@@ -93,13 +112,13 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                     const SizedBox(height: 20),
 
                     // Welcome Text
-                    const Text(
-                      "Welcome, Visitor! 👋",
+                    Text(
+                      "Welcome, $_userName! 👋",
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navyBlue),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      "SRIMCA AI Assistant",
+                    Text(
+                      _isLoggedIn ? "Dashboard Ready" : "SRIMCA AI Assistant",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -114,72 +133,91 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
 
                     const SizedBox(height: 24),
 
-                    // Login/Register Buttons for Visitors
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: lightGrey,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Welcome Visitor! Login or Register',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: navyBlue,
+                    if (!_isLoggedIn)
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: lightGrey,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => Navigator.pushNamed(context, '/login'),
-                                  icon: const Icon(Icons.login, size: 20),
-                                  label: const Text('Login'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: accentBlue,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Welcome Visitor! Login or Register',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: navyBlue,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                                    icon: const Icon(Icons.login, size: 20),
+                                    label: const Text('Login'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: accentBlue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => Navigator.pushNamed(context, '/login'),
-                                  icon: const Icon(Icons.person_add, size: 20),
-                                  label: const Text('Register'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: navyBlue,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                                    icon: const Icon(Icons.person_add, size: 20),
+                                    label: const Text('Register'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: navyBlue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: accentBlue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.check_circle, color: accentBlue, size: 48),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Welcome back, $_userName!',
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: navyBlue),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 24),
 
                     // Quick Info

@@ -153,7 +153,7 @@ class VisitorQRPage extends StatelessWidget {
                           side: const BorderSide(color: accentBlue),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        onPressed: () => Navigator.pushNamed(context, '/visitor-register'),
                         icon: const Icon(Icons.person_add, color: accentBlue),
                         label: const Text(
                           "Register Visitor",
@@ -169,24 +169,26 @@ class VisitorQRPage extends StatelessWidget {
                 ),
               ),
 
-              // QR Link Info
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: Colors.grey),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("QR opens web registration: $kVisitorRegistrationUrl")),
+                      const SnackBar(content: Text("QR Scanned! Proceeding to registration...")),
                     );
+                    Navigator.pushNamed(context, '/visitor-register');
                   },
-                  icon: const Icon(Icons.link, color: Colors.grey),
+                  icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
                   label: const Text(
-                    "QR Links to Web Register",
-                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                    "Simulate QR Scan → Register",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

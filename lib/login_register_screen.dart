@@ -595,7 +595,16 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
             );
             break;
           case 'visitor':
-            Navigator.pushReplacementNamed(context, '/visitor');
+            Navigator.pushReplacementNamed(
+              context,
+              '/welcome',
+              arguments: {
+                'role': 'Visitor',
+                'userId': user['_id'] ?? '',
+                'userName': user['name'] ?? 'Visitor',
+                'email': user['email'] ?? '',
+              },
+            );
             break;
           default:
             Navigator.pushReplacementNamed(
@@ -844,7 +853,16 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
             );
             break;
           case 'visitor':
-            Navigator.pushReplacementNamed(context, '/visitor');
+            Navigator.pushReplacementNamed(
+              context,
+              '/welcome',
+              arguments: {
+                'role': 'Visitor',
+                'userId': user['_id'] ?? '',
+                'userName': user['name'] ?? 'Visitor',
+                'email': user['email'] ?? '',
+              },
+            );
             break;
           default:
             Navigator.pushReplacementNamed(

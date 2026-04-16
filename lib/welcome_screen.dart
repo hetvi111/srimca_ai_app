@@ -35,9 +35,9 @@ class WelcomeScreen extends StatelessWidget {
         details = staffId.isNotEmpty ? 'Staff ID: $staffId' : 'Staff account';
         break;
       case 'Visitor':
-        title = 'Welcome, Visitor';
-        subtitle = 'Visitor access (QR-registered).';
-        details = 'Limited access until approved.';
+        title = 'Welcome, Visitor!';
+        subtitle = 'Your visit has been registered.';
+        details = 'Start chatting with SAI or view your profile.';
         break;
       default:
         // Student
@@ -184,6 +184,8 @@ class WelcomeScreen extends StatelessWidget {
                       } else if (role.toLowerCase() == 'visitor') {
                         Navigator.pushReplacementNamed(context, '/visitor');
                       } else {
+                        Navigator.pushReplacementNamed(context, '/home'); // fallback
+                      }
                         Navigator.pushReplacementNamed(context, '/home'); // fallback
                       }
                     },

@@ -36,78 +36,34 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    // Navigate based on saved login session after splash delay.
-    Timer(const Duration(seconds: 3), _navigateNext);
+    // Check visitor auth after animation
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _checkVisitorAuth();
+      }
+    });
   }
 
-  Future<void> _navigateNext() async {
-    try {
-      if (!mounted) return;
-
-      // REMOVED: Firebase email link handling (OTP migration complete)
-      // Deep links no longer used for verification
-
-
-      final isLoggedIn = await AuthService.isLoggedIn();
+  Future<bool> _checkVisitorAuth() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (isLoggedIn) {
       final savedUser = await AuthService.getUser();
-
-      if (isLoggedIn && savedUser != null) {
+      if (savedUser != null) {
         final role = (savedUser['role'] ?? '').toString().toLowerCase();
-
-        // Subscribe push only if not web
-        if (!kIsWeb) {
-          try {
-            await PushNotificationService.subscribeToRoleTopics(role);
-          } catch (e) {
-            debugPrint('Push subscription error for $role: $e');
+        if (role == 'visitor') {
+          if (!kIsWeb) {
+            try {
+              await PushNotificationService.subscribeToRoleTopics(role);
+            } catch (e) {
+              debugPrint('Push subscription error: $e');
+            }
           }
+          if (mounted) Navigator.pushReplacementNamed(context, '/visitor');
+          return true;
         }
-
-        switch (role) {
-          case 'admin':
-            if (mounted) Navigator.pushReplacementNamed(context, '/admin');
-            return;
-          case 'faculty':
-            if (mounted) Navigator.pushReplacementNamed(context, '/faculty');
-            return;
-          case 'student':
-            if (mounted) Navigator.pushReplacementNamed(
-              context,
-              '/student',
-              arguments: {
-                'studentName': savedUser['name'] ?? 'Student',
-                'semester': savedUser['semester'] ?? 'N/A',
-                'userId': savedUser['_id'] ?? '',
-                'email': savedUser['email'] ?? '',
-                'enrollmentNumber': savedUser['enrollment'] ?? '',
-                'course': savedUser['department'] ?? '',
-              },
-            );
-            return;
-          case 'visitor':
-            if (mounted) Navigator.pushReplacementNamed(context, '/visitor');
-            return;
-          default:
-            await AuthService.clearAuth();
-            if (mounted) Navigator.pushReplacementNamed(context, '/login');
-            return;
-        }
-      }
-
-      if (mounted) Navigator.pushReplacementNamed(context, '/first');
-    } catch (e, stack) {
-      debugPrint('SplashScreen navigation error: $e');
-      debugPrint('Stack: $stack');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('App startup error. Redirecting to login.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
       }
     }
+    return false;
   }
 
   @override
@@ -219,26 +175,90 @@ class _SplashScreenState extends State<SplashScreen>
                     const Spacer(flex: 3),
 
                     // Loading indicator
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 20),
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          strokeWidth: 3,
-                        ),
-                      ),
-                    ),
-
-                    // Bottom Logo
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 40),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                        fit: BoxFit.contain,
-                      ),
+                    AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        if (_animationController.value < 0.8) {
+                          return const Padding(
+                            padding: EdgeInsets.only(bottom: 20),
+                            child: SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 3,
+                              ),
+                            ),
+                          );
+                        }
+                        
+                        return Column(
+                          children: [
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                                child: ElevatedButton.icon(
+                                  icon: Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 28),
+                                  label: const Text(
+                                    '🚀 QR Scan Entry',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: accentBlue,
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 8,
+                                  ),
+                                  onPressed: () => Navigator.of(context).pushNamed('/qr-scan'),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(Icons.login_rounded, color: Colors.white, size: 24),
+                                  label: const Text(
+                                    'Login / Register',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.white, width: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  onPressed: () => Navigator.of(context).pushNamed('/login'),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                height: 70,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

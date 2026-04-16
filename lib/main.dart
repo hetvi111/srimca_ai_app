@@ -18,6 +18,7 @@ import 'package:srimca_ai/reports_analytics_page.dart';
 import 'package:srimca_ai/security_page.dart';
 import 'package:srimca_ai/VisitorHomePage.dart';
 import 'package:srimca_ai/visitor_registration_page.dart';
+import 'package:srimca_ai/visitor_qr_page.dart';
 import 'package:srimca_ai/student_page.dart';
 import 'package:srimca_ai/student_notifications_page.dart';
 import 'package:srimca_ai/student_chat_history_page.dart';
@@ -225,6 +226,8 @@ builder: (context, child) {
         '/faculty': (context) => const FacultyHomePage(),
         '/visitor': (context) => VisitorHomePage(),
         '/register': (context) => const VisitorRegistrationPage(),
+        '/qr-scan': (context) => const VisitorQRPage(),
+        '/visitor-register': (context) => const VisitorRegistrationPage(),
         '/student': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return StudentHomePage(
