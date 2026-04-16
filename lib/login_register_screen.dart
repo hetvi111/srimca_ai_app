@@ -799,22 +799,80 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     if (!mounted) return;
     
     if (result['success'] == true) {
+      final responseData = result['data'] as Map<String, dynamic>?;
+      final token = responseData?['token'] as String?;
+      final user = responseData?['user'] as Map<String, dynamic>?;
+
+      if (token != null && token.isNotEmpty) {
+        await AuthService.saveToken(token);
+      }
+      if (user != null) {
+        await AuthService.saveUser(user);
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Registration successful! Please login.')),
+        SnackBar(content: Text(result['message'] ?? 'Registration successful! Logging in...')),
       );
-      // Clear form & switch to login tab
-      _emailController.clear();
-      _passwordController.clear();
-      _confirmPasswordController.clear();
-      _nameController.clear();
-      _mobileController.clear();
-      _enrollmentController.clear();
-      _dobController.clear();
-      _designationController.clear();
-      _selectedSemester = '';
-      _selectedDepartment = '';
-      _selectedPurpose = '';
-      _tabController.animateTo(0);
+
+      if (user != null) {
+        final String role = (user['role'] as String? ?? _selectedRole).toLowerCase();
+        try {
+          if (role.isNotEmpty) {
+            await PushNotificationService.subscribeToRoleTopics(role);
+          }
+        } catch (e) {
+          debugPrint('FCM topic subscription failed: $e');
+        }
+
+        switch (role) {
+          case 'admin':
+            Navigator.pushReplacementNamed(context, '/admin');
+            break;
+          case 'faculty':
+            Navigator.pushReplacementNamed(context, '/faculty');
+            break;
+          case 'student':
+            Navigator.pushReplacementNamed(
+              context,
+              '/student',
+              arguments: {
+                'studentName': user['name'] ?? 'student',
+                'semester': user['semester'] ?? 'semester',
+                'userId': user['_id'] ?? '',
+                'email': user['email'] ?? '',
+              },
+            );
+            break;
+          case 'visitor':
+            Navigator.pushReplacementNamed(context, '/visitor');
+            break;
+          default:
+            Navigator.pushReplacementNamed(
+              context,
+              '/welcome',
+              arguments: {
+                'role': role.isNotEmpty ? role[0].toUpperCase() + role.substring(1) : 'User',
+                'userId': user['_id'] ?? '',
+                'userName': user['name'] ?? 'User',
+                'email': user['email'] ?? '',
+              },
+            );
+        }
+      } else {
+        // Fall back to login tab if user data is missing.
+        _emailController.clear();
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+        _nameController.clear();
+        _mobileController.clear();
+        _enrollmentController.clear();
+        _dobController.clear();
+        _designationController.clear();
+        _selectedSemester = '';
+        _selectedDepartment = '';
+        _selectedPurpose = '';
+        _tabController.animateTo(0);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['error'] ?? 'Registration failed')),
