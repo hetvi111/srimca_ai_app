@@ -42,7 +42,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     'placement',
     'meeting',
     'event',
-    'tour',
+    'Campus Visit',
     'other',
   ];
 
@@ -55,7 +55,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
     'placement': 'Placement/Recruitment',
     'meeting': 'Meeting with Faculty',
     'event': 'College Event',
-    'tour': 'Campus Tour',
+    'Campus Visit': 'Campus Visit',
     'other': 'Other',
   };
 
