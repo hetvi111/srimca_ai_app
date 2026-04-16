@@ -24,6 +24,8 @@ from database import get_collection, Collections
 from models import UserModel
 from config import get_config
 from notification_helper import create_notification  # Optional: Enable if needed
+from firebase import get_firebase_app
+from firebase_admin import auth as firebase_auth
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -76,8 +78,15 @@ def _hash_otp(otp: str) -> str:
 
 def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[bool, str]:
     """Send OTP email using SMTP credentials from environment."""
-    sender_email = os.getenv("SMTP_SENDER_EMAIL", "").strip()
-    sender_password = os.getenv("SMTP_SENDER_PASSWORD", "").strip()
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+    ).strip()
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
@@ -108,6 +117,64 @@ def _send_registration_otp_email(email: str, otp: str, name: str = "") -> tuple[
     except Exception as e:
         print(f"OTP email sending error: {e}")
         return False, "Failed to send OTP email"
+
+
+def _send_verification_email(email: str, verification_link: str, name: str = "") -> tuple[bool, str]:
+    """Send Firebase email verification link using SMTP credentials from environment."""
+    sender_email = (
+        os.getenv("SMTP_SENDER_EMAIL", "")
+        or os.getenv("SMTP_FROM", "")
+        or os.getenv("SMTP_USER", "")
+    ).strip()
+    sender_password = (
+        os.getenv("SMTP_SENDER_PASSWORD", "")
+        or os.getenv("SMTP_PASS", "")
+    ).strip()
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+    if not sender_email or not sender_password:
+        return False, "Email service not configured on server"
+
+    greeting_name = name.strip() or "User"
+    msg = MIMEText(
+        (
+            f"Hello {greeting_name},\n\n"
+            "Welcome to SRIMCA AI.\n"
+            "Please verify your email by clicking the link below:\n\n"
+            f"{verification_link}\n\n"
+            "If you did not create this account, you can ignore this email.\n\n"
+            "Regards,\nSRIMCA AI Team"
+        ),
+        "plain",
+    )
+    msg["Subject"] = "Verify your SRIMCA AI email"
+    msg["From"] = sender_email
+    msg["To"] = email
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        return True, "Verification email sent successfully"
+    except Exception as e:
+        print(f"Verification email sending error: {e}")
+        return False, "Failed to send verification email"
+
+
+def _get_firebase_user_by_email(email: str):
+    """Fetch Firebase user by email if Firebase is enabled."""
+    app = get_firebase_app()
+    if app is None:
+        return None
+    try:
+        return firebase_auth.get_user_by_email(email, app=app)
+    except firebase_auth.UserNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Firebase get_user_by_email error: {e}")
+        return None
 
 
 @auth_bp.route('/send-registration-otp', methods=['POST'])
@@ -299,6 +366,27 @@ def register():
             password=hashed_password.decode('utf-8'),
             role=role
         )
+
+        # Optional Firebase account + email verification link.
+        # This runs only when Firebase Admin SDK is configured.
+        firebase_app = get_firebase_app()
+        if firebase_app is not None:
+            firebase_user = _get_firebase_user_by_email(email)
+            created_in_firebase = False
+            if firebase_user is None:
+                firebase_user = firebase_auth.create_user(
+                    email=email,
+                    password=password,
+                    display_name=name,
+                    app=firebase_app
+                )
+                created_in_firebase = True
+
+            # Skip Firebase verification link - backend OTP is sufficient
+            user_doc['firebase_uid'] = firebase_user.uid
+            user_doc['email_verified'] = True  # Backend OTP verified = email verified
+        else:
+            user_doc['email_verified'] = True
         
         # Add ALL fields to the user document (single collection)
         user_doc['mobile'] = mobile
@@ -382,6 +470,13 @@ def login():
         # Check if user is active
         if not user_doc.get('is_active', True):
             return jsonify({'error': 'Account is deactivated'}), 401
+
+        # ✅ Backend OTP verification used. Skip Firebase email verification check.
+        # Always trust backend-verified users
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {'email_verified': True}}
+        )
         
         # Verify password
         stored_password = user_doc.get('password', '')
@@ -547,3 +642,106 @@ def change_password():
     except Exception as e:
         print(f"Change password error: {e}")
         return jsonify({'error': 'Failed to change password'}), 500
+
+
+@auth_bp.route('/resend-verification-email', methods=['POST'])
+def resend_verification_email():
+    """
+    Resend Firebase verification email.
+    Expected JSON: { "email": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users = get_collection(Collections.USERS)
+        user_doc = users.find_one({'email': email})
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+
+        firebase_app = get_firebase_app()
+        if firebase_app is None:
+            return jsonify({'error': 'Firebase email verification is not enabled on server'}), 503
+
+        firebase_user = _get_firebase_user_by_email(email)
+        if firebase_user is None:
+            return jsonify({'error': 'Firebase user not found for this email'}), 404
+        
+        # Rate limiting: 1 email per 60 seconds
+        now = datetime.utcnow()
+        last_sent = user_doc.get('last_verification_email_sent')
+        if last_sent and (now - last_sent).seconds < 60:
+            return jsonify({'error': 'Please wait 60 seconds before requesting again'}), 429
+        
+        if firebase_user.email_verified:
+            users.update_one({'_id': user_doc['_id']}, {'$set': {'email_verified': True}})
+            return jsonify({'message': 'Email already verified'}), 200
+
+        verification_link = firebase_auth.generate_email_verification_link(
+            email, 
+            app=firebase_app,
+            action_code_settings={
+                'url': 'https://srimca-ai-app-y828.onrender.com/email-verified',
+                'handle_code_in_app': True
+            }
+        )
+        sent, message = _send_verification_email(
+            email=email,
+            verification_link=verification_link,
+            name=user_doc.get('name', '')
+        )
+        if not sent:
+            return jsonify({'error': message}), 500
+
+        users.update_one(
+            {'_id': user_doc['_id']},
+            {'$set': {
+                'verification_email_sent_at': datetime.utcnow(),
+                'last_verification_email_sent': datetime.utcnow()
+            }}
+        )
+        return jsonify({'message': message}), 200
+    except Exception as e:
+        print(f"Resend verification email error: {e}")
+        return jsonify({'error': 'Failed to resend verification email'}), 500
+
+
+@auth_bp.route('/email-verification-status', methods=['POST'])
+def email_verification_status():
+    """
+    Check whether a user's Firebase email is verified.
+    Expected JSON: { "email": "" }
+    """
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        users = get_collection(Collections.USERS)
+        user_doc = users.find_one({'email': email})
+        if not user_doc:
+            return jsonify({'error': 'User not found'}), 404
+
+        firebase_app = get_firebase_app()
+        if firebase_app is None:
+            return jsonify({
+                'email_verified': bool(user_doc.get('email_verified', True)),
+                'source': 'local'
+            }), 200
+
+        firebase_user = _get_firebase_user_by_email(email)
+        if firebase_user is None:
+            return jsonify({'error': 'Firebase user not found for this email'}), 404
+
+        verified = bool(firebase_user.email_verified)
+        users.update_one({'_id': user_doc['_id']}, {'$set': {'email_verified': verified}})
+        return jsonify({
+            'email_verified': verified,
+            'source': 'firebase'
+        }), 200
+    except Exception as e:
+        print(f"Email verification status error: {e}")
+        return jsonify({'error': 'Failed to check verification status'}), 500

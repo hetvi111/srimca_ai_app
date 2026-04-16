@@ -202,6 +202,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -324,6 +325,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   dropdownColor: const Color(0xFF2D2A47),
+                  isExpanded: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: _inputDecoration(),
                   items: _roles
@@ -380,6 +382,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedSemester.isEmpty ? null : _selectedSemester,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Semester"),
                     items: _semesters
@@ -396,8 +399,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration("Department / Course"),
+                    decoration: _inputDecoration("Course"),
                     items: _departments
                         .map((d) => DropdownMenuItem(
                               value: d,
@@ -415,6 +419,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedPurpose.isEmpty ? null : _selectedPurpose,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Purpose of Visit"),
                     items: _purposes
@@ -434,6 +439,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
                   DropdownButtonFormField<String>(
                     value: _selectedDepartment.isEmpty ? null : _selectedDepartment,
                     dropdownColor: const Color(0xFF2D2A47),
+                    isExpanded: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration("Department / Course"),
                     items: _departments
@@ -787,86 +793,33 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
       requestBody['designation'] = _designationController.text.trim();
     }
 
-    // Show loading dialog for OTP send
-    if (!mounted) return;
-    final navigator = Navigator.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
+    final String emailForOtp = email.toLowerCase().trim();
+
+    final bool? registered = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RegistrationOtpPage(
+          email: emailForOtp,
+          name: name,
+          registrationBody: requestBody,
+        ),
+      ),
     );
 
-    try {
-      final uri = Uri.parse('$kApiBaseUrl/api/send-registration-otp');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email.toLowerCase(),
-          'name': name,
-        }),
-      );
-
-      if (!mounted) return;
-      // Close dialog if still open
-      if (navigator.canPop()) {
-        navigator.pop();
-      }
-
-      if (res.statusCode == 200) {
-        final bool? registered = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RegistrationOtpPage(
-              email: email.toLowerCase(),
-              name: name,
-              registrationBody: requestBody,
-            ),
-          ),
-        );
-        if (!mounted) return;
-        if (registered == true) {
-          _emailController.clear();
-          _passwordController.clear();
-          _confirmPasswordController.clear();
-          _nameController.clear();
-          _mobileController.clear();
-          _enrollmentController.clear();
-          _dobController.clear();
-          _designationController.clear();
-          _selectedSemester = '';
-          _selectedDepartment = '';
-          _selectedPurpose = '';
-          _tabController.animateTo(0);
-        }
-      } else {
-        // Print error for debugging
-        print('Registration failed with status: ${res.statusCode}');
-        print('Response body: ${res.body}');
-
-        Map<String, dynamic> body = {};
-        try {
-          body = jsonDecode(res.body) as Map<String, dynamic>;
-        } catch (_) {
-          body = {};
-        }
-        final msg = body['error'] ?? body['message'] ?? 'Registration failed';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg.toString())),
-        );
-      }
-} catch (e) {
-      if (!mounted) return;
-      // Close dialog if still open
-      final navigator = Navigator.of(context);
-      if (navigator.canPop()) {
-        navigator.pop();
-      }
-      // Print error for debugging
-      print('Registration exception: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    if (!mounted) return;
+    if (registered == true) {
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmPasswordController.clear();
+      _nameController.clear();
+      _mobileController.clear();
+      _enrollmentController.clear();
+      _dobController.clear();
+      _designationController.clear();
+      _selectedSemester = '';
+      _selectedDepartment = '';
+      _selectedPurpose = '';
+      _tabController.animateTo(0);
     }
   }
 
