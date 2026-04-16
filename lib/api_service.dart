@@ -1053,5 +1053,50 @@ class ApiService {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
-}
+
+  /// Send registration OTP to email (called automatically on OTP page)
+  static Future<Map<String, dynamic>> sendRegistrationOtp({
+    required String email,
+    String name = '',
+  }) async {
+    try {
+      final response = await post('/api/send-registration-otp', body: {
+        'email': email.trim().toLowerCase(),
+        if (name.isNotEmpty) 'name': name.trim(),
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'message': data['message'] ?? 'OTP sent successfully'};
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Failed to send OTP'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Verify registration OTP
+  static Future<Map<String, dynamic>> verifyRegistrationOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await post('/api/verify-registration-otp', body: {
+        'email': email.trim().toLowerCase(),
+        'otp': otp.trim(),
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'message': data['message'] ?? 'OTP verified successfully'};
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {'success': false, 'error': data['error'] ?? 'Invalid OTP'};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+  }
+
 
