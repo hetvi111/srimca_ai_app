@@ -49,6 +49,17 @@ def create_app(config_name=None):
         config_name = os.getenv('FLASK_ENV', 'development')
     config = get_config()
     
+    # Debug SMTP env resolution on startup when available
+    print(
+        "SMTP env loaded:",
+        f"SMTP_HOST={os.getenv('SMTP_HOST')}",
+        f"SMTP_PORT={os.getenv('SMTP_PORT')}",
+        f"SMTP_FROM_set={bool(os.getenv('SMTP_FROM'))}",
+        f"SMTP_USER_set={bool(os.getenv('SMTP_USER'))}",
+        f"SMTP_SENDER_EMAIL_set={bool(os.getenv('SMTP_SENDER_EMAIL'))}",
+        f"SMTP_PASS_set={bool(os.getenv('SMTP_PASS') or os.getenv('SMTP_PASSWORD') or os.getenv('SMTP_SENDER_PASSWORD'))}",
+    )
+    
     app.config['SECRET_KEY'] = config.JWT_SECRET_KEY
     app.config['MONGODB_URI'] = config.MONGODB_URI
     app.config['MONGODB_DB_NAME'] = config.MONGODB_DB_NAME
