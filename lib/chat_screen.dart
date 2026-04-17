@@ -93,14 +93,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _scrollToBottom();
 
     String response;
+    response = _getFallbackResponse(userMessage); // Immediate fallback
     try {
       response = await _getAIResponse(
         userMessage,
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 8));
     } catch (e) {
-      response =
-          "Sorry, I couldn't process your request right now. Please try again later.";
+      // Use fallback on timeout/error
     }
+
 
     if (mounted) {
       setState(() {
