@@ -1,0 +1,171 @@
+SRIMCA AI BACKEND — DEPLOYMENT (Separate Server)
+
+This file contains copy-paste steps to deploy the Flask backend found in:
+  ./backend
+
+============================================================
+1) Server prerequisites
+============================================================
+- OS: Linux recommended (Ubuntu/Debian)
+- Install:
+  - Python 3.11
+  - Git
+  - pip
+  - (Optional) Nginx + Gunicorn via systemd
+- If you will use MongoDB Atlas:
+  - ensure you have MONGODB_URI access (SRIMCA uses MongoDB)
+
+============================================================
+2) Create app directory + pull code
+============================================================
+Example:
+
+  sudo mkdir -p /var/www/srimca-ai
+  sudo chown -R $USER:$USER /var/www/srimca-ai
+  cd /var/www/srimca-ai
+  git clone <YOUR_GIT_REPO_URL> .
+
+(Adjust path if you use a different user.)
+
+============================================================
+3) Create Python virtual environment
+============================================================
+  cd /var/www/srimca-ai/backend
+  python3.11 -m venv venv
+  source venv/bin/activate
+
+============================================================
+4) Install dependencies
+============================================================
+  pip install --upgrade pip
+  pip install -r requirements.txt
+  pip install -r srimca/requirements.txt
+
+============================================================
+5) Configure environment variables
+============================================================
+The Flask app uses settings via backend/config.py (env vars).
+
+Create a file:
+  /var/www/srimca-ai/backend/.env
+
+Example contents (edit values):
+
+  # Flask / runtime
+  FLASK_ENV=production
+
+  # MongoDB
+  MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster-host>/<db>?retryWrites=true&w=majority
+  MONGODB_DB_NAME=srimca_ai
+
+  # JWT secret key (MUST be set in production)
+  JWT_SECRET_KEY=<SOME_LONG_RANDOM_SECRET>
+
+  # CORS (allowed origins)
+  # Either set to your frontend domain, or use * if you understand the risk.
+  CORS_ORIGINS=https://<FRONTEND_DOMAIN>
+
+  # SMTP for email OTP / verification
+  SMTP_USER=2025mca006@gmail.com
+  SMTP_PASS=<SMTP_APP_PASSWORD>
+  SMTP_FROM=2025mca006@gmail.com
+  SMTP_HOST=smtp.gmail.com
+  SMTP_PORT=587
+  SMTP_SENDER_EMAIL=2025mca006@gmail.com
+
+Notes:
+- If you do not have SMTP enabled, routes requiring email may fail.
+- Render already configured similar variables in repo render.yaml, but this is for separate servers.
+
+============================================================
+6) Run backend with Gunicorn
+============================================================
+From /var/www/srimca-ai:
+
+  cd /var/www/srimca-ai
+  source backend/venv/bin/activate
+
+Start command:
+
+  gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 2 backend.app:app
+
+If you prefer a simpler worker count:
+  gunicorn --bind 0.0.0.0:8000 --workers 1 backend.app:app
+
+Health checks:
+  http://<BACKEND_DOMAIN>:8000/health
+  http://<BACKEND_DOMAIN>:8000/api/health
+
+============================================================
+7) (Recommended) systemd service
+============================================================
+Create:
+  sudo nano /etc/systemd/system/srimca-backend.service
+
+Paste:
+
+  [Unit]
+  Description=SRIMCA AI Backend
+  After=network.target
+
+  [Service]
+  Type=simple
+  User=<YOUR_USER>
+  WorkingDirectory=/var/www/srimca-ai
+  EnvironmentFile=/var/www/srimca-ai/backend/.env
+  ExecStart=/var/www/srimca-ai/backend/venv/bin/gunicorn \
+    --bind 0.0.0.0:8000 \
+    --workers 2 --threads 2 \
+    backend.app:app
+
+  Restart=always
+  RestartSec=3
+
+  [Install]
+  WantedBy=multi-user.target
+
+Enable + start:
+  sudo systemctl daemon-reload
+  sudo systemctl enable srimca-backend
+  sudo systemctl start srimca-backend
+
+View logs:
+  sudo journalctl -u srimca-backend -f
+
+============================================================
+8) (Recommended) Nginx reverse proxy
+============================================================
+Example Nginx site:
+  server {
+    listen 80;
+    server_name <BACKEND_DOMAIN>;
+
+    location / {
+      proxy_pass http://127.0.0.1:8000;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+  }
+
+(Optional) enable HTTPS via certbot/Let’s Encrypt.
+
+============================================================
+9) Firewall / security
+============================================================
+- Allow inbound traffic to backend port 8000 only from Nginx (if you use Nginx).
+- Or expose 8000 publicly only if secured.
+
+============================================================
+10) Frontend configuration reminder
+============================================================
+Update your Flutter frontend API base URL in:
+- lib/api_service.dart
+(or wherever your API URL is defined)
+
+Set it to:
+  https://<BACKEND_DOMAIN>
+
+End of file.
+

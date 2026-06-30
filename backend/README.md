@@ -213,6 +213,30 @@ Expected: {\"message\":\"OTP sent successfully\"}
 - Make sure JWT_SECRET_KEY is set
 - Check token expiration settings
 
+# 🔹 QR Code Generation (Visitor Entry)
+
+## Generate Visitor QR Codes
+
+**Static Gate QR** (for general visitor entry):
+```bash
+cd /path/to/srimca_ai
+python backend/generate_visitor_qr.py
+```
+
+Generates `assets/images/visitor_qr.png` → Used in Flutter `VisitorHomePage.dart`
+
+**What it does:**
+- Creates QR pointing to `/api/visitor`
+- Auto-saves to Flutter assets folder
+- Ready for hot reload in app
+
+**Dynamic Visitor QR** (individual check-ins):
+Script also generates example dynamic QR for specific visitors.
+
+**Backend QR Endpoints:**
+- `GET /api/visitor/qr/<visitor_id>` - Get visitor QR
+- `POST /api/visitor/qr/checkin` - Check-in via QR scan
+
 ## License
 
 MIT License

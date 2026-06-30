@@ -392,9 +392,11 @@ def login():
         }), 200
     
     except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'error': 'Login failed'}), 500
-
+    import traceback
+    print("===== LOGIN ERROR =====")
+    traceback.print_exc()
+    print("=======================")
+    return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():

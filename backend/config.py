@@ -25,7 +25,7 @@ class Config:
     FIREBASE_CLIENT_EMAIL = os.getenv('FIREBASE_CLIENT_EMAIL', '')
     
     # JWT Configuration
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_super_secret_jwt_key_change_in_production')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'd352729f824cc6f38bc774a3f70086c06c9dbe34107086a156c76acc4c406c77')
     JWT_EXPIRATION_HOURS = int(os.getenv('JWT_EXPIRATION_HOURS', '24'))
     
     # Flask Configuration
@@ -34,7 +34,10 @@ class Config:
     PORT = int(os.getenv('PORT', '5000'))
     
     # CORS Configuration
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*')
+    CORS_ORIGINS = os.getenv(
+    'CORS_ORIGINS',
+    'https://srimcaai.web.app,https://srimcaai.firebaseapp.com'
+).split(',')
 
 
 class DevelopmentConfig(Config):

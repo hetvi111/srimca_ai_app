@@ -4,11 +4,10 @@ import 'firebase_options.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-
 import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_register_screen.dart';
-import 'package:srimca_ai/welcome_screen.dart';
+import 'package:srimca_ai/welcome_screen.dart' as welcome;
 import 'package:srimca_ai/admin_main_dashboard.dart';
 import 'package:srimca_ai/user_management.dart';
 import 'package:srimca_ai/faculty_dashboard.dart';
@@ -25,6 +24,9 @@ import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_page.dart';
 import 'package:srimca_ai/admin_password_requests_page.dart';
+import 'package:srimca_ai/visitor_entry_page.dart';
+import 'package:srimca_ai/api_service.dart';
+
 
 // App Theme Colors
 class AppColors {
@@ -56,15 +58,12 @@ void main() async {
   };
 
   // Global error zone for uncaught async errors
-  runZonedGuarded(
-    () {
-      runApp(const MyApp());
-    },
-    (error, stack) {
-      debugPrint('Uncaught async error: $error');
-      debugPrint('Stack: $stack');
-    },
-  );
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  }, (error, stack) {
+    debugPrint('Uncaught async error: $error');
+    debugPrint('Stack: $stack');
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -113,7 +112,9 @@ class _MyAppState extends State<MyApp> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        drawerTheme: const DrawerThemeData(backgroundColor: AppColors.drawer),
+        drawerTheme: const DrawerThemeData(
+          backgroundColor: AppColors.drawer,
+        ),
         cardTheme: CardThemeData(
           color: AppColors.card,
           elevation: 2,
@@ -149,50 +150,45 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
-      builder: (context, child) {
-        ErrorWidget.builder = (FlutterErrorDetails details) {
-          return Scaffold(
-            backgroundColor: AppColors.background,
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 80,
-                      color: AppColors.button,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Something went wrong',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Please reload the page or contact support.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () => SystemNavigator.pop(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reload App'),
-                    ),
-                  ],
+builder: (context, child) {
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 80, color: AppColors.button),
+              const SizedBox(height: 16),
+              Text(
+                'Something went wrong',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          );
-        };
+              const SizedBox(height: 8),
+              const Text(
+                'Please reload the page or contact support.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => SystemNavigator.pop(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload App'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  };
 
-        return child!;
-      },
+  return child!;
+},
       home: const SplashScreen(),
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
@@ -206,8 +202,7 @@ class _MyAppState extends State<MyApp> {
                   Text('Page not found: ${settings.name}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () =>
-                        Navigator.pushReplacementNamed(context, '/login'),
+                    onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
                     child: const Text('Go to Login'),
                   ),
                 ],
@@ -219,13 +214,10 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/first': (context) => const FirstScreen(),
         '/login': (context) => const LoginRegisterScreen(),
-        '/welcome': (context) => const WelcomeScreen(),
-
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
-        '/admin-password-requests': (context) =>
-            const AdminPasswordRequestsPage(),
+        '/admin-password-requests': (context) => const AdminPasswordRequestsPage(),
         '/content-knowledge': (context) => const ContentManagementPage(),
         '/monitoring': (context) => const AIMonitoringPage(),
         '/reports': (context) => ReportsAnalyticsPage(),
@@ -233,20 +225,34 @@ class _MyAppState extends State<MyApp> {
         '/faculty': (context) => const FacultyHomePage(),
         '/visitor': (context) {
           final args =
-              ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>?;
-          return VisitorHomePage(
-            token: args?['token'] ?? '',
-            userId: args?['userId'] ?? '',
+              ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          if (args != null &&
+              args['userId'] != null &&
+              args['token'] != null) {
+            return VisitorHomePage(
+              token: args['token']?.toString() ?? 'visitor',
+              userId: args['userId']?.toString() ?? 'visitor',
+              userName: args['userName']?.toString(),
+            );
+          }
+          return FutureBuilder<Map<String, dynamic>?>(
+            future: AuthService.getUser(),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              return VisitorHomePage(
+                token: 'visitor',
+                userId: user?['_id']?.toString() ?? 'visitor',
+                userName: user?['name']?.toString(),
+              );
+            },
           );
         },
         '/register': (context) => const VisitorRegistrationPage(),
         '/qr-scan': (context) => const VisitorQRPage(),
         '/visitor-register': (context) => const VisitorRegistrationPage(),
+        '/visitor-entry': (context) => const VisitorEntryPage(),
         '/student': (context) {
-          final args =
-              ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return student.StudentHomePage(
             studentName: args?['studentName'] ?? 'Student',
             semester: args?['semester'] ?? 'N/A',
@@ -257,17 +263,13 @@ class _MyAppState extends State<MyApp> {
           );
         },
         '/student-notifications': (context) {
-          final args =
-              ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return StudentNotificationsPage(
             userId: args?['userId']?.toString() ?? '',
           );
         },
         '/student-chat-history': (context) {
-          final args =
-              ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return StudentChatHistoryPage(
             userId: args?['userId']?.toString() ?? '',
           );
@@ -276,3 +278,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+

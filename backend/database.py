@@ -43,13 +43,13 @@ def connect_to_mongodb():
     
     try:
         # Create MongoDB client with proper settings
-        _client = MongoClient(
-            uri,
-            serverSelectionTimeoutMS=5000,  # 5 seconds timeout
-            connectTimeoutMS=10000,
-            retryWrites=True,
-            retryReads=True
-        )
+       _client = MongoClient(
+    uri,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=5000,
+    tls=True
+)
         
         # Get database
         _db = _client[config.MONGODB_DB_NAME]
@@ -57,7 +57,8 @@ def connect_to_mongodb():
         # Test connection
         _client.admin.command('ping')
         
-        print(f"✅ Successfully connected to MongoDB Atlas: {config.MONGODB_DB_NAME}")
+       print("MongoDB ping successful")
+print("Database name:", config.MONGODB_DB_NAME)
         return _db
         
     except ServerSelectionTimeoutError as e:

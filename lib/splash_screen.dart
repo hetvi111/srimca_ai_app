@@ -217,7 +217,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     ),
                                     elevation: 8,
                                   ),
-                                  onPressed: () => Navigator.of(context).pushNamed('/qr-scan'),
+                                  onPressed: () => Navigator.of(context).pushNamed('/visitor-entry'),
                                 ),
                               ),
                             ),

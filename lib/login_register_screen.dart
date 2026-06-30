@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:srimca_ai/static_data.dart';
@@ -6,6 +7,8 @@ import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_screen.dart';
+import 'package:srimca_ai/visitor_auth_layout.dart';
+import 'package:srimca_ai/visitor_theme.dart';
 // REMOVED: registration_otp_page.dart - direct registration
 
 class LoginRegisterScreen extends StatefulWidget {
@@ -63,12 +66,17 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
   bool get _isVisitor => _selectedRole.toLowerCase() == 'visitor';
 
   bool _obscurePassword = true;
+  bool _visitorShowLogin = true;
   String _selectedRole = 'student';
   final List<String> _roles = ['student', 'faculty', 'admin', 'visitor'];
 
-  @override
+@override
   void initState() {
     super.initState();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args?['preselectRole'] == 'visitor') {
+      _selectedRole = 'visitor';
+    }
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -88,6 +96,10 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isVisitor && (kIsWeb || MediaQuery.of(context).size.width >= 700)) {
+      return _buildVisitorAuthScreen();
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: GestureDetector(
@@ -171,6 +183,124 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           ),
         ),
       ),
+    );
+  }
+
+  // ================= VISITOR WEB AUTH =================
+  Widget _buildVisitorAuthScreen() {
+    final isLoginTab = _visitorShowLogin;
+
+    return VisitorAuthLayout(
+      title: isLoginTab ? 'Visitor Login' : 'Visitor Registration',
+      subtitle: isLoginTab
+          ? 'Sign in to track visits, chat with AI, and download your pass.'
+          : 'Register your visit and get quick access to SRIMCA services.',
+      isLogin: isLoginTab,
+      onSwitchMode: () {
+        setState(() => _visitorShowLogin = !_visitorShowLogin);
+      },
+      form: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!isLoginTab) ...[
+            TextField(
+              controller: _nameController,
+              decoration: _visitorInputDecoration('Full Name'),
+            ),
+            const SizedBox(height: 16),
+          ],
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: _visitorInputDecoration(
+              isLoginTab ? 'Mobile Number / Email' : 'Email Address',
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (!isLoginTab) ...[
+            TextField(
+              controller: _mobileController,
+              keyboardType: TextInputType.phone,
+              decoration: _visitorInputDecoration('Mobile Number'),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedPurpose.isEmpty ? null : _selectedPurpose,
+              decoration: _visitorInputDecoration('Purpose of Visit'),
+              items: _purposes
+                  .map((p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(_purposeLabels[p] ?? p),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedPurpose = v ?? ''),
+            ),
+            const SizedBox(height: 16),
+          ],
+          TextField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: _visitorInputDecoration('Password').copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
+          ),
+          if (!isLoginTab) ...[
+            const SizedBox(height: 16),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: _obscurePassword,
+              decoration: _visitorInputDecoration('Confirm Password'),
+            ),
+          ],
+          if (isLoginTab) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/forgot-password'),
+                child: const Text('Forgot Password?'),
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLoginTab ? _apiLogin : _apiRegister,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: visitorPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                isLoginTab ? 'Login' : 'Register Visit',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _visitorInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
@@ -597,12 +727,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           case 'visitor':
             Navigator.pushReplacementNamed(
               context,
-              '/welcome',
+              '/visitor',
               arguments: {
-                'role': 'Visitor',
                 'userId': user['_id'] ?? '',
+                'token': token ?? '',
                 'userName': user['name'] ?? 'Visitor',
-                'email': user['email'] ?? '',
               },
             );
             break;
@@ -855,12 +984,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen>
           case 'visitor':
             Navigator.pushReplacementNamed(
               context,
-              '/welcome',
+              '/visitor',
               arguments: {
-                'role': 'Visitor',
                 'userId': user['_id'] ?? '',
+                'token': token ?? '',
                 'userName': user['name'] ?? 'Visitor',
-                'email': user['email'] ?? '',
               },
             );
             break;

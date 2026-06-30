@@ -1,5 +1,5 @@
 """
-SRIMCA AI Backend - Main Application Entry Point
+SRIMCA AI Backend - Main Application Entry Point app.py
 This is the main Flask application that registers all blueprints and routes.
 """
 

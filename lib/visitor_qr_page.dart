@@ -62,24 +62,24 @@ class _VisitorQRPageState extends State<VisitorQRPage> {
       if (!mounted) return;
 
       final success = result?['success'] == true;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(success ? 'Check-in Successful' : 'Check-in Failed'),
-          content: Text(result?['message'] ?? 'Unknown error'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                if (success) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+      if (success) {
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+        Navigator.pushNamed(context, '/visitor-entry');
+      } else {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Check-in Failed'),
+            content: Text(result?['message'] ?? 'Unknown error'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       print(e);
     }
