@@ -1,6 +1,7 @@
 import math
 from .config import get_knowledge_collection, get_embedding_model
 
+
 def cosine_similarity(vec1, vec2):
     """Calculate cosine similarity between two vectors."""
     if len(vec1) != len(vec2):
@@ -16,12 +17,11 @@ def cosine_similarity(vec1, vec2):
     return dot / (norm1 * norm2)
 
 
-def retrieve_context(question, top_k=3):
+def retrieve_context(question, top_k=1):
     """
     Retrieve most relevant SRIMCA context using embeddings.
     Optimized for Render deployment.
     """
-
     try:
         embedding_model = get_embedding_model()
 
@@ -61,14 +61,10 @@ def retrieve_context(question, top_k=3):
         # Sort by similarity descending
         scores.sort(key=lambda x: x[0], reverse=True)
 
-        # Get top matches
-        top_contexts = [
-            text
-            for score, text in scores[:top_k]
-            if score > 0
-        ]
+        # Return only the best matching context
+        best_context = scores[0][1]
 
-        return "\n\n".join(top_contexts)
+        return best_context
 
     except Exception as e:
         print(f"❌ Retriever Error: {e}")
