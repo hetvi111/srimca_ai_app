@@ -30,8 +30,12 @@ const String kProductionUrl = String.fromEnvironment(
 );
 
 String get kApiBaseUrl {
+  const definedUrl = String.fromEnvironment('API_PROD_URL', defaultValue: '');
+  if (definedUrl.isNotEmpty) {
+    return definedUrl;
+  }
   if (kDebugMode) {
-    return kProductionUrl; // Change this to your local backend URL
+    return 'http://127.0.0.1:5000';
   }
   return kProductionUrl;
 }

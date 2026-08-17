@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
+import 'package:srimca_ai/login_screen.dart';
+import 'package:srimca_ai/register_screen.dart';
 import 'package:srimca_ai/login_register_screen.dart';
 import 'package:srimca_ai/welcome_screen.dart' as welcome;
 import 'package:srimca_ai/admin_main_dashboard.dart';
@@ -15,7 +17,8 @@ import 'package:srimca_ai/content_management_page.dart';
 import 'package:srimca_ai/ai_monitoring_page.dart';
 import 'package:srimca_ai/reports_analytics_page.dart';
 import 'package:srimca_ai/security_page.dart';
-import 'package:srimca_ai/VisitorHomePage.dart';
+import 'package:srimca_ai/visitor/visitor_home_screen.dart';
+import 'package:srimca_ai/visitor/visitor_welcome_screen.dart';
 import 'package:srimca_ai/visitor_registration_page.dart';
 import 'package:srimca_ai/visitor_qr_page.dart';
 import 'package:srimca_ai/student_page.dart' as student;
@@ -24,7 +27,6 @@ import 'package:srimca_ai/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_page.dart';
 import 'package:srimca_ai/admin_password_requests_page.dart';
-import 'package:srimca_ai/visitor_entry_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
 
@@ -189,8 +191,70 @@ builder: (context, child) {
 
   return child!;
 },
-      home: const SplashScreen(),
+      onGenerateRoute: (settings) {
+        final rawName = settings.name ?? '';
+        final uri = Uri.parse(rawName);
+        final path = uri.path.isEmpty ? rawName : uri.path;
+
+        if (path == '/' || path.isEmpty) {
+          return MaterialPageRoute(
+            builder: (_) => const SplashScreen(),
+            settings: settings,
+          );
+        }
+        if (path == '/visitor-welcome' ||
+            path == 'visitor-welcome' ||
+            path == '/visitor-entry' ||
+            path == 'visitor-entry') {
+          return MaterialPageRoute(
+            builder: (_) => const VisitorWelcomeScreen(),
+            settings: settings,
+          );
+        }
+        if (path == '/visitor' || path == 'visitor') {
+          return MaterialPageRoute(
+            builder: (_) => const VisitorHomeScreen(
+              token: 'visitor',
+              userId: 'visitor',
+            ),
+            settings: settings,
+          );
+        }
+        if (path == '/first' || path == 'first') {
+          return MaterialPageRoute(
+            builder: (_) => const FirstScreen(),
+            settings: settings,
+          );
+        }
+        if (path == '/login' || path == 'login') {
+          return MaterialPageRoute(
+            builder: (_) => const LoginScreen(),
+            settings: settings,
+          );
+        }
+        if (path == '/register' ||
+            path == 'register' ||
+            path == '/visitor-register' ||
+            path == 'visitor-register') {
+          return MaterialPageRoute(
+            builder: (_) => const RegisterScreen(initialRole: 'visitor'),
+            settings: settings,
+          );
+        }
+        return null;
+      },
       onUnknownRoute: (settings) {
+        final name = settings.name ?? '';
+        if (name.contains('visitor-welcome') || name.contains('visitor-entry')) {
+          return MaterialPageRoute(
+            builder: (context) => const VisitorWelcomeScreen(),
+          );
+        }
+        if (name.contains('visitor')) {
+          return MaterialPageRoute(
+            builder: (context) => const VisitorHomeScreen(token: 'visitor', userId: 'visitor'),
+          );
+        }
         return MaterialPageRoute(
           builder: (context) => Scaffold(
             body: Center(
@@ -212,8 +276,21 @@ builder: (context, child) {
         );
       },
       routes: {
+        '/': (context) => const SplashScreen(),
         '/first': (context) => const FirstScreen(),
-        '/login': (context) => const LoginRegisterScreen(),
+        '/login': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return LoginScreen(
+            initialRole: args?['role']?.toString() ?? args?['preselectRole']?.toString(),
+          );
+        },
+        '/register': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return RegisterScreen(
+            initialRole: args?['role']?.toString() ?? args?['preselectRole']?.toString(),
+          );
+        },
+        '/login-register': (context) => const LoginScreen(),
         '/admin': (context) => const AdminMainDashboard(),
         '/user-management': (context) => const UserManagementPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
@@ -229,7 +306,7 @@ builder: (context, child) {
           if (args != null &&
               args['userId'] != null &&
               args['token'] != null) {
-            return VisitorHomePage(
+            return VisitorHomeScreen(
               token: args['token']?.toString() ?? 'visitor',
               userId: args['userId']?.toString() ?? 'visitor',
               userName: args['userName']?.toString(),
@@ -239,7 +316,7 @@ builder: (context, child) {
             future: AuthService.getUser(),
             builder: (context, snapshot) {
               final user = snapshot.data;
-              return VisitorHomePage(
+              return VisitorHomeScreen(
                 token: 'visitor',
                 userId: user?['_id']?.toString() ?? 'visitor',
                 userName: user?['name']?.toString(),
@@ -247,10 +324,10 @@ builder: (context, child) {
             },
           );
         },
-        '/register': (context) => const VisitorRegistrationPage(),
         '/qr-scan': (context) => const VisitorQRPage(),
-        '/visitor-register': (context) => const VisitorRegistrationPage(),
-        '/visitor-entry': (context) => const VisitorEntryPage(),
+        '/visitor-register': (context) => const RegisterScreen(initialRole: 'visitor'),
+        '/visitor-entry': (context) => const VisitorWelcomeScreen(),
+        '/visitor-welcome': (context) => const VisitorWelcomeScreen(),
         '/student': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return student.StudentHomePage(

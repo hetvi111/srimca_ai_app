@@ -42,15 +42,26 @@ class UserModel:
         if user_doc is None:
             return None
         
-        return {
+        result = {
             '_id': str(user_doc.get('_id', '')),
             'name': user_doc.get('name', ''),
             'email': user_doc.get('email', ''),
             'role': user_doc.get('role', ''),
-            'created_at': user_doc.get('created_at').isoformat() if user_doc.get('created_at') else None,
+            'created_at': user_doc.get('created_at').isoformat() if isinstance(user_doc.get('created_at'), datetime) else user_doc.get('created_at'),
             'is_active': user_doc.get('is_active', True),
             'profile': user_doc.get('profile', {})
         }
+        # Include all other non-sensitive fields from user_doc
+        exclude_fields = {'password', 'otp', 'otp_hash', 'otp_expires_at'}
+        for k, v in user_doc.items():
+            if k not in exclude_fields and k not in result:
+                if isinstance(v, ObjectId):
+                    result[k] = str(v)
+                elif isinstance(v, datetime):
+                    result[k] = v.isoformat()
+                else:
+                    result[k] = v
+        return result
 
 
 class NoticeModel:

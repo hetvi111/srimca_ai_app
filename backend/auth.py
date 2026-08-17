@@ -10,11 +10,15 @@ NORMALIZED DATABASE DESIGN:
 """
 
 from flask import Blueprint, request, jsonify
+import os
+import random
+import hashlib
+import smtplib
+from email.mime.text import MIMEText
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
-# No email/OTP imports needed after removal
 
 from database import get_collection, Collections
 from models import UserModel
@@ -392,11 +396,11 @@ def login():
         }), 200
     
     except Exception as e:
-    import traceback
-    print("===== LOGIN ERROR =====")
-    traceback.print_exc()
-    print("=======================")
-    return jsonify({'error': str(e)}), 500
+        import traceback
+        print("===== LOGIN ERROR =====")
+        traceback.print_exc()
+        print("=======================")
+        return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
@@ -501,7 +505,9 @@ def change_password():
             return jsonify({'error': 'User not found'}), 404
         
         # Verify current password
-        stored_password = user_doc.get('password', '').encode('utf-8')
+        stored_password = user_doc.get('password', '')
+        if isinstance(stored_password, str):
+            stored_password = stored_password.encode('utf-8')
         if not bcrypt.checkpw(data['current_password'].encode('utf-8'), stored_password):
             return jsonify({'error': 'Current password is incorrect'}), 401
         

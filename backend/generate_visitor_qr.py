@@ -1,92 +1,92 @@
-import qrcode
-from PIL import Image
+"""
+SRIMCA AI - Visitor Gate QR Code Generator
+Generates high-resolution static & dynamic QR codes for visitor check-in & welcome screen.
+"""
+
+import os
+import time
 import base64
 from io import BytesIO
-import hashlib
-import time
-import os
+import qrcode
+from PIL import Image
 
-# 🔹 1. Generate Static Gate QR (for general visitor entry)
-def generate_gate_qr():
-    url = "https://srimcaai.web.app/#/"  # Direct to Flutter web app landing
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+ASSETS_IMG_DIR = os.path.join(PROJECT_ROOT, "assets", "images")
+DYNAMIC_QR_DIR = os.path.join(ASSETS_IMG_DIR, "dynamic_qr")
+
+# Production & Local URLs
+DEFAULT_VISITOR_URL = os.getenv("VISITOR_GATE_URL", "https://srimcaai.web.app/#/visitor-welcome")
+LOCAL_VISITOR_URL = "http://localhost:8080/#/visitor-welcome"
+
+
+def generate_gate_qr(target_url=DEFAULT_VISITOR_URL, output_filename="visitor_qr.png"):
+    """
+    Generate Static Gate QR code that visitors scan on campus.
+    Directs visitor to the Welcome Screen with Get Started / Register / Login options.
+    """
+    os.makedirs(ASSETS_IMG_DIR, exist_ok=True)
+    out_path = os.path.join(ASSETS_IMG_DIR, output_filename)
 
     qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
+        version=2,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
         border=4,
     )
-
-    qr.add_data(url)
+    qr.add_data(target_url)
     qr.make(fit=True)
 
-    img = qr.make_image(fill_color="black", back_color="white")
+    img = qr.make_image(fill_color="#001F3F", back_color="white").convert("RGBA")
 
-    # Save to Flutter assets folder
-    os.makedirs("../../assets/images", exist_ok=True)
-    path = "../../assets/images/visitor_qr.png"
-    img.save(path)
+    # Save QR image
+    img.save(out_path)
+    print(f"[SUCCESS] Static Gate QR generated at: {out_path}")
+    print(f"[INFO] Target URL: {target_url}")
+    return out_path
 
-    print(f"✅ Static GATE QR saved at: {path}")
-    print(f"👉 URL: {url}")
 
-    return path
-
-# 🔹 2. Generate Dynamic QR for specific visitor (token-based)
-def generate_dynamic_qr(visitor_token):
+def generate_dynamic_qr(visitor_token=None):
     """
-    Generate QR for specific visitor check-in.
-    Token example: visitor_<id>_<timestamp>
+    Generate dynamic QR pass for an individual registered visitor.
     """
-    # Create secure token if none provided
-    if visitor_token is None or visitor_token == "test123":
-        visitor_token = f"visitor_test_{int(time.time())}"
-    
-    # QR data: backend endpoint with token param
-    qr_data = f"https://srimcaai.web.app/#/qr/{visitor_token}"  # Web app QR route
-    
+    if not visitor_token:
+        visitor_token = f"visitor_{int(time.time())}"
+
+    os.makedirs(DYNAMIC_QR_DIR, exist_ok=True)
+    qr_data = f"https://srimcaai.web.app/#/visitor-pass?token={visitor_token}"
+
     qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        version=2,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=10,
         border=4,
     )
-
     qr.add_data(qr_data)
     qr.make(fit=True)
 
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Save dynamic QR
-    os.makedirs("../../assets/images/dynamic_qr", exist_ok=True)
+    img = qr.make_image(fill_color="#001F3F", back_color="white")
     timestamp = int(time.time())
-    path = f"../../assets/images/dynamic_qr/visitor_{visitor_token}_{timestamp}.png"
-    img.save(path)
-    
-    # Base64 for immediate use (Flutter/API)
+    file_path = os.path.join(DYNAMIC_QR_DIR, f"pass_{visitor_token}_{timestamp}.png")
+    img.save(file_path)
+
+    # Base64 string for direct mobile/web API transport
     buffered = BytesIO()
     img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
+    img_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-    print(f"✅ Dynamic QR saved at: {path}")
-    print(f"👉 QR URL: {qr_data}")
-    print(f"👉 Token: {visitor_token}")
-
+    print(f"[SUCCESS] Dynamic Visitor QR Pass generated: {file_path}")
+    print(f"[INFO] Token: {visitor_token}")
     return {
-        "qr_url": qr_data,
         "token": visitor_token,
-        "image_path": path,
-        "base64": f"data:image/png;base64,{img_str}"
+        "qr_data": qr_data,
+        "file_path": file_path,
+        "base64": f"data:image/png;base64,{img_b64}"
     }
 
-# 🔹 Main Run
-if __name__ == "__main__":
-    # Generate static gate QR
-    generate_gate_qr()
 
-    # Example dynamic QR
-    print("\n🔹 Example Dynamic QR:")
-    dynamic = generate_dynamic_qr("test123")
-    print(f"QR URL: {dynamic['qr_url']}")
-    print(f"Token: {dynamic['token']}")
-    print("✅ Script completed successfully!")
+if __name__ == "__main__":
+    print("--- SRIMCA AI QR Code Generator ---")
+    gate_qr = generate_gate_qr()
+    sample_dynamic = generate_dynamic_qr("sample_guest_01")
+    print("--- Completed Successfully ---")

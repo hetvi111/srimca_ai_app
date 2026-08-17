@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/chat_screen.dart';
+import 'package:srimca_ai/visitor/visitor_info_sheets.dart';
 
-// Brand & Theme Colors
+// Palette Tokens
 const Color vNavyDark = Color(0xFF001F3F);
-const Color vNavyLight = Color(0xFF0B2545);
+const Color vNavyMedium = Color(0xFF0B2545);
 const Color vBlueAccent = Color(0xFF1E88E5);
 const Color vSoftBg = Color(0xFFF8FAFC);
-const Color vCardBg = Colors.white;
 const Color vTextDark = Color(0xFF0F172A);
 const Color vTextMuted = Color(0xFF64748B);
 
-class VisitorHomePage extends StatefulWidget {
+class VisitorHomeScreen extends StatefulWidget {
   final String token;
   final String userId;
   final String? userName;
 
-  const VisitorHomePage({
+  const VisitorHomeScreen({
     super.key,
     required this.token,
     required this.userId,
@@ -24,10 +24,10 @@ class VisitorHomePage extends StatefulWidget {
   });
 
   @override
-  State<VisitorHomePage> createState() => _VisitorHomePageState();
+  State<VisitorHomeScreen> createState() => _VisitorHomeScreenState();
 }
 
-class _VisitorHomePageState extends State<VisitorHomePage> {
+class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   int _selectedIndex = 0;
   String _displayName = 'Visitor';
   String _token = '';
@@ -56,9 +56,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
         });
       }
     } catch (_) {
-      if (mounted) {
-        setState(() => _loadingNotices = false);
-      }
+      if (mounted) setState(() => _loadingNotices = false);
     }
   }
 
@@ -144,35 +142,35 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header
+          // 1. Header (SRIMCA Logo, Welcome Message, Search Icon, Profile/Guest Icon)
           _buildHeader(),
           const SizedBox(height: 18),
 
-          // 2. Hero Section
+          // 2. Hero Section ("Welcome to SRIMCA AI Assistant", short intro, Ask AI button)
           _buildHeroSection(),
           const SizedBox(height: 24),
 
-          // 3. Quick Actions
-          _buildSectionTitle('Quick Actions'),
+          // 3. Quick Actions (Courses, Admissions, Fees, Faculty, Contact Us, Campus Location)
+          _buildSectionHeading('Quick Actions'),
           const SizedBox(height: 12),
           _buildQuickActionsGrid(),
           const SizedBox(height: 28),
 
-          // 4. Featured Information Cards
-          _buildSectionTitle('Featured Information'),
+          // 4. Featured Information Cards (About, Programs, Admissions, Placement, Facilities, News)
+          _buildSectionHeading('Featured Information'),
           const SizedBox(height: 12),
           _buildFeaturedCards(),
           const SizedBox(height: 28),
 
-          // 5. AI Assistant Section (Ask SAI)
+          // 5. AI Assistant Section (Ask SAI, "How can I help you today?", [Start Chat])
           _buildAskSAISection(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  // 1. Header (SRIMCA Logo, Welcome Message, Search Icon, Profile/Guest Icon)
+  // --- 1. Header ---
   Widget _buildHeader() {
     return Row(
       children: [
@@ -192,7 +190,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
           child: Image.asset(
             'assets/images/logo.png',
-            errorBuilder: (_, __, ___) => const Icon(Icons.school, color: vNavyDark),
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.school, color: vNavyDark),
           ),
         ),
         const SizedBox(width: 12),
@@ -211,7 +209,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                 overflow: TextOverflow.ellipsis,
               ),
               const Text(
-                'SRIMCA AI Campus Portal',
+                'SRIMCA AI Campus Assistant',
                 style: TextStyle(
                   fontSize: 12,
                   color: vTextMuted,
@@ -222,7 +220,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.search_rounded, color: vNavyDark),
+          icon: const Icon(Icons.search_rounded, color: vNavyDark, size: 24),
           tooltip: 'Search SRIMCA Info',
           onPressed: _showSearchModal,
         ),
@@ -245,7 +243,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  // 2. Hero Section
+  // --- 2. Hero Section ---
   Widget _buildHeroSection() {
     return Container(
       width: double.infinity,
@@ -301,7 +299,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Shrimad Rajchandra Institute of Management & Computer Application, Uka Tarsadia University. Explore academics, admissions, and campus amenities.',
+            'Shrimad Rajchandra Institute of Management & Computer Application (UTU). Explore academic programs, admissions, syllabus, and world-class amenities.',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white70,
@@ -331,7 +329,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  // 3. Quick Actions Grid (Courses, Admissions, Fees, Faculty, Contact Us, Campus Location)
+  // --- 3. Quick Actions Grid ---
   Widget _buildQuickActionsGrid() {
     final actions = [
       {
@@ -339,42 +337,42 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
         'icon': Icons.school_rounded,
         'color': const Color(0xFF2563EB),
         'bg': const Color(0xFFEFF6FF),
-        'onTap': () => _showInfoModal('Academic Courses', _coursesContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Academic Programs', VisitorInfoSheets.programsOffered()),
       },
       {
         'title': 'Admissions',
         'icon': Icons.assignment_turned_in_rounded,
         'color': const Color(0xFF059669),
         'bg': const Color(0xFFECFDF5),
-        'onTap': () => _showInfoModal('Admission Guidelines', _admissionsContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Admission Guidelines', VisitorInfoSheets.admissionInfo()),
       },
       {
         'title': 'Fees',
         'icon': Icons.account_balance_wallet_rounded,
         'color': const Color(0xFFD97706),
         'bg': const Color(0xFFFFFBEB),
-        'onTap': () => _showInfoModal('Fee Structure & Scholarships', _feesContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Fee Structure & Scholarships', VisitorInfoSheets.feesContent()),
       },
       {
         'title': 'Faculty',
         'icon': Icons.badge_rounded,
         'color': const Color(0xFF7C3AED),
         'bg': const Color(0xFFF5F3FF),
-        'onTap': () => _showInfoModal('Faculty & Administration', _facultyContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Faculty & Mentors', VisitorInfoSheets.facultyContent()),
       },
       {
         'title': 'Contact Us',
         'icon': Icons.phone_in_talk_rounded,
         'color': const Color(0xFFDC2626),
         'bg': const Color(0xFFFEF2F2),
-        'onTap': () => _showInfoModal('Contact & Inquiries', _contactContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Contact & Helpdesk', VisitorInfoSheets.contactContent()),
       },
       {
         'title': 'Location',
         'icon': Icons.location_on_rounded,
         'color': const Color(0xFF0891B2),
         'bg': const Color(0xFFECFEFF),
-        'onTap': () => _showInfoModal('Campus Location & Transport', _locationContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Campus Location & Buses', VisitorInfoSheets.locationContent()),
       },
     ];
 
@@ -445,54 +443,54 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  // 4. Featured Information Cards
+  // --- 4. Featured Information Cards ---
   Widget _buildFeaturedCards() {
     final cards = [
       {
         'title': 'About SRIMCA',
-        'subtitle': 'College overview, Vision & Mission, AICTE approvals',
+        'subtitle': 'College overview, Vision & Mission, AICTE approval',
         'icon': Icons.account_balance_rounded,
         'badge': 'Overview',
         'color': const Color(0xFF2563EB),
-        'onTap': () => _showInfoModal('About SRIMCA', _aboutSrimcaContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'About SRIMCA', VisitorInfoSheets.aboutSrimca()),
       },
       {
         'title': 'Programs Offered',
         'subtitle': 'MCA (2-Yr), BCA (3-Yr), Integrated MCA (5-Yr), MBA',
         'icon': Icons.workspace_premium_rounded,
-        'badge': 'Academics',
+        'badge': 'Degrees',
         'color': const Color(0xFF7C3AED),
-        'onTap': () => _showInfoModal('Programs Offered', _coursesContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Programs Offered', VisitorInfoSheets.programsOffered()),
       },
       {
         'title': 'Admission Information',
-        'subtitle': 'Eligibility criteria, Required documents & ACPC process',
+        'subtitle': 'Eligibility criteria, Required documents checklist & ACPC process',
         'icon': Icons.checklist_rounded,
         'badge': 'Admissions',
         'color': const Color(0xFF059669),
-        'onTap': () => _showInfoModal('Admission Information', _admissionsContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Admission Guidelines', VisitorInfoSheets.admissionInfo()),
       },
       {
         'title': 'Placement Highlights',
-        'subtitle': 'Top recruiters (TCS, Infosys, Wipro), stats & training cell',
+        'subtitle': 'Top recruiters (TCS, Infosys, TatvaSoft), statistics & training',
         'icon': Icons.trending_up_rounded,
-        'badge': 'Careers',
+        'badge': 'Placements',
         'color': const Color(0xFFD97706),
-        'onTap': () => _showInfoModal('Placement Highlights', _placementsContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Placement Highlights', VisitorInfoSheets.placementHighlights()),
       },
       {
         'title': 'Campus Facilities',
-        'subtitle': '250+ PCs, 200 Mbps Wi-Fi, Library, AC Auditoriums & Hostels',
+        'subtitle': '250+ PCs, 200 Mbps Wi-Fi, Central Library, AC Auditorium',
         'icon': Icons.apartment_rounded,
         'badge': 'Campus',
         'color': const Color(0xFF0891B2),
-        'onTap': () => _showInfoModal('Campus Facilities', _facilitiesContent()),
+        'onTap': () => VisitorInfoSheets.show(context, 'Campus Facilities', VisitorInfoSheets.campusFacilities()),
       },
       {
         'title': 'Latest News & Events',
         'subtitle': 'Workshops, Seminars, TechFest, and Hackathons',
         'icon': Icons.event_available_rounded,
-        'badge': 'Happenings',
+        'badge': 'Events',
         'color': const Color(0xFFE11D48),
         'onTap': () => setState(() => _selectedIndex = 2),
       },
@@ -567,14 +565,14 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  // 5. AI Assistant Section ("Ask SAI" Card)
+  // --- 5. AI Assistant Section ("Ask SAI") ---
   Widget _buildAskSAISection() {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [const Color(0xFF0F172A), vNavyDark],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), vNavyDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -633,7 +631,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Instant answers for timetables, admissions, faculty contact, exams, and campus guidelines.',
+            'Instant answers for timetables, admissions, faculty contact, exams, fees, and campus guidelines.',
             style: TextStyle(
               fontSize: 12,
               color: Colors.white60,
@@ -673,9 +671,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: vNavyDark,
-          ),
+          color: vNavyDark,
           child: Row(
             children: [
               const Icon(Icons.smart_toy_rounded, color: Colors.cyanAccent),
@@ -691,7 +687,14 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
-                onPressed: () => _showInfoModal('About AI Assistant', _aiInfoContent()),
+                onPressed: () => VisitorInfoSheets.show(
+                  context,
+                  'About AI Assistant',
+                  const Text(
+                    'SRIMCA AI Assistant provides 24/7 answers on academic syllabus, timetables, admission forms, facilities, faculty, and notices.',
+                    style: TextStyle(fontSize: 14, color: vTextMuted, height: 1.5),
+                  ),
+                ),
               ),
             ],
           ),
@@ -873,7 +876,6 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Profile Card
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -958,7 +960,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                   child: Image.asset(
                     'assets/images/visitor_qr.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.qr_code_2_rounded,
                       size: 80,
                       color: vNavyDark,
@@ -967,7 +969,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Show this QR at campus security for seamless verification.',
+                  'Show this QR at campus security for verification.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: vTextMuted),
                 ),
@@ -976,9 +978,8 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
           const SizedBox(height: 20),
 
-          // Menu Actions
-          _buildProfileTile(Icons.info_outline_rounded, 'About SRIMCA', () => _showInfoModal('About SRIMCA', _aboutSrimcaContent())),
-          _buildProfileTile(Icons.headset_mic_rounded, 'Help & Support', () => _showInfoModal('Helpdesk Support', _contactContent())),
+          _buildProfileTile(Icons.info_outline_rounded, 'About SRIMCA', () => VisitorInfoSheets.show(context, 'About SRIMCA', VisitorInfoSheets.aboutSrimca())),
+          _buildProfileTile(Icons.headset_mic_rounded, 'Help & Support', () => VisitorInfoSheets.show(context, 'Helpdesk Support', VisitorInfoSheets.contactContent())),
           _buildProfileTile(Icons.logout_rounded, isGuest ? 'Login as Registered User' : 'Logout', _logout, isDestructive: true),
         ],
       ),
@@ -1009,10 +1010,8 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  // ==========================================
-  // HELPER MODALS & CONTENT BUILDERS
-  // ==========================================
-  Widget _buildSectionTitle(String title) {
+  // --- Helper Methods ---
+  Widget _buildSectionHeading(String title) {
     return Text(
       title,
       style: const TextStyle(
@@ -1024,64 +1023,6 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
     );
   }
 
-  void _showInfoModal(String title, Widget content) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: vNavyDark,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: content,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void _showSearchModal() {
     final searchCtrl = TextEditingController();
     showModalBottomSheet(
@@ -1090,9 +1031,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1118,9 +1057,7 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                         }
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1131,21 +1068,21 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
                       label: const Text('MCA Fees'),
                       onPressed: () {
                         Navigator.pop(ctx);
-                        _showInfoModal('Fee Structure', _feesContent());
+                        VisitorInfoSheets.show(context, 'Fee Structure', VisitorInfoSheets.feesContent());
                       },
                     ),
                     ActionChip(
                       label: const Text('BCA Admission'),
                       onPressed: () {
                         Navigator.pop(ctx);
-                        _showInfoModal('Admission Information', _admissionsContent());
+                        VisitorInfoSheets.show(context, 'Admission Guidelines', VisitorInfoSheets.admissionInfo());
                       },
                     ),
                     ActionChip(
                       label: const Text('Campus Address'),
                       onPressed: () {
                         Navigator.pop(ctx);
-                        _showInfoModal('Campus Location', _locationContent());
+                        VisitorInfoSheets.show(context, 'Campus Location', VisitorInfoSheets.locationContent());
                       },
                     ),
                   ],
@@ -1155,159 +1092,6 @@ class _VisitorHomePageState extends State<VisitorHomePage> {
           ),
         );
       },
-    );
-  }
-
-  // --- Content Widgets for Dialogs ---
-  Widget _aboutSrimcaContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
-          'Shrimad Rajchandra Institute of Management and Computer Application (SRIMCA)',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: vNavyDark),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'Established in 2002 (MCA) and 2004 (MBA), SRIMCA is a premier constituent institute of Uka Tarsadia University (UTU). All programs are recognized by AICTE, New Delhi, and Government of Gujarat.',
-          style: TextStyle(fontSize: 13, height: 1.4, color: vTextMuted),
-        ),
-        SizedBox(height: 16),
-        Text('🌟 Vision', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 4),
-        Text(
-          'To become a globally recognized premier educational institute for academic excellence, innovation, and character building.',
-          style: TextStyle(fontSize: 13, height: 1.4, color: vTextMuted),
-        ),
-        SizedBox(height: 12),
-        Text('🎯 Mission', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 4),
-        Text(
-          'To remain on the cutting edge of education, research, industry partnerships, and social commitment.',
-          style: TextStyle(fontSize: 13, height: 1.4, color: vTextMuted),
-        ),
-      ],
-    );
-  }
-
-  Widget _coursesContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('1. Master of Computer Applications (MCA)', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        Text('• Duration: 2 Years (4 Semesters)\n• Eligibility: Passed BCA/B.Sc/B.Com/BA with Mathematics with min 50%.\n• Admission: Through ACPC Gujarat & Management Quota.\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('2. Bachelor of Computer Applications (BCA)', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        Text('• Duration: 3 Years (6 Semesters)\n• Eligibility: Passed 12th standard (HSC) in Science or Commerce.\n• Admission: Direct admission through UTU Admission Portal.\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('3. Integrated MCA (5-Year)', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        Text('• Direct 5-year post-12th program leading to Master degree.\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('4. Master of Business Administration (MBA)', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        Text('• Specializations in Marketing, Finance, HR, and International Business.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _admissionsContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('📋 Admission Process Steps:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 6),
-        Text('1. Register online on UTU Admission Portal or ACPC portal for MCA.\n2. Submit 10th, 12th, and Graduation marksheets.\n3. Participate in seat allotment or campus counselling.\n4. Confirm admission by submitting tuition fee token.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        SizedBox(height: 14),
-        Text('📄 Required Documents Checklist:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 6),
-        Text('• 10th & 12th Marksheets\n• Degree Marksheets (for MCA/MBA)\n• School/College Leaving Certificate (LC)\n• Caste/Income Certificate (if applicable)\n• Passport size photographs & Aadhar Card', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _feesContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('💰 Tuition & Academic Fees (Per Year):', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('• MCA: Approx. ₹65,000 - ₹75,000 / year\n• BCA: Approx. ₹45,000 - ₹55,000 / year\n• MBA: Approx. ₹68,000 - ₹78,000 / year\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('🎓 Scholarships Available:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 6),
-        Text('• Digital Gujarat Government Scholarships (SC/ST/SEBC/EWS)\n• MYSY (Mukhyamantri Yuva Swavalamban Yojana)\n• University Merit Scholarships for top rankers', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _facultyContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('👨‍🏫 Esteemed Faculty & Mentors:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('SRIMCA boasts highly qualified professors with Ph.D. and M.Tech degrees, having extensive research publications and industry experience in AI, Cloud, Cybersecurity, and Software Engineering.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        SizedBox(height: 12),
-        Text('• Mentorship Program: Each student is assigned a dedicated faculty counselor.\n• Project Guidance: Hands-on industry project mentors for final-year dissertations.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _contactContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('📞 Get in Touch with SRIMCA:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('• Phone: +91 2625 290074 / 290075\n• Email: director.srimca@utu.ac.in\n• Admissions Helpline: +91 99099 12345\n• Official Website: www.utu.ac.in / srimca.utu.ac.in', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        SizedBox(height: 12),
-        Text('🕒 Campus Office Hours: Monday - Saturday (8:30 AM - 4:30 PM)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: vNavyDark)),
-      ],
-    );
-  }
-
-  Widget _locationContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('📍 Campus Location & Address:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('Maliba Campus, Gopal Vidyanagar, Bardoli-Mahuva Road, Tarsadi, Surat, Gujarat - 394350.\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('🚌 Transportation & Commute:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 6),
-        Text('• University buses ply from Surat, Navsari, Bardoli, Vyara, Kadod, and Valod.\n• 15 mins drive from Bardoli Railway Station.\n• 45 mins from Surat Railway Station.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _placementsContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('💼 Campus Placement Highlights:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('• Highest Package: ₹8.5 LPA\n• Average Package: ₹3.8 - ₹4.5 LPA\n• Over 85% placement record for eligible students.\n', style: TextStyle(fontSize: 13, color: vTextMuted)),
-        Text('🏢 Top Hiring Partners:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 6),
-        Text('TCS, Infosys, Wipro, L&T Infotech, Capgemini, TatvaSoft, Bacancy, WebOccult, Dhyey Consulting, and 50+ IT recruiters.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _facilitiesContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('🏛️ World-Class Campus Amenities:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('• 250+ High-Performance Computer Labs with Gigabit LAN\n• 200 Mbps Dedicated Internet Leased Line & Wi-Fi\n• Central Digital Library with IEEE/ACM Journals\n• Air-conditioned 500-seat Auditorium & Seminar Halls\n• Sports ground, Gym, Canteen, and on-campus Hostels', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
-    );
-  }
-
-  Widget _aiInfoContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('🤖 About SRIMCA AI Assistant:', style: TextStyle(fontWeight: FontWeight.bold, color: vNavyDark)),
-        SizedBox(height: 8),
-        Text('Powered by state-of-the-art AI and SRIMCA academic database, providing instant 24/7 answers regarding syllabus, exam timetables, notices, admissions, and campus amenities.', style: TextStyle(fontSize: 13, color: vTextMuted)),
-      ],
     );
   }
 }
