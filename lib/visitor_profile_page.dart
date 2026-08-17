@@ -1,339 +1,165 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:srimca_ai/api_service.dart' show AuthService;
-import 'dart:convert';
-
-// Navy Blue Theme Colors
-const Color navyBlue = Color(0xFF001F3F);
-const Color navyBlueLight = Color(0xFF1A237E);
-const Color accentBlue = Color(0xFF1E88E5);
-const Color lightGrey = Color(0xFFF5F5F5);
+import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/visitor_qr_page.dart';
+import 'package:srimca_ai/visitor_theme.dart';
 
 class VisitorProfilePage extends StatefulWidget {
-  final String? visitorId;
-  
-  const VisitorProfilePage({super.key, this.visitorId});
+  final String userId;
+  final String token;
+
+  /// When true, renders content only (no Scaffold/AppBar) for portal embedding.
+  final bool embedded;
+
+  const VisitorProfilePage({
+    super.key,
+    required this.userId,
+    required this.token,
+    this.embedded = false,
+  });
 
   @override
   State<VisitorProfilePage> createState() => _VisitorProfilePageState();
 }
 
 class _VisitorProfilePageState extends State<VisitorProfilePage> {
-  // Visitor data from database
-  Map<String, dynamic> visitorData = {};
-  List<Map<String, dynamic>> visitHistory = [];
-  bool _isLoading = true;
+  Map<String, dynamic> profileData = {};
+  List history = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadVisitorData();
+    loadData();
   }
 
-  Future<void> _loadVisitorData() async {
+  Future<void> loadData() async {
+    if (widget.userId == 'guest' || widget.userId.isEmpty) {
+      setState(() => isLoading = false);
+      return;
+    }
     try {
-      // Get stored user data
-      final userData = await AuthService.getUser();
-      
-      if (userData != null && userData.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            visitorData = {
-              'name': userData['name'] ?? 'Visitor',
-              'email': userData['email'] ?? '',
-              'phone': userData['mobile'] ?? userData['phone'] ?? '',
-              'purpose': userData['purpose'] ?? 'Not specified',
-              'status': userData['status'] ?? 'pending',
-              'registrationDate': _formatDate(userData['created_at'] ?? userData['registrationDate']),
-            };
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
+      final profile = await ApiService.getProfile(widget.token, widget.userId);
+      final logs = await ApiService.getHistory(widget.token, widget.userId);
+      setState(() {
+        profileData = profile ?? {};
+        history = logs;
+        isLoading = false;
+      });
     } catch (e) {
-      debugPrint('Error loading visitor data: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => isLoading = false);
     }
   }
 
-  String _formatDate(dynamic dateStr) {
-    if (dateStr == null) return 'N/A';
-    try {
-      if (dateStr is String) {
-        return dateStr.substring(0, 10);
-      }
-      return dateStr.toString();
-    } catch (e) {
-      return 'N/A';
-    }
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      // Clear stored data using AuthService
-      await AuthService.clearAuth();
-      
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/login',
-          (route) => false,
-        );
-      }
-    }
+  Future<void> logout() async {
+    await AuthService.clearAuth();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text("My Profile"),
-          backgroundColor: navyBlue,
-          foregroundColor: Colors.white,
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("My Profile"),
-        backgroundColor: navyBlue,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadVisitorData,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [navyBlue, navyBlueLight]),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 35, color: navyBlue),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          visitorData['name'] ?? 'Visitor',
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(visitorData['status']).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            visitorData['status']?.toString().toUpperCase() ?? 'PENDING',
-                            style: TextStyle(color: _getStatusColor(visitorData['status']), fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
+    final content = isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderCard(),
+                const SizedBox(height: 20),
+                _buildPersonalInfoCard(),
+                const SizedBox(height: 20),
+                _buildQuickActionsCard(),
+                const SizedBox(height: 20),
+                _buildVisitHistoryTable(),
+                if (!widget.embedded) ...[
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: logout,
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Logout'),
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
+          );
 
-            const SizedBox(height: 24),
+    if (widget.embedded) return content;
 
-            // Contact Information
-            _sectionTitle("Contact Information"),
-            const SizedBox(height: 12),
-            _infoCard([
-              _infoRow(Icons.person, "Name", visitorData['name'] ?? 'N/A'),
-              _infoRow(Icons.phone, "Phone", visitorData['phone'] ?? 'N/A'),
-              _infoRow(Icons.email, "Email", visitorData['email'] ?? 'N/A'),
-              _infoRow(Icons.flag, "Purpose", visitorData['purpose'] ?? 'N/A'),
-              _infoRow(Icons.calendar_today, "Registered On", visitorData['registrationDate'] ?? 'N/A'),
-            ]),
-
-            const SizedBox(height: 24),
-
-            // Update Profile Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: accentBlue),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  _showUpdateDialog();
-                },
-                icon: const Icon(Icons.edit, color: accentBlue),
-                label: const Text("Update Profile", style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Logout Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: _logout,
-                icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Visit History
-            _sectionTitle("Visit History"),
-            const SizedBox(height: 12),
-            
-            if (visitHistory.isEmpty)
-              Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.history, size: 50, color: Colors.grey[400]),
-                    const SizedBox(height: 8),
-                    Text("No visit history", style: TextStyle(color: Colors.grey[600])),
-                  ],
-                ),
-              )
-            else
-              ...visitHistory.map((visit) => _visitHistoryCard(visit)),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Visitor Profile'),
+        backgroundColor: visitorNavy,
+        foregroundColor: Colors.white,
       ),
+      body: content,
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: navyBlue),
-    );
-  }
-
-  Widget _infoCard(List<Widget> children) {
+  Widget _buildHeaderCard() {
+    final name = profileData['name']?.toString() ?? 'Visitor';
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: lightGrey,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: accentBlue),
-          const SizedBox(width: 12),
-          Text("$label: ", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: navyBlue),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _visitHistoryCard(Map<String, dynamic> visit) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: lightGrey),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12),
         ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _getStatusColor(visit['status']).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: visitorPrimary.withValues(alpha: 0.15),
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : 'V',
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: visitorPrimary,
+              ),
             ),
-            child: Icon(Icons.event, color: _getStatusColor(visit['status'])),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(visit['purpose'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, color: navyBlue)),
-                Text(visit['department'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                Text(visit['date'] ?? '', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: visitorNavy,
+                  ),
+                ),
+                Text(
+                  'Visitor ID: ${widget.userId.length > 8 ? widget.userId.substring(0, 8) : widget.userId}',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    profileData['status']?.toString() ?? 'Approved Visitor',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _getStatusColor(visit['status']).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              visit['status']?.toString().toUpperCase() ?? '',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(visit['status'])),
             ),
           ),
         ],
@@ -341,79 +167,184 @@ class _VisitorProfilePageState extends State<VisitorProfilePage> {
     );
   }
 
-  Color _getStatusColor(String? status) {
-    switch (status) {
-      case 'approved': return Colors.green;
-      case 'completed': return Colors.blue;
-      case 'rejected': return Colors.red;
-      default: return Colors.orange;
-    }
+  Widget _buildPersonalInfoCard() {
+    return _sectionCard(
+      'Personal Information',
+      [
+        _infoRow('Full Name', profileData['name'] ?? 'N/A'),
+        _infoRow('Mobile Number', profileData['phone'] ?? 'N/A'),
+        _infoRow('Email', profileData['email'] ?? 'N/A'),
+        _infoRow('Visitor Type', profileData['visitor_type'] ?? 'General'),
+        _infoRow('Purpose', profileData['purpose'] ?? 'N/A'),
+        _infoRow('Registration Date',
+            profileData['created_at']?.toString().split('T').first ?? 'N/A'),
+      ],
+    );
   }
 
-  void _showUpdateDialog() {
-    final nameController = TextEditingController(text: visitorData['name'] ?? '');
-    final phoneController = TextEditingController(text: visitorData['phone'] ?? '');
-    final emailController = TextEditingController(text: visitorData['email'] ?? '');
+  Widget _buildQuickActionsCard() {
+    return _sectionCard(
+      'Quick Actions',
+      [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit Profile'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VisitorQRPage(
+                      token: widget.token,
+                      userId: widget.userId,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: visitorPrimary,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.qr_code),
+              label: const Text('Download Pass'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/forgot-password'),
+              icon: const Icon(Icons.lock),
+              label: const Text('Change Password'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20, right: 20, top: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Update Profile", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: navyBlue)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: "Name",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneController,
-                decoration: InputDecoration(
-                  labelText: "Phone",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: accentBlue, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  onPressed: () async {
-                    // Update local data (in production, call API to update)
-                    setState(() {
-                      visitorData['name'] = nameController.text;
-                      visitorData['phone'] = phoneController.text;
-                      visitorData['email'] = emailController.text;
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully!")));
-                  },
-                  child: const Text("Save Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+  Widget _buildVisitHistoryTable() {
+    return _sectionCard(
+      'Visit History',
+      [
+        if (history.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('No visits yet'),
+          )
+        else
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(visitorBg),
+              columns: const [
+                DataColumn(label: Text('Department')),
+                DataColumn(label: Text('Visit Date')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Action')),
+              ],
+              rows: history.map<DataRow>((item) {
+                return DataRow(cells: [
+                  DataCell(Text(
+                    profileData['department']?.toString() ?? 'MCA',
+                  )),
+                  DataCell(Text(item['check_in']?.toString() ?? 'N/A')),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        item['status']?.toString() ?? 'Approved',
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VisitorQRPage(
+                              token: widget.token,
+                              userId: widget.userId,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('View Pass'),
+                    ),
+                  ),
+                ]);
+              }).toList(),
+            ),
           ),
-        );
-      },
+      ],
+    );
+  }
+
+  Widget _sectionCard(String title, List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: visitorNavy,
+            ),
+          ),
+          const Divider(),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

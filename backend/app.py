@@ -1,5 +1,5 @@
 """
-SRIMCA AI Backend - Main Application Entry Point
+SRIMCA AI Backend - Main Application Entry Point app.py
 This is the main Flask application that registers all blueprints and routes.
 """
 
@@ -27,6 +27,7 @@ from routes.users import users_bp
 from routes.admin import admin_bp
 from routes.ai import ai_bp
 from routes.notifications import notifications_bp
+from routes.visitor import visitor_bp
 
 
 def initialize_database_async():
@@ -49,6 +50,17 @@ def create_app(config_name=None):
         config_name = os.getenv('FLASK_ENV', 'development')
     config = get_config()
     
+    # Debug SMTP env resolution on startup when available
+    print(
+        "SMTP env loaded:",
+        f"SMTP_HOST={os.getenv('SMTP_HOST')}",
+        f"SMTP_PORT={os.getenv('SMTP_PORT')}",
+        f"SMTP_FROM_set={bool(os.getenv('SMTP_FROM'))}",
+        f"SMTP_USER_set={bool(os.getenv('SMTP_USER'))}",
+        f"SMTP_SENDER_EMAIL_set={bool(os.getenv('SMTP_SENDER_EMAIL'))}",
+        f"SMTP_PASS_set={bool(os.getenv('SMTP_PASS') or os.getenv('SMTP_PASSWORD') or os.getenv('SMTP_SENDER_PASSWORD'))}",
+    )
+    
     app.config['SECRET_KEY'] = config.JWT_SECRET_KEY
     app.config['MONGODB_URI'] = config.MONGODB_URI
     app.config['MONGODB_DB_NAME'] = config.MONGODB_DB_NAME
@@ -70,6 +82,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(visitor_bp)
     
     # Health check route
     @app.route('/')

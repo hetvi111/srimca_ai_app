@@ -8,6 +8,16 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: MONGODB_URI
-        sync: false  # Set this in Render dashboard
+        sync: mongodb+srv://n8n:n8nconnection@cluster0.guplsjx.mongodb.net # Set this in Render dashboard
       - key: MONGODB_DB_NAME
         value: srimca_ai
+      - key: SMTP_USER
+        value: 2025mca006@gmail.com
+      - key: SMTP_PASS
+        value: ocgq ypyb bfuu dsiz
+      - key: SMTP_FROM
+        value: 2025mca006@gmail.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587

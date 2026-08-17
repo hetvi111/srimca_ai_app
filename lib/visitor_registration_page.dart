@@ -1,154 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'VisitorHomePage.dart';
-import 'api_service.dart';
-
-// Navy Blue Theme Colors
-const Color navyBlue = Color(0xFF001F3F);
-const Color navyBlueLight = Color(0xFF1A237E);
-const Color accentBlue = Color(0xFF1E88E5);
-const Color lightGrey = Color(0xFFF5F5F5);
+import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/visitor_auth_layout.dart';
+import 'package:srimca_ai/visitor_theme.dart';
 
 class VisitorRegistrationPage extends StatefulWidget {
   const VisitorRegistrationPage({super.key});
 
   @override
-  State<VisitorRegistrationPage> createState() => _VisitorRegistrationPageState();
+  State<VisitorRegistrationPage> createState() =>
+      _VisitorRegistrationPageState();
 }
 
 class _VisitorRegistrationPageState extends State<VisitorRegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Controllers
   final _nameController = TextEditingController();
-  final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  
-  // Visitor fields
-  String _selectedPurpose = '';
-  
-  final List<String> _purposes = [
-    'admission',
-    'placement',
-    'meeting',
-    'event',
-    'tour',
-    'other',
-  ];
-  
-  final Map<String, String> _purposeLabels = {
-    'admission': 'Admission Inquiry',
-    'placement': 'Placement/Recruitment',
-    'meeting': 'Meeting with Faculty',
-    'event': 'College Event',
-    'tour': 'Campus Tour',
-    'other': 'Other',
-  };
-  
+  final _phoneController = TextEditingController();
+  final _facultyController = TextEditingController();
+  String _selectedPurpose = 'Campus Visit';
+  String _selectedDepartment = 'mca';
+  String _visitorType = 'parent';
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  final _departments = const {'bca': 'BCA', 'mca': 'MCA'};
+  final _purposes = const [
+    'Campus Visit',
+    'admission',
+    'meeting',
+    'event',
+    'placement',
+    'other',
+  ];
+  final _visitorTypes = const [
+    'parent',
+    'student',
+    'recruiter',
+    'guest',
+  ];
 
   @override
   void dispose() {
     _nameController.dispose();
-    _mobileController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
+    _facultyController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitRegistration() async {
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Build request body for visitor registration
-      final Map<String, dynamic> requestBody = {
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim().toLowerCase(),
-        'password': _passwordController.text,
-        'role': 'visitor',
-        'mobile': _mobileController.text.trim(),
-        'purpose': _selectedPurpose,
-      };
-      
-      // Call backend API
-      final uri = Uri.parse('$kApiBaseUrl/api/register');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
+      final result = await ApiService.registerVisitor(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        purpose: _selectedPurpose,
       );
 
-      if (!mounted) return;
-
-      if (res.statusCode == 201) {
-        // Show success dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 30),
-                SizedBox(width: 12),
-                Text("Registration Successful!"),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Thank you for registering! Your visit request has been submitted."),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: lightGrey,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info, color: accentBlue, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "You will receive a confirmation notification once your visit is approved.",
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const VisitorHomePage()),
-                  );
-                },
-                child: const Text("Continue"),
-              ),
-            ],
-          ),
+      if (result['success'] == true) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(
+          context,
+          '/visitor',
+          arguments: {
+            'userId': result['userId'],
+            'token': result['token'],
+            'userName': _nameController.text.trim(),
+          },
         );
       } else {
-        final Map<String, dynamic> body = jsonDecode(res.body);
-        final msg = body['error']?.toString() ?? 'Registration failed';
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(content: Text(result['error'] ?? 'Registration failed')),
         );
       }
     } catch (e) {
@@ -156,245 +82,207 @@ class _VisitorRegistrationPageState extends State<VisitorRegistrationPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  InputDecoration _decoration(String label, {IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null ? Icon(icon, size: 20) : null,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Visitor Registration"),
-        backgroundColor: navyBlue,
-        foregroundColor: Colors.white,
-        elevation: 6,
+    return VisitorAuthLayout(
+      title: 'Visitor Registration',
+      subtitle:
+          'Register your visit to SRIMCA and get access to AI assistance, digital pass, and more.',
+      isLogin: false,
+      onSwitchMode: () => Navigator.pushReplacementNamed(
+        context,
+        '/login',
+        arguments: {'preselectRole': 'visitor'},
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [navyBlue, navyBlueLight]),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.person_add, color: Colors.white, size: 30),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+      form: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final twoCol = constraints.maxWidth > 480;
+                if (twoCol) {
+                  return Column(
+                    children: [
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Register Your Visit", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text("Fill in your details below", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _nameController,
+                              decoration: _decoration('Full Name', icon: Icons.person),
+                              validator: (v) =>
+                                  v?.trim().isEmpty ?? true ? 'Required' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: _decoration('Mobile Number', icon: Icons.phone),
+                              validator: (v) =>
+                                  v?.trim().isEmpty ?? true ? 'Required' : null,
+                            ),
+                          ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _decoration('Email Address', icon: Icons.email),
+                              validator: (v) =>
+                                  v?.trim().isEmpty ?? true ? 'Required' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _visitorType,
+                              decoration: _decoration('Visitor Type'),
+                              items: _visitorTypes
+                                  .map((t) => DropdownMenuItem(
+                                        value: t,
+                                        child: Text(t[0].toUpperCase() + t.substring(1)),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _visitorType = v ?? _visitorType),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedPurpose,
+                              decoration: _decoration('Purpose of Visit'),
+                              items: _purposes
+                                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                                  .toList(),
+                              onChanged: (v) => setState(
+                                () => _selectedPurpose = v ?? _selectedPurpose,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedDepartment,
+                              decoration: _decoration('Department To Visit'),
+                              items: _departments.entries
+                                  .map((e) => DropdownMenuItem(
+                                        value: e.key,
+                                        child: Text(e.value),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) => setState(
+                                () => _selectedDepartment = v ?? _selectedDepartment,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _facultyController,
+                        decoration: _decoration(
+                          'Faculty To Meet (optional)',
+                          icon: Icons.person_outline,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: _decoration('Full Name', icon: Icons.person),
+                      validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: _decoration('Email Address', icon: Icons.email),
+                      validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: _decoration('Mobile Number', icon: Icons.phone),
+                      validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedPurpose,
+                      decoration: _decoration('Purpose of Visit'),
+                      items: _purposes
+                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedPurpose = v ?? _selectedPurpose),
                     ),
                   ],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _register,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: visitorPrimary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Register Visit',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
-
-              const SizedBox(height: 24),
-
-              // Name Field
-              _buildTextField(
-                controller: _nameController,
-                label: "Full Name",
-                icon: Icons.person,
-                hint: "Enter your full name",
-                validator: (value) => value == null || value.isEmpty ? "Please enter your name" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              // Mobile Field
-              _buildTextField(
-                controller: _mobileController,
-                label: "Mobile Number",
-                icon: Icons.phone,
-                hint: "Enter your mobile number",
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Please enter your mobile number";
-                  if (value.length < 10) return "Please enter a valid mobile number";
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Email Field
-              _buildTextField(
-                controller: _emailController,
-                label: "Email Address",
-                icon: Icons.email,
-                hint: "Enter your email address",
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Please enter your email";
-                  if (!value.contains('@')) return "Please enter a valid email";
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Purpose Dropdown
-              _buildDropdown(
-                label: "Purpose of Visit",
-                icon: Icons.flag,
-                value: _selectedPurpose,
-                items: _purposes,
-                onChanged: (value) => setState(() => _selectedPurpose = value!),
-                validator: (value) => value == null || value.isEmpty ? "Please select purpose of visit" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              // Password Field
-              _buildTextField(
-                controller: _passwordController,
-                label: "Password",
-                icon: Icons.lock,
-                hint: "Create password (min 6 chars)",
-                obscure: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Please enter password";
-                  if (value.length < 6) return "Password must be at least 6 characters";
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 32),
-
-              // Submit Button
-              _buildSubmitButton(),
-
-              const SizedBox(height: 16),
-
-              // Info Text
-              _buildInfoText(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required String hint,
-    TextInputType? keyboardType,
-    bool obscure = false,
-    bool readOnly = false,
-    VoidCallback? onTap,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: navyBlue)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          obscureText: obscure,
-          readOnly: readOnly,
-          onTap: onTap,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: accentBlue),
-            hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: accentBlue, width: 2),
             ),
-          ),
-          validator: validator,
+          ],
         ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildDropdown({
-    required String label,
-    required IconData icon,
-    required String value,
-    required List<String> items,
-    Map<String, String>? itemLabels,
-    required void Function(String?) onChanged,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: navyBlue)),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value.isEmpty ? null : value,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: accentBlue),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: accentBlue, width: 2),
-            ),
-          ),
-          items: items.map((item) => DropdownMenuItem(
-            value: item,
-            child: Text(itemLabels?[item] ?? item),
-          )).toList(),
-          onChanged: onChanged,
-          validator: validator,
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accentBlue,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: _isLoading ? null : _submitRegistration,
-        child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
-              )
-            : const Text(
-                "Submit Registration",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildInfoText() {
-    return Center(
-      child: Text(
-        "Your information will be reviewed by college admin.\nYou will receive a confirmation once approved.",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
     );
   }

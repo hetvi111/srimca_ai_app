@@ -1,0 +1,120 @@
+SRIMCA AI FRONTEND (Flutter Web) — DEPLOYMENT (Separate Server)
+
+This file contains copy-paste steps to build and deploy the Flutter Web frontend found in:
+  ./web
+and Flutter project root.
+
+============================================================
+1) Server prerequisites
+============================================================
+- Install Nginx (recommended) and optionally certbot for HTTPS.
+- Open ports:
+  - 80 (and 443 if HTTPS)
+
+============================================================
+2) Build Flutter Web
+============================================================
+On a build machine (can be same server or local):
+
+A) Install Flutter (if not already):
+- flutter
+
+B) From project root:
+  cd /path/to/srimca-ai
+
+C) Get dependencies and build:
+  flutter pub get
+
+  # Production web build
+  flutter build web --release
+
+Output:
+  ./build/web
+
+============================================================
+3) Configure API base URL (must match backend)
+============================================================
+In the Flutter codebase, set the API URL to your backend domain.
+Typically in:
+  lib/api_service.dart
+
+Set to something like:
+  https://<BACKEND_DOMAIN>
+
+Rebuild after updating:
+  flutter build web --release
+
+============================================================
+4) Copy build output to frontend server
+============================================================
+Common approach:
+- Copy build/web to Nginx web root.
+
+If your Nginx document root is:
+  /var/www/html
+
+Then copy:
+  sudo rm -rf /var/www/html/*
+  sudo cp -r build/web/* /var/www/html/
+
+(Use your correct paths.)
+
+============================================================
+5) Nginx configuration for Flutter Web
+============================================================
+Create a site config (example):
+  sudo nano /etc/nginx/sites-available/srimca-frontend
+
+Paste:
+
+  server {
+    listen 80;
+    server_name <FRONTEND_DOMAIN>;
+
+    root /var/www/html;
+    index index.html;
+
+    # Flutter web uses client-side routing; route everything to index.html
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+
+    # Caching (optional, can improve performance)
+    location ~*\.(?:js|css|png|jpg|jpeg|gif|svg|ico|woff2|woff|ttf)$ {
+      expires 30d;
+      add_header Cache-Control "public, max-age=2592000";
+      try_files $uri =404;
+    }
+  }
+
+Enable and reload:
+  sudo ln -s /etc/nginx/sites-available/srimca-frontend /etc/nginx/sites-enabled/ || true
+  sudo nginx -t
+  sudo systemctl reload nginx
+
+============================================================
+6) (Recommended) HTTPS
+============================================================
+If using certbot:
+  sudo apt-get update
+  sudo apt-get install -y certbot python3-certbot-nginx
+  sudo certbot --nginx -d <FRONTEND_DOMAIN>
+
+============================================================
+7) CORS reminder (backend side)
+============================================================
+Backend must allow the frontend origin (domain) via CORS.
+Set in backend env:
+  CORS_ORIGINS=https://<FRONTEND_DOMAIN>
+
+============================================================
+8) Smoke test
+============================================================
+After deployment:
+- Open:
+  http(s)://<FRONTEND_DOMAIN>/
+- Ensure API calls succeed in browser dev tools.
+- Check backend logs for incoming requests.
+
+End of file.
+

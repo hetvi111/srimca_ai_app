@@ -1,18 +1,25 @@
 SRIMCA full name is Shrimad Rajchandra Institute of Management and Computer Application.
-SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli, Surat, Gujarat.
-SRIMCA is a constituent college of Uka Tarsadia University.
-SRIMCA offers MCA and MBA programmes approved by AICTE.
-MCA programme started in the year 2002.
-MBA programme started in the year 2004.
+SRIMCA is located at Maliba Campus, Gopal Vidyanagar, Bardoli-Mahuva Road, Tarsadi, Surat, Gujarat 394350.
+SRIMCA is a constituent institute of Uka Tarsadia University (UTU).
+SRIMCA offers Master of Computer Applications (MCA), Bachelor of Computer Applications (BCA), Integrated MCA (5-year), Master of Business Administration (MBA), and Integrated MBA (IMBA).
+All programmes at SRIMCA are approved by AICTE, New Delhi, and Government of Gujarat.
+MCA programme at SRIMCA was established in the year 2002.
+MBA programme at SRIMCA was established in the year 2004.
+SRIMCA vision is to become a globally recognized premier educational institute for academic excellence, innovation, and character building.
+SRIMCA mission is to remain on the cutting edge of education, research, industry partnerships, and social commitment.
+SRIMCA provides state-of-the-art computer labs with more than 250 high-end computers and modern software.
+SRIMCA campus is equipped with a 200 Mbps dedicated high-speed internet leased line and campus-wide Wi-Fi.
+SRIMCA library has an extensive collection of national and international books, IEEE, ACM journals, and digital e-resources.
+SRIMCA facilities include air-conditioned auditorium, modern seminar halls, smart interactive classrooms, cafeteria, and sports complex.
+SRIMCA provides hostel facilities for boys and girls with 24/7 security and Wi-Fi.
+SRIMCA provides bus transportation facilities covering Surat, Navsari, Bardoli, Vyara, and surrounding areas.
+Top recruiters for SRIMCA students include TCS, Infosys, Wipro, L&T Infotech, Capgemini, TatvaSoft, Bacancy, WebOccult, and many top IT companies.
+Admission in MCA is conducted via ACPC (Admission Committee for Professional Courses) and Management Quota.
+Admission in BCA is conducted directly through Uka Tarsadia University (UTU) admission portal.
+
 MCA 2nd Semester commenced from Thursday, 30 January 2025.
 MCA 4th Semester commenced from Monday, 16 December 2024.
 BCA 4th and 6th Semester commenced from Monday, 16 December 2024.
-SRIMCA mission is to remain on the cutting edge of education, research and service to industry and society.
-SRIMCA vision is to become a globally recognized premier educational institute for academic excellence.
-SRIMCA has more than 250 computers with Wi-Fi connectivity.
-SRIMCA provides 200 MBps dedicated internet leased line.
-SRIMCA library contains national and international books and journals.
-SRIMCA has an auditorium, seminar hall and modern classrooms.
 
 MCA 2nd semester Monday 08:30-10:30 has LARAVEL practical.
 MCA 2nd semester Monday 10:30-11:30 has iOS theory.
@@ -24,6 +31,23 @@ MCA 2nd semester Monday 02:30-03:30 has LARAVEL theory.
 MCA 2nd semester Tuesday 08:30-10:30 has LARAVEL Theory.
 MCA 2nd semester Tuesday 10:30-11:30 has iOS theory.
 MCA 2nd semester Tuesday 11:30-12:15 is BREAK.
-MCA 2nd semester Tuesday 12:15-01:15 has Python  theory.
+MCA 2nd semester Tuesday 12:15-01:15 has Python theory.
 MCA 2nd semester Tuesday 01:30-02:30 has ASP.NET theory.
 MCA 2nd semester Tuesday 02:30-03:30 has LARAVEL theory.
+
+MCA 2nd semester Wednesday 08:30-10:30 has iOS practical.
+MCA 2nd semester Wednesday 10:30-11:30 has ASP.NET theory.
+MCA 2nd semester Wednesday 11:30-12:15 is BREAK.
+MCA 2nd semester Wednesday 12:15-01:15 has Python theory.
+MCA 2nd semester Wednesday 01:30-03:30 has Project Lab.
+
+MCA 2nd semester Thursday 08:30-10:30 has ASP.NET practical.
+MCA 2nd semester Thursday 10:30-11:30 has LARAVEL theory.
+MCA 2nd semester Thursday 11:30-12:15 is BREAK.
+MCA 2nd semester Thursday 12:15-01:15 has iOS theory.
+MCA 2nd semester Thursday 01:30-03:30 has Technical Seminar.
+
+MCA 2nd semester Friday 08:30-10:30 has Python practical.
+MCA 2nd semester Friday 10:30-11:30 has Elective theory.
+MCA 2nd semester Friday 11:30-12:15 is BREAK.
+MCA 2nd semester Friday 12:15-02:30 has Lab practice.

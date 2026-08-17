@@ -171,13 +171,26 @@ const String kApiBaseUrl = 'https://your-backend-url.com';
 
 ### Render.com (Recommended for free hosting)
 
-1. Push your code to GitHub
-2. Create a new Web Service on Render
-3. Set:
-   - Build Command: `pip install -r backend/requirements.txt`
-   - Start Command: `gunicorn -w 4 -b 0.0.0.0:$PORT backend.app:application`
-4. Add environment variables in Render dashboard
-5. Deploy!
+1. Push to GitHub
+2. New Web Service on Render.com
+3. **Build:** `pip install -r backend/requirements.txt -r backend/srimca/requirements.txt`
+4. **Start:** `cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 1 app:app`
+5. **Environment Vars** (Dashboard → Environment):
+   - All from .env.example
+   - **SMTP_* vars CRITICAL** for OTP emails
+   
+**SMTP on Render:** Add SMTP_SENDER_EMAIL, SMTP_SENDER_PASSWORD etc. → OTP works instantly!
+
+### Test Deployed API
+```
+curl -X POST https://your-app.onrender.com/api/send-registration-otp \
+-H "Content-Type: application/json" \
+-d '{"email":"test@example.com"}'
+```
+
+Expected: {\"message\":\"OTP sent successfully\"}
+
+6. Deploy!
 
 ### Railway
 
@@ -199,6 +212,30 @@ const String kApiBaseUrl = 'https://your-backend-url.com';
 ### JWT Issues
 - Make sure JWT_SECRET_KEY is set
 - Check token expiration settings
+
+# 🔹 QR Code Generation (Visitor Entry)
+
+## Generate Visitor QR Codes
+
+**Static Gate QR** (for general visitor entry):
+```bash
+cd /path/to/srimca_ai
+python backend/generate_visitor_qr.py
+```
+
+Generates `assets/images/visitor_qr.png` → Used in Flutter `VisitorHomePage.dart`
+
+**What it does:**
+- Creates QR pointing to `/api/visitor`
+- Auto-saves to Flutter assets folder
+- Ready for hot reload in app
+
+**Dynamic Visitor QR** (individual check-ins):
+Script also generates example dynamic QR for specific visitors.
+
+**Backend QR Endpoints:**
+- `GET /api/visitor/qr/<visitor_id>` - Get visitor QR
+- `POST /api/visitor/qr/checkin` - Check-in via QR scan
 
 ## License
 

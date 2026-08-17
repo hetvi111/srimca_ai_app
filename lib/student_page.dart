@@ -483,8 +483,14 @@ class _StudentHomePageState extends State<StudentHomePage> {
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
-        title: const Text("Student Dashboard"),
-        backgroundColor: navyBlue,
+        title: Text(
+          _selectedIndex == 1
+              ? 'AI Chat'
+              : _selectedIndex == 2
+                  ? 'Profile'
+                  : 'Student Dashboard',
+        ),
+        backgroundColor: _selectedIndex == 1 ? const Color(0xFF3F51B5) : navyBlue,
         foregroundColor: Colors.white,
         elevation: 6,
         actions: [
@@ -505,7 +511,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
         index: _selectedIndex,
         children: [
           _homePageContent(),
-          ChatScreen(userId: widget.userId),
+          ChatScreen(userId: widget.userId, embedded: true),
           StudentProfilePage(
             userId: widget.userId,
             enrollmentNumber: widget.enrollmentNumber,

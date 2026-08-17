@@ -1,12 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:app_links/app_links.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
-import 'package:flutter/foundation.dart';
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,127 +11,123 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
 
   // Navy Blue Theme Colors
-  static const Color navyBlue = Color(0xFF001F3F);
-  static const Color navyBlueLight = Color(0xFF1A237E);
+  static const Color navyDark = Color(0xFF001F3F);
+  static const Color navyMedium = Color(0xFF1A237E);
   static const Color accentBlue = Color(0xFF1E88E5);
-  static const Color navyBlueLighter = Color(0xFF3949AB); // light indigo blue
+  static const Color lightIndigo = Color(0xFF3949AB);
+
+  Timer? _navigationTimer;
+
   @override
   void initState() {
     super.initState();
 
-    // Animation controller
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1600),
       vsync: this,
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
     );
 
     _animationController.forward();
 
-    // Navigate based on saved login session after splash delay.
-    Timer(const Duration(seconds: 3), _navigateNext);
+    _initializeAppFlow();
   }
 
-  Future<void> _navigateNext() async {
-    try {
-      if (!mounted) return;
+  Future<void> _initializeAppFlow() async {
+    // Wait for animation
+    await Future.delayed(const Duration(milliseconds: 2200));
+    if (!mounted) return;
 
-      // Handle Firebase email verification link (app opened from email) - mobile only
-      if (!kIsWeb) {
-        try {
-          final appLinks = AppLinks();
-          final uri = await appLinks.getInitialLink();
-          if (uri != null && FirebaseService.isSignInWithEmailLink(uri.toString())) {
-            final prefs = await SharedPreferences.getInstance();
-            final email = prefs.getString('email_for_sign_in_link');
-            if (email != null && email.isNotEmpty) {
-              final result = await FirebaseService.signInWithEmailLink(
-                email: email,
-                link: uri.toString(),
-              );
-              if (result['success'] == true) {
-                await prefs.remove('email_for_sign_in_link');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email verified successfully!')),
-                  );
-                }
-              }
+    try {
+      final isLoggedIn = await AuthService.isLoggedIn();
+      if (isLoggedIn) {
+        final user = await AuthService.getUser();
+        if (user != null && mounted) {
+          final role = (user['role'] as String? ?? '').toLowerCase();
+
+          if (role.isNotEmpty && !kIsWeb) {
+            try {
+              await PushNotificationService.subscribeToRoleTopics(role);
+            } catch (e) {
+              debugPrint('FCM topic subscription note: $e');
             }
           }
-        } catch (e) {
-          debugPrint('Deep link handling error: $e');
-        }
-      }
 
-      final isLoggedIn = await AuthService.isLoggedIn();
-      final savedUser = await AuthService.getUser();
+          if (!mounted) return;
 
-      if (isLoggedIn && savedUser != null) {
-        final role = (savedUser['role'] ?? '').toString().toLowerCase();
-
-        // Subscribe push only if not web
-        if (!kIsWeb) {
-          try {
-            await PushNotificationService.subscribeToRoleTopics(role);
-          } catch (e) {
-            debugPrint('Push subscription error for $role: $e');
+          switch (role) {
+            case 'admin':
+              Navigator.pushReplacementNamed(context, '/admin');
+              return;
+            case 'faculty':
+              Navigator.pushReplacementNamed(context, '/faculty');
+              return;
+            case 'student':
+              Navigator.pushReplacementNamed(
+                context,
+                '/student',
+                arguments: {
+                  'studentName': user['name'] ?? 'Student',
+                  'semester': user['semester'] ?? 'semester',
+                  'userId': user['_id'] ?? '',
+                  'email': user['email'] ?? '',
+                  'enrollmentNumber': user['enrollment'] ?? user['enrollment_number'] ?? '',
+                  'course': user['department'] ?? user['course'] ?? '',
+                },
+              );
+              return;
+            case 'visitor':
+              Navigator.pushReplacementNamed(
+                context,
+                '/visitor',
+                arguments: {
+                  'userId': user['_id'] ?? '',
+                  'token': 'visitor',
+                  'userName': user['name'] ?? 'Visitor',
+                },
+              );
+              return;
           }
         }
+      }
+    } catch (e) {
+      debugPrint('Splash authentication error: $e');
+    }
 
-        switch (role) {
-          case 'admin':
-            if (mounted) Navigator.pushReplacementNamed(context, '/admin');
-            return;
-          case 'faculty':
-            if (mounted) Navigator.pushReplacementNamed(context, '/faculty');
-            return;
-          case 'student':
-            if (mounted) Navigator.pushReplacementNamed(
-              context,
-              '/student',
-              arguments: {
-                'studentName': savedUser['name'] ?? 'Student',
-                'semester': savedUser['semester'] ?? 'N/A',
-                'userId': savedUser['_id'] ?? '',
-                'email': savedUser['email'] ?? '',
-                'enrollmentNumber': savedUser['enrollment'] ?? '',
-                'course': savedUser['department'] ?? '',
-              },
-            );
-            return;
-          case 'visitor':
-            if (mounted) Navigator.pushReplacementNamed(context, '/visitor');
-            return;
-          default:
-            await AuthService.clearAuth();
-            if (mounted) Navigator.pushReplacementNamed(context, '/login');
-            return;
+    if (mounted) {
+      if (kIsWeb) {
+        final fragment = Uri.base.fragment;
+        if (fragment.contains('visitor-welcome') || fragment.contains('visitor-entry')) {
+          Navigator.pushReplacementNamed(context, '/visitor-welcome');
+          return;
+        }
+        if (fragment.contains('visitor')) {
+          Navigator.pushReplacementNamed(context, '/visitor');
+          return;
         }
       }
-
-      if (mounted) Navigator.pushReplacementNamed(context, '/first');
-    } catch (e, stack) {
-      debugPrint('SplashScreen navigation error: $e');
-      debugPrint('Stack: $stack');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('App startup error. Redirecting to login.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
-      }
+      Navigator.pushReplacementNamed(context, '/first');
     }
   }
 
   @override
   void dispose() {
+    _navigationTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -143,125 +135,108 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: navyBlue,
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF001F3F), // Dark Top
-                  Color(0xFF1A237E), // Medium
-                  Color(0xFF3949AB), // Light Bottom
-                ],
-              ),
-            ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              navyDark,
+              navyMedium,
+              lightIndigo,
+            ],
           ),
-          
-          // Decorative circles
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: accentBlue.withOpacity(0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -30,
-            left: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: accentBlue.withOpacity(0.1),
-              ),
-            ),
-          ),
-
-          // Main Content - ensure safe area and centered layout
-          SafeArea(
-            child: Center(
-              child: SizedBox(
-                width: double.infinity,
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Spacer(flex: 2),
-
-                    // Animated Robot Icon
-                    ScaleTransition(
-                      scale: Tween<double>(begin: 0.5, end: 1.0)
-                          .animate(_animationController),
-                      child: Container(
-                        width: 220,
-                        height: 280,
-                        child: Image.asset(
-                          'assets/images/i1.png', // ✅ no space
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // Title
-                    const Text(
-                      'SRIMCA AI ASSISTANT',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
+                    // Institution Logo
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: 80,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.school_rounded,
+                        size: 60,
                         color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
 
-                    // Subtitle
-                    const Text(
-                      'Artificial Intelligence with Moral Commitment and Attitude',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-
-                    const Spacer(flex: 3),
-
-                    // Loading indicator
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 20),
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          strokeWidth: 3,
+                    // Animated Robot with scaling
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Container(
+                        height: 220,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentBlue.withValues(alpha: 0.35),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/i1.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.smart_toy_rounded,
+                            size: 140,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
 
-                    // Bottom Logo
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 40),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                        fit: BoxFit.contain,
+                    const SizedBox(height: 36),
+
+                    // App Title
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        children: [
+                          const Text(
+                            'SRIMCA AI ASSISTANT',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Artificial Intelligence with Moral Commitment and Attitude',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.5,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 48),
+                          const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -269,7 +244,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

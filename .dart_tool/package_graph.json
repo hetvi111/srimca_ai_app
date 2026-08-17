@@ -19,6 +19,8 @@
         "flutter_local_notifications",
         "http",
         "intl",
+        "mobile_scanner",
+        "qr_flutter",
         "shared_preferences"
       ],
       "devDependencies": [
@@ -49,6 +51,26 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "qr_flutter",
+      "version": "4.1.0",
+      "dependencies": [
+        "flutter",
+        "qr"
+      ]
+    },
+    {
+      "name": "mobile_scanner",
+      "version": "7.2.0",
+      "dependencies": [
+        "collection",
+        "flutter",
+        "flutter_web_plugins",
+        "meta",
+        "plugin_platform_interface",
+        "web"
       ]
     },
     {
@@ -257,7 +279,7 @@
     },
     {
       "name": "matcher",
-      "version": "0.12.17",
+      "version": "0.12.19",
       "dependencies": [
         "async",
         "meta",
@@ -268,7 +290,7 @@
     },
     {
       "name": "test_api",
-      "version": "0.7.7",
+      "version": "0.7.10",
       "dependencies": [
         "async",
         "boolean_selector",
@@ -282,6 +304,32 @@
       ]
     },
     {
+      "name": "qr",
+      "version": "3.0.2",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "dbus",
       "version": "0.7.12",
       "dependencies": [
@@ -290,11 +338,6 @@
         "meta",
         "xml"
       ]
-    },
-    {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
     },
     {
       "name": "cross_file",
@@ -317,22 +360,8 @@
       "dependencies": []
     },
     {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
       "name": "flutter_plugin_android_lifecycle",
       "version": "2.0.33",
-      "dependencies": [
-        "flutter"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
       "dependencies": [
         "flutter"
       ]
@@ -581,14 +610,14 @@
     },
     {
       "name": "material_color_utilities",
-      "version": "0.11.1",
+      "version": "0.13.0",
       "dependencies": [
         "collection"
       ]
     },
     {
       "name": "characters",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": []
     },
     {
