@@ -45,27 +45,11 @@ _embedding_model_initialized = False
 
 
 def get_embedding_model():
-    """Return cached embedding model, loading it on first use only."""
-    global _embedding_model, _embedding_model_initialized
-
-    if _embedding_model_initialized:
-        return _embedding_model
-
-    _embedding_model_initialized = True
-    try:
-        from sentence_transformers import SentenceTransformer
-    except Exception:
-        print("Warning: sentence-transformers not available; semantic retrieval disabled.")
-        _embedding_model = None
-        return _embedding_model
-
-    try:
-        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-    except Exception as exc:
-        print(f"Warning: failed to load embedding model: {exc}")
-        _embedding_model = None
-
-    return _embedding_model
+    """
+    Disable embeddings on Render to avoid OOM/timeout.
+    """
+    return None
+    
 
 # OpenAI client (optional - for GPT answers if you have credits)
 if OpenAI is not None and OPENAI_API_KEY:

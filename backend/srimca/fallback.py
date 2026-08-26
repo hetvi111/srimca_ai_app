@@ -59,52 +59,49 @@ def get_fallback_answer(question: str) -> str:
             "All technical programs are approved by **AICTE**, New Delhi."
         )
 
-    # 5. Courses / Programs Offered
-    if any(w in q for w in ['course', 'courses', 'program', 'programs', 'degree', 'branch', 'offer', 'curriculum', 'stream']):
+    # 5. Courses & Admission
+    if any(w in q for w in ['course', 'courses', 'program', 'programmes', 'degree', 'admission', 'eligibility', 'seat', 'intake', 'bca', 'mca', 'mba']):
         return (
-            "**Academic Programmes Offered at SRIMCA:**\n\n"
-            "1. **MCA** (Master of Computer Applications) - 2 Years\n"
-            "2. **BCA** (Bachelor of Computer Applications) - 3 Years\n"
-            "3. **Integrated MCA** - 5 Years\n"
-            "4. **MBA** (Master of Business Administration) - 2 Years\n"
-            "5. **Integrated MBA (IMBA)** - 5 Years\n\n"
-            "All courses feature industry-aligned syllabus including AI, Cloud Computing, Full-stack Web Development, and Data Science."
+            "**SRIMCA Programmes & Admissions:**\n\n"
+            "• **MCA (Master of Computer Applications):** 2-Year PG Degree (Intake: 120 seats). Eligibility: Passed BCA/B.Sc/B.Com/B.A. with Mathematics at 10+2 level or Graduation level.\n"
+            "• **BCA (Bachelor of Computer Applications):** 3-Year UG Degree (Intake: 180 seats). Eligibility: 12th Pass from recognized board.\n"
+            "• **Integrated MCA (BCA + MCA):** 5-Year Dual Degree Program.\n"
+            "• **MBA (Master of Business Administration):** 2-Year PG Degree (Specializations: Finance, HR, Marketing).\n"
+            "• **Integrated MBA:** 5-Year Integrated Management Degree."
         )
 
-    # 6. Admission / Eligibility / ACPC
-    if any(w in q for w in ['admission', 'apply', 'eligibility', 'acpc', 'enroll', 'seat', 'criteria', 'entrance', 'fees', 'fee']):
-        return (
-            "**SRIMCA Admissions & Eligibility:**\n\n"
-            "• **MCA Admissions:** Governed by **ACPC** (Admission Committee for Professional Courses, Gujarat) & Management Quota.\n"
-            "• **BCA Admissions:** Direct admission through the **UTU Admission Portal** based on 12th standard (HSC) merit.\n"
-            "• **MBA Admissions:** Through ACPC CMAT / Management quota merit list.\n\n"
-            "You can apply online via the official university admission portal or visit the campus admission desk."
-        )
-
-    # 7. Placements & Recruiters
-    if any(w in q for w in ['placement', 'package', 'salary', 'recruiter', 'company', 'companies', 'job', 'hiring', 'interview']):
-        return (
-            "**SRIMCA Training & Placement:**\n\n"
-            "SRIMCA has an active Training and Placement Cell with excellent campus recruitment records.\n"
-            "• **Top Recruiters:** TCS, Infosys, Wipro, L&T Infotech, Capgemini, TatvaSoft, Bacancy, WebOccult, Dhyey Consulting, and more.\n"
-            "• **Support:** Pre-placement training, mock technical interviews, aptitude tests, and industrial internships."
-        )
-
-    # 8. Facilities / Infrastructure / Labs / Hostel / Wi-Fi
-    if any(w in q for w in ['facility', 'facilities', 'lab', 'computer', 'hostel', 'wifi', 'wi-fi', 'internet', 'library', 'canteen', 'cafeteria', 'bus', 'transport']):
+    # 6. Facilities & Infrastructure
+    if any(w in q for w in ['facility', 'facilities', 'lab', 'labs', 'library', 'canteen', 'hostel', 'sports', 'wifi', 'internet']):
         return (
             "**SRIMCA Campus Facilities:**\n\n"
-            "• **Computer Labs:** Over 250+ high-performance systems with latest development tools.\n"
-            "• **Internet:** 200 Mbps dedicated leased-line with high-speed Wi-Fi across campus.\n"
-            "• **Library:** Extensive collection of books, IEEE/ACM journals, and digital e-learning resources.\n"
-            "• **Infrastructure:** Air-conditioned auditorium, seminar halls, and smart classrooms.\n"
-            "• **Hostel & Transport:** On-campus AC/Non-AC hostels for boys and girls, plus bus service covering Surat, Navsari, and Bardoli."
+            "• **Computer Labs:** High-speed internet, modern desktop systems, advanced software & development tools.\n"
+            "• **Central Library:** Thousands of books, international journals, IEEE digital subscription, and e-learning resources.\n"
+            "• **Hostel & Mess:** Separate secure hostels for boys and girls with 24/7 security and hygienic food.\n"
+            "• **Sports & Gym:** Playground for cricket, football, volleyball, indoor games, and modern gymnasium."
         )
 
-    # 9. Vision & Mission
-    if 'vision' in q:
-        return "**SRIMCA Vision:** To become a globally recognized premier educational institute for academic excellence, innovation, and character building."
+    # 7. Placements & Career
+    if any(w in q for w in ['placement', 'placements', 'job', 'salary', 'package', 'company', 'companies', 'recruiters']):
+        return (
+            "**SRIMCA Training & Placement Cell:**\n\n"
+            "• Strong placement record with top IT and Management recruiters.\n"
+            "• **Top Recruiters:** TCS, Infosys, Wipro, Capgemini, L&T Infotech, Gateway Group, TatvaSoft, Crest Data Systems.\n"
+            "• Pre-placement training including aptitude tests, mock interviews, and technical workshops."
+        )
 
+    # 8. Principal & Contact
+    if any(w in q for w in ['contact', 'phone', 'email', 'number', 'call', 'principal', 'director', 'hod']):
+        return (
+            "**SRIMCA Contact Information:**\n\n"
+            "• **Email:** director.srimca@utu.ac.in\n"
+            "• **Website:** https://srimca.edu.in / https://utu.ac.in\n"
+            "• **Phone:** +91 (02625) 290020 / 290074\n"
+            "• **Address:** Maliba Campus, Gopal Vidyanagar, Bardoli-Mahuva Road, Tarsadi, Surat - 394350."
+        )
+
+    # 9. Mission & Vision
+    if 'vision' in q:
+        return "**SRIMCA Vision:** To become a center of excellence in management and computer education by producing competent professionals with strong ethical values."
     if 'mission' in q:
         return "**SRIMCA Mission:** To remain on the cutting edge of education, research, industry partnerships, and moral commitment to society."
 

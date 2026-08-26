@@ -1,34 +1,35 @@
-from .retriever import retrieve_context
-from .config import openai_client
 from .fallback import get_fallback_answer
+import os
+
+try:
+    from openai import OpenAI
+    api_key = os.getenv('OPENAI_API_KEY')
+    openai_client = OpenAI(api_key=api_key) if api_key else None
+except Exception:
+    openai_client = None
+
 
 def get_gpt_answer(question):
-    """Generate answer using GPT with retrieved context."""
-    if not openai_client:
-        return None
+    """Answer generator using OpenAI GPT if configured, or fallback engine."""
+    if openai_client:
+        try:
+            prompt = f"You are SRIMCA AI Assistant. Question: {question}"
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                timeout=8,
+                temperature=0.3,
+                max_tokens=250
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"⚠️ OpenAI error: {e}")
 
     try:
-        context = retrieve_context(question)
-        if not context:
-            return None
-        
-        prompt = f"""You are SRIMCA AI, a helpful assistant for Shrimad Rajchandra Institute.
-
-Answer based on this context:
-{context}
-
-Question: {question}
-
-Answer:"""
-
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            timeout=8,
-            temperature=0.3,
-            max_tokens=200
-        )
-        return response.choices[0].message.content.strip()
+        answer = get_fallback_answer(question)
+        if answer and answer.strip():
+            return answer
     except Exception as e:
-        print(f"⚠️  OpenAI error: {e}")
-        return None
+        print(f"Fallback Error: {e}")
+
+    return "SRIMCA AI is currently unable to answer your query."
