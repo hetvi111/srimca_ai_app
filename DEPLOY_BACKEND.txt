@@ -75,7 +75,7 @@ Example contents (edit values):
 
 Notes:
 - If you do not have SMTP enabled, routes requiring email may fail.
-- Render already configured similar variables in repo render.yaml, but this is for separate servers.
+- Vercel configuration is stored in root vercel.json.
 
 ============================================================
 6) Run backend with Gunicorn

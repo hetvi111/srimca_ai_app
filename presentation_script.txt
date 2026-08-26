@@ -140,7 +140,7 @@ Development tooling and environment:
 - Git and GitHub for version control
 - Postman for API testing
 - Android Studio and VS Code for development
-- Deployment via Render and Firebase Hosting.
+- Deployment via Vercel and Firebase Hosting.
 
 Small but important files:
 - `backend/requirements.txt` lists backend dependencies like Flask, pymongo, bcrypt, PyJWT, firebase-admin, sentence-transformers, and OpenAI.
@@ -173,7 +173,7 @@ Testing and deployment:
 - Backend uses `Flask` and can be deployed with `gunicorn`.
 - Frontend is built with Flutter for Android, iOS, and web.
 - Firebase Messaging handles push notifications.
-- Render and Firebase are used for cloud deployment.
+- Vercel and Firebase are used for cloud deployment.
 - Environment variables are stored in `.env` for secure configuration.
 
 Future technical enhancements:

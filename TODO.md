@@ -45,7 +45,7 @@ flutter pub get && flutter run
 
 **Production Deploy:**
 ```
-git push origin main  # Render auto-deploys backend/web
+git push origin main  # Vercel auto-deploys backend
 ```
 - Update generate_gate_qr() URL to production API
 - flutter build web → deploy web.app PWA

@@ -17,8 +17,8 @@ curl -X POST http://localhost:5000/api/send-registration-otp \
 ```
 Expected: {\"message\":\"OTP sent successfully\"}
 
-### 3. Deploy Render [USER]
-- Render dashboard → Env Vars → Add:
+### 3. Deploy Vercel [USER]
+- Vercel dashboard → Settings → Environment Variables → Add:
   * SMTP_SENDER_EMAIL=your@gmail.com
   * SMTP_SENDER_PASSWORD=app_password
   * SMTP_HOST=smtp.gmail.com
@@ -34,7 +34,7 @@ Expected: {\"message\":\"OTP sent successfully\"}
 - [x] Create backend/.env.example
 - [ ] User sets env vars & tests
 
-**Next:** User: Set .env vars → Test endpoint → Deploy Render vars → Done!
+**Next:** User: Set .env vars → Test endpoint → Deploy Vercel vars → Done!
 
 **Code is correct** - Message shows only when SMTP vars missing (expected behavior)."
 </xai:function_call.

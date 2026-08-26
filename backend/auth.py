@@ -566,7 +566,7 @@ def resend_verification_email():
             email, 
             app=firebase_app,
             action_code_settings={
-                'url': 'https://srimca-ai-app-y828.onrender.com/email-verified',
+                'url': 'https://srimca-lx6ryuw70-2025mca006-5245s-projects.vercel.app/email-verified',
                 'handle_code_in_app': True
             }
         )

@@ -169,28 +169,24 @@ const String kApiBaseUrl = 'https://your-backend-url.com';
 
 ## Deployment
 
-### Render.com (Recommended for free hosting)
+### Vercel (Recommended deployment)
 
-1. Push to GitHub
-2. New Web Service on Render.com
-3. **Build:** `pip install -r backend/requirements.txt -r backend/srimca/requirements.txt`
-4. **Start:** `cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 1 app:app`
-5. **Environment Vars** (Dashboard → Environment):
-   - All from .env.example
-   - **SMTP_* vars CRITICAL** for OTP emails
-   
-**SMTP on Render:** Add SMTP_SENDER_EMAIL, SMTP_SENDER_PASSWORD etc. → OTP works instantly!
+Project URL: `https://srimca-lx6ryuw70-2025mca006-5245s-projects.vercel.app`
+Dashboard: `https://vercel.com/2025mca006-5245s-projects/srimca`
+
+1. Push to GitHub repository.
+2. Import project into Vercel dashboard.
+3. Vercel automatically uses root `vercel.json` and `api/index.py` serverless handler.
+4. **Environment Variables** (Vercel Dashboard → Settings → Environment Variables):
+   - Set `MONGODB_URI`, `MONGODB_DB_NAME`, `JWT_SECRET_KEY`, `SMTP_*` etc.
+5. Deploy!
 
 ### Test Deployed API
 ```
-curl -X POST https://your-app.onrender.com/api/send-registration-otp \
--H "Content-Type: application/json" \
--d '{"email":"test@example.com"}'
+curl -X POST https://srimca-lx6ryuw70-2025mca006-5245s-projects.vercel.app/api/health
 ```
 
-Expected: {\"message\":\"OTP sent successfully\"}
-
-6. Deploy!
+Expected: {"api":"ok","database":"connected","status":"healthy"}
 
 ### Railway
 

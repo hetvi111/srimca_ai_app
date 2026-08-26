@@ -33,11 +33,10 @@ class Config:
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
     PORT = int(os.getenv('PORT', '5000'))
     
-    # CORS Configuration
     CORS_ORIGINS = os.getenv(
-    'CORS_ORIGINS',
-    'https://srimcaai.web.app,https://srimcaai.firebaseapp.com'
-).split(',')
+        'CORS_ORIGINS',
+        'https://srimca-lx6ryuw70-2025mca006-5245s-projects.vercel.app,https://srimcaai.web.app,https://srimcaai.firebaseapp.com,*'
+    ).split(',')
 
 
 class DevelopmentConfig(Config):

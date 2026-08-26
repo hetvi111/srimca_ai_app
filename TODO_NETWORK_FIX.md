@@ -1,4 +1,4 @@
-# 🚀 Network Timeout Fix - Render Sleep Issue
+# 🚀 Network Timeout Fix - Vercel Serverless Optimization
 
 ## Status: ⏳ In Progress
 
@@ -22,7 +22,7 @@
   flutter run
   ```
 
-- [ ] **5. Deploy fixes** (git push → Render auto-deploys)
+- [ ] **5. Deploy fixes** (git push → Vercel auto-deploys)
 
 - [ ] **6. Railway Migration (Optional Permanent Fix)**
   - Create Railway account

@@ -10,7 +10,7 @@
 - cd backend && python app.py
 - Check http://localhost:5000/health
 
-### 3. [SKIP] Deploy to Render
-- No code changes made
+### 3. Deploy to Vercel
+- Handled via Vercel serverless functions
 
-### 4. [MANUAL] Verify Render deployment
+### 4. [MANUAL] Verify Vercel deployment

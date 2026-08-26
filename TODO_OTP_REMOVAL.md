@@ -22,7 +22,7 @@ Status: ✅ Step 1 Complete
 
 5. [ ] **Test direct registration flow**
    - Register → immediate login
-   - Backend deploy to Render
+   - Backend deploy to Vercel
 
 6. [ ] **Complete & cleanup**
    - Mark all steps done

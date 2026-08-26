@@ -4,7 +4,7 @@ Flutter app with Firebase (Auth + Firestore) and a Python backend API.
 
 ## Goal
 
-Use Firebase for free live hosting and avoid Render-specific URLs.
+Use Vercel for backend deployment and Firebase for live web hosting.
 
 ## Free Hosting Setup (Firebase)
 

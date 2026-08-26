@@ -115,7 +115,7 @@ def create_app(config_name=None):
     
     @app.errorhandler(500)
     def internal_error(error):
-        # Log full traceback so Render/local logs show what failed.
+        # Log full traceback so Vercel/local logs show what failed.
         try:
             app.logger.error("HTTP 500 error:\n%s", "".join(traceback.format_exception(type(error), error, error.__traceback__)))
         except Exception:
