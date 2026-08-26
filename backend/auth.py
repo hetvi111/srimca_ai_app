@@ -19,10 +19,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
-<<<<<<< HEAD
-=======
-# No email/OTP imports needed after removal
->>>>>>> 6f857520e400707e31c228fcceb2c0b882a2cd6e
+
 
 from database import get_collection, Collections
 from models import UserModel

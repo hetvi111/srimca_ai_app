@@ -8,8 +8,12 @@ from config import get_config
 import sys
 import io
 
-# Fix Unicode encoding for Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+# Fix Unicode encoding for Windows (safely check for buffer attribute)
+if hasattr(sys.stdout, 'buffer') and sys.stdout.buffer is not None:
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 # Global database connection
 _client = None
