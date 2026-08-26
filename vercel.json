@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "echo 'Building SRIMCA Python Backend'",
   "builds": [
     {
       "src": "api/index.py",
