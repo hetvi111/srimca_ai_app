@@ -1,0 +1,26 @@
+# Vercel Ignore File
+# Exclude heavy local binaries, virtual environments, and Flutter frontend files
+
+venv/
+.venv/
+env/
+ENV/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+android/
+ios/
+windows/
+linux/
+macos/
+.git/
+.idea/
+.vscode/
+Composer-Setup.exe
+*.exe
+*.dll
+*.so
+backend/srimca/chroma_db/
+backend/srimca/net/
+assets/
