@@ -26,7 +26,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 
 const String kProductionUrl = String.fromEnvironment(
   'API_PROD_URL',
-  defaultValue: 'https://srimca-lx6ryuw70-2025mca006-5245s-projects.vercel.app',
+  defaultValue: 'https://srimca.vercel.app',
 );
 
 String get kApiBaseUrl {
