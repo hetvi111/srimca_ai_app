@@ -68,9 +68,11 @@ def create_app(config_name=None):
     # Enable CORS
     CORS(app, origins=config.CORS_ORIGINS, supports_credentials=True)
     
-    # Initialize database in a background thread so the server can bind quickly.
-    db_init_thread = threading.Thread(target=initialize_database_async, daemon=True)
-    db_init_thread.start()
+    # Initialize database in a background thread for server environments.
+    # In Vercel serverless environment, skip background thread to avoid context freezing.
+    if not os.getenv('VERCEL') and not os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+        db_init_thread = threading.Thread(target=initialize_database_async, daemon=True)
+        db_init_thread.start()
     
     # Register blueprints
     app.register_blueprint(auth_bp)
