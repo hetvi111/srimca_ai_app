@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'package:srimca_ai/visitor_qr_page.dart';
-import 'package:srimca_ai/visitor_theme.dart';
+import 'package:srimca_ai/visitor/visitor_qr_page.dart';
+import 'package:srimca_ai/visitor/visitor_theme.dart';
 
 class VisitorProfilePage extends StatefulWidget {
   final String userId;

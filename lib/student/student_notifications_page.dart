@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/push_notification_service.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -227,6 +228,21 @@ class _StudentNotificationsPageState extends State<StudentNotificationsPage> {
         foregroundColor: Colors.white,
         elevation: 4,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Send Test Notification',
+            onPressed: () async {
+              await PushNotificationService.showTestNotification();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔔 Test notification sent to device tray!'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
           if (unreadCount > 0)
             Padding(
               padding: const EdgeInsets.only(right: 16),

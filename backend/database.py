@@ -112,6 +112,10 @@ class Collections:
     SYSTEM_META = 'system_meta'
     PASSWORD_RESET_REQUESTS = 'password_requests'
     VISITOR_LOGS = 'visitor_logs'
+    CAMPUS_LOCATIONS = 'campus_locations'
+    KNOWLEDGE_BASE = 'knowledge'
+    ACTIVITY_LOGS = 'activity_logs'
+    UNRESOLVED_QUERIES = 'unresolved_queries'
 
 
 def close_mongodb_connection():
@@ -142,8 +146,12 @@ def initialize_collections():
         Collections.NOTIFICATIONS,
         Collections.VISITORS,
         Collections.QUERIES,
-    Collections.SYSTEM_META,
+        Collections.SYSTEM_META,
         Collections.PASSWORD_RESET_REQUESTS,
+        Collections.CAMPUS_LOCATIONS,
+        Collections.KNOWLEDGE_BASE,
+        Collections.ACTIVITY_LOGS,
+        Collections.UNRESOLVED_QUERIES,
     ]
 
     for collection_name in required_collections:
@@ -204,6 +212,26 @@ def initialize_indexes():
     db[Collections.PASSWORD_RESET_REQUESTS].create_index('email')
     db[Collections.PASSWORD_RESET_REQUESTS].create_index('status')
     db[Collections.PASSWORD_RESET_REQUESTS].create_index('created_at')
+
+    # Campus locations collection indexes
+    try:
+        db[Collections.CAMPUS_LOCATIONS].create_index('name', unique=True)
+        db[Collections.CAMPUS_LOCATIONS].create_index('aliases')
+    except Exception as e:
+        print(f"Warning creating campus_locations indexes: {e}")
+
+    # Knowledge base, activity logs, and unresolved queries indexes
+    try:
+        db[Collections.KNOWLEDGE_BASE].create_index('category')
+        db[Collections.KNOWLEDGE_BASE].create_index('status')
+        db[Collections.KNOWLEDGE_BASE].create_index('created_at')
+        db[Collections.ACTIVITY_LOGS].create_index('created_at')
+        db[Collections.ACTIVITY_LOGS].create_index('module')
+        db[Collections.ACTIVITY_LOGS].create_index('action')
+        db[Collections.UNRESOLVED_QUERIES].create_index('status')
+        db[Collections.UNRESOLVED_QUERIES].create_index('created_at')
+    except Exception as e:
+        print(f"Warning creating knowledge/activity indexes: {e}")
     
     print("Database indexes created successfully")
 

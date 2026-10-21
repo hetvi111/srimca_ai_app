@@ -7,8 +7,8 @@ import 'package:srimca_ai/api_service.dart';
 import 'package:srimca_ai/firebase_service.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_screen.dart';
-import 'package:srimca_ai/visitor_auth_layout.dart';
-import 'package:srimca_ai/visitor_theme.dart';
+import 'package:srimca_ai/visitor/visitor_auth_layout.dart';
+import 'package:srimca_ai/visitor/visitor_theme.dart';
 // REMOVED: registration_otp_page.dart - direct registration
 
 class LoginRegisterScreen extends StatefulWidget {

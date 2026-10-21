@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'ai_query_monitoring_page.dart';
-import 'faculty_ai_assistant_page.dart';
+import 'package:srimca_ai/faculty/faculty_ai_assistant_page.dart';
 
 class AiMonitorPage extends StatelessWidget {
   const AiMonitorPage({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'edit_profile_page.dart';
-import 'security_profile.dart';
+import 'package:srimca_ai/admin/security_profile.dart';
 import 'help_page.dart';
 import 'about_page.dart';
 import 'package:srimca_ai/main.dart';

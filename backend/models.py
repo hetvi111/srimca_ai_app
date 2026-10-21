@@ -410,3 +410,193 @@ class PasswordResetRequestModel:
             'updated_at': request_doc.get('updated_at').isoformat() if request_doc.get('updated_at') else None,
             'reset_password': request_doc.get('reset_password', None)  # Temp PW for admin
         }
+
+
+class CampusLocationModel:
+    """Campus location model for automatic campus navigation"""
+
+    collection_name = Collections.CAMPUS_LOCATIONS
+
+    @staticmethod
+    def create_location(
+        name: str,
+        latitude: float,
+        longitude: float,
+        description: str,
+        aliases: list = None,
+        building: str = '',
+        floor: str = '',
+        room: str = '',
+        category: str = 'academic',
+        coordinates_verified: bool = True
+    ):
+        """
+        Create a new campus location document
+        """
+        now = datetime.utcnow()
+        return {
+            'name': name.strip(),
+            'latitude': float(latitude) if latitude is not None else 0.0,
+            'longitude': float(longitude) if longitude is not None else 0.0,
+            'description': description.strip(),
+            'aliases': [a.strip().lower() for a in (aliases or []) if a and a.strip()],
+            'building': building.strip(),
+            'floor': floor.strip(),
+            'room': room.strip(),
+            'category': category.strip(),
+            'coordinates_verified': coordinates_verified,
+            'created_at': now,
+            'updated_at': now
+        }
+
+    @staticmethod
+    def to_dict(location_doc):
+        """Convert campus location document to dictionary"""
+        if location_doc is None:
+            return None
+
+        return {
+            '_id': str(location_doc.get('_id', '')),
+            'name': location_doc.get('name', ''),
+            'latitude': float(location_doc.get('latitude', 0.0) or 0.0),
+            'longitude': float(location_doc.get('longitude', 0.0) or 0.0),
+            'description': location_doc.get('description', ''),
+            'aliases': location_doc.get('aliases', []),
+            'building': location_doc.get('building', ''),
+            'floor': location_doc.get('floor', ''),
+            'room': location_doc.get('room', ''),
+            'category': location_doc.get('category', 'academic'),
+            'coordinates_verified': bool(location_doc.get('coordinates_verified', True)),
+            'created_at': location_doc.get('created_at').isoformat() if isinstance(location_doc.get('created_at'), datetime) else location_doc.get('created_at'),
+            'updated_at': location_doc.get('updated_at').isoformat() if isinstance(location_doc.get('updated_at'), datetime) else location_doc.get('updated_at')
+        }
+
+
+class KnowledgeBaseModel:
+    """Knowledge base model for official college information used by AI Assistant"""
+
+    collection_name = Collections.KNOWLEDGE_BASE
+
+    @staticmethod
+    def create_entry(
+        title: str,
+        text: str,
+        category: str = 'general',
+        tags: list = None,
+        status: str = 'approved',
+        created_by: str = 'admin'
+    ):
+        now = datetime.utcnow()
+        return {
+            'title': title.strip(),
+            'text': text.strip(),
+            'category': category.strip().lower(),
+            'tags': [t.strip().lower() for t in (tags or []) if t and t.strip()],
+            'status': status.strip().lower(),
+            'created_by': created_by,
+            'views': 0,
+            'created_at': now,
+            'updated_at': now
+        }
+
+    @staticmethod
+    def to_dict(entry_doc):
+        if entry_doc is None:
+            return None
+        return {
+            '_id': str(entry_doc.get('_id', '')),
+            'title': entry_doc.get('title', entry_doc.get('question', '')),
+            'text': entry_doc.get('text', entry_doc.get('answer', '')),
+            'category': entry_doc.get('category', 'general'),
+            'tags': entry_doc.get('tags', []),
+            'status': entry_doc.get('status', 'approved'),
+            'created_by': str(entry_doc.get('created_by', 'admin')),
+            'views': entry_doc.get('views', 0),
+            'created_at': entry_doc.get('created_at').isoformat() if isinstance(entry_doc.get('created_at'), datetime) else entry_doc.get('created_at'),
+            'updated_at': entry_doc.get('updated_at').isoformat() if isinstance(entry_doc.get('updated_at'), datetime) else entry_doc.get('updated_at')
+        }
+
+
+class ActivityLogModel:
+    """Activity log model for admin actions and audit trail"""
+
+    collection_name = Collections.ACTIVITY_LOGS
+
+    @staticmethod
+    def create_log(
+        acting_user: str,
+        action: str,
+        module: str,
+        affected_record: str = '',
+        details: str = '',
+        user_id: str = '',
+        outcome: str = 'success'
+    ):
+        return {
+            'acting_user': acting_user,
+            'user_id': user_id,
+            'action': action.upper(),
+            'module': module,
+            'affected_record': affected_record,
+            'details': details,
+            'outcome': outcome,
+            'created_at': datetime.utcnow()
+        }
+
+    @staticmethod
+    def to_dict(log_doc):
+        if log_doc is None:
+            return None
+        return {
+            '_id': str(log_doc.get('_id', '')),
+            'acting_user': log_doc.get('acting_user', 'Admin'),
+            'user_id': str(log_doc.get('user_id', '')),
+            'action': log_doc.get('action', 'ACTION'),
+            'module': log_doc.get('module', 'System'),
+            'affected_record': log_doc.get('affected_record', ''),
+            'details': log_doc.get('details', ''),
+            'outcome': log_doc.get('outcome', 'success'),
+            'created_at': log_doc.get('created_at').isoformat() if isinstance(log_doc.get('created_at'), datetime) else log_doc.get('created_at')
+        }
+
+
+class UnresolvedQueryModel:
+    """Model for unanswered or unresolved user questions needing admin review"""
+
+    collection_name = Collections.UNRESOLVED_QUERIES
+
+    @staticmethod
+    def create_query(
+        question: str,
+        user_id: str = '',
+        user_role: str = 'student',
+        status: str = 'pending'
+    ):
+        return {
+            'question': question.strip(),
+            'user_id': user_id,
+            'user_role': user_role,
+            'status': status,
+            'approved_answer': '',
+            'resolved_by': '',
+            'created_at': datetime.utcnow(),
+            'resolved_at': None
+        }
+
+    @staticmethod
+    def to_dict(q_doc):
+        if q_doc is None:
+            return None
+        return {
+            '_id': str(q_doc.get('_id', '')),
+            'question': q_doc.get('question', ''),
+            'user_id': str(q_doc.get('user_id', '')),
+            'user_role': q_doc.get('user_role', 'student'),
+            'status': q_doc.get('status', 'pending'),
+            'approved_answer': q_doc.get('approved_answer', ''),
+            'resolved_by': str(q_doc.get('resolved_by', '')),
+            'created_at': q_doc.get('created_at').isoformat() if isinstance(q_doc.get('created_at'), datetime) else q_doc.get('created_at'),
+            'resolved_at': q_doc.get('resolved_at').isoformat() if isinstance(q_doc.get('resolved_at'), datetime) else q_doc.get('resolved_at')
+        }
+
+

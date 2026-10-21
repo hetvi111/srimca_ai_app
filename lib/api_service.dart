@@ -779,10 +779,20 @@ class ApiService {
                   ?.map((e) => e.toString())
                   .toList() ??
               <String>[];
+          
+          Map<String, dynamic>? locationMap;
+          if (data['location'] != null && data['location'] is Map) {
+            locationMap = Map<String, dynamic>.from(data['location'] as Map);
+          }
+
           return {
             'answer': data['answer'] as String? ??
+                data['reply'] as String? ??
                 "I apologize, but I couldn't generate a response.",
+            'type': data['type'] as String? ?? 'text',
+            'location': locationMap,
             'follow_up_questions': followUps,
+            'suggestions': followUps,
             'personalized_guidance':
                 data['personalized_guidance'] as String? ?? "",
           };
@@ -793,7 +803,10 @@ class ApiService {
       return {
         'answer':
             "I apologize, but I'm having trouble processing your request right now. Please try again later.",
+        'type': 'text',
+        'location': null,
         'follow_up_questions': <String>[],
+        'suggestions': <String>[],
         'personalized_guidance': "",
       };
     } catch (e) {
@@ -801,10 +814,18 @@ class ApiService {
       return {
         'answer':
             "I apologize, but I'm having trouble connecting to the AI service. Please check your internet connection and try again.",
+        'type': 'text',
+        'location': null,
         'follow_up_questions': <String>[],
+        'suggestions': <String>[],
         'personalized_guidance': "",
       };
     }
+  }
+
+  /// Ask SRIMCA AI and get structured response with campus location details if available
+  static Future<Map<String, dynamic>> askAIChat(String question) async {
+    return await askAIDetailed(question);
   }
 
   /// Get AI monitoring queries and stats
@@ -1416,4 +1437,468 @@ class ApiService {
       return {'success': false, 'error': 'Network error: $e'};
     }
   }
+
+  // =========================================================================
+  // SEVEN ADMIN DASHBOARD MODULES API METHODS
+  // =========================================================================
+
+  // --- Module 1: Dashboard Overview ---
+  static Future<Map<String, dynamic>?> getDashboardLiveStats() async {
+    try {
+      final response = await get('/api/admin/dashboard/stats');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['stats'] as Map<String, dynamic>? ?? data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getDashboardLiveStats: $e');
+      return null;
+    }
+  }
+
+  // --- Module 2: Campus Navigation Management ---
+  static Future<List<Map<String, dynamic>>> getCampusLocations({
+    String? search,
+    String? category,
+    String? verified,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (category != null && category != 'all') queryParams['category'] = category;
+      if (verified != null && verified != 'all') queryParams['verified'] = verified;
+
+      final response = await get('/api/admin/campus-locations', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['locations'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getCampusLocations: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> createCampusLocation(Map<String, dynamic> locationData) async {
+    try {
+      final response = await post('/api/admin/campus-locations', body: locationData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? data['error'] ?? '',
+        'location': data['location'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateCampusLocation(String id, Map<String, dynamic> locationData) async {
+    try {
+      final response = await put('/api/admin/campus-locations/$id', body: locationData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+        'location': data['location'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<bool> deleteCampusLocation(String id) async {
+    try {
+      final response = await delete('/api/admin/campus-locations/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleteCampusLocation: $e');
+      return false;
+    }
+  }
+
+  // --- Module 3: AI Knowledge Base ---
+  static Future<List<Map<String, dynamic>>> getKnowledgeEntries({
+    String? search,
+    String? category,
+    String? status,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (category != null && category != 'all') queryParams['category'] = category;
+      if (status != null && status != 'all') queryParams['status'] = status;
+
+      final response = await get('/api/admin/knowledge', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['entries'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getKnowledgeEntries: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> createKnowledgeEntry(Map<String, dynamic> entryData) async {
+    try {
+      final response = await post('/api/admin/knowledge', body: entryData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? data['error'] ?? '',
+        'entry': data['entry'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateKnowledgeEntry(String id, Map<String, dynamic> entryData) async {
+    try {
+      final response = await put('/api/admin/knowledge/$id', body: entryData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+        'entry': data['entry'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<bool> deleteKnowledgeEntry(String id) async {
+    try {
+      final response = await delete('/api/admin/knowledge/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleteKnowledgeEntry: $e');
+      return false;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getUnresolvedQueries({String? status}) async {
+    try {
+      final queryParams = <String, String>{};
+      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+
+      final response = await get('/api/admin/knowledge/unresolved', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['queries'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getUnresolvedQueries: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> resolveUnresolvedQuery({
+    required String queryId,
+    required String approvedAnswer,
+    required String category,
+    String? title,
+  }) async {
+    try {
+      final response = await post(
+        '/api/admin/knowledge/resolve-query',
+        body: {
+          'query_id': queryId,
+          'approved_answer': approvedAnswer,
+          'category': category,
+          if (title != null && title.isNotEmpty) 'title': title,
+        },
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // --- Module 4: Notices & Notifications ---
+  static Future<List<Map<String, dynamic>>> getAdminNoticesList({
+    String? search,
+    String? category,
+    String? status,
+    String? targetRole,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (category != null && category != 'all') queryParams['category'] = category;
+      if (status != null && status != 'all') queryParams['status'] = status;
+      if (targetRole != null && targetRole != 'all') queryParams['target_role'] = targetRole;
+
+      final response = await get('/api/admin/notices', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['notices'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getAdminNoticesList: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> createAdminNoticeItem(Map<String, dynamic> noticeData) async {
+    try {
+      final response = await post('/api/admin/notices', body: noticeData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? data['error'] ?? '',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateAdminNoticeItem(String id, Map<String, dynamic> noticeData) async {
+    try {
+      final response = await put('/api/admin/notices/$id', body: noticeData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<bool> deleteAdminNoticeItem(String id) async {
+    try {
+      final response = await delete('/api/admin/notices/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleteAdminNoticeItem: $e');
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getAdminNotificationStats() async {
+    try {
+      final response = await get('/api/admin/notifications/stats');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['stats'] as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getAdminNotificationStats: $e');
+      return null;
+    }
+  }
+
+  // --- Module 5: User Management ---
+  static Future<List<Map<String, dynamic>>> getAdminUsersList({
+    String? search,
+    String? role,
+    String? status,
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (role != null && role != 'all') queryParams['role'] = role;
+      if (status != null && status != 'all') queryParams['status'] = status;
+
+      final response = await get('/api/admin/users', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['users'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getAdminUsersList: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> createAdminUserAccount(Map<String, dynamic> userData) async {
+    try {
+      final response = await post('/api/admin/users', body: userData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? data['error'] ?? '',
+        'user': data['user'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateAdminUserAccount(String id, Map<String, dynamic> userData) async {
+    try {
+      final response = await put('/api/admin/users/$id', body: userData);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+        'user': data['user'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<bool> toggleAdminUserStatus(String id) async {
+    try {
+      final response = await post('/api/admin/users/$id/toggle-status');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error toggleAdminUserStatus: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteAdminUserAccount(String id) async {
+    try {
+      final response = await delete('/api/admin/users/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleteAdminUserAccount: $e');
+      return false;
+    }
+  }
+
+  // --- Module 6: Visitor Pass Approval ---
+  static Future<List<Map<String, dynamic>>> getVisitorPasses({
+    String? status,
+    String? search,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (status != null && status != 'all') queryParams['status'] = status;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+
+      final response = await get('/api/admin/visitor-passes', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['passes'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getVisitorPasses: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> approveVisitorPass(String id, {String? remarks, String? validUntil}) async {
+    try {
+      final response = await post(
+        '/api/admin/visitor-passes/$id/approve',
+        body: {
+          if (remarks != null) 'remarks': remarks,
+          if (validUntil != null) 'valid_until': validUntil,
+        },
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+        'pass_token': data['pass_token'],
+        'verification_url': data['verification_url'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> rejectVisitorPass(String id, {String? reason}) async {
+    try {
+      final response = await post(
+        '/api/admin/visitor-passes/$id/reject',
+        body: {
+          if (reason != null) 'reason': reason,
+        },
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? data['error'] ?? '',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // --- Module 7: Reports & Activity Logs ---
+  static Future<Map<String, dynamic>?> getAdminReportsSummary({String timeframe = '30days'}) async {
+    try {
+      final response = await get('/api/admin/reports/summary', queryParams: {'timeframe': timeframe});
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['reports'] as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getAdminReportsSummary: $e');
+      return null;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getAdminActivityLogs({
+    String? search,
+    String? module,
+    String? action,
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (module != null && module != 'all') queryParams['module'] = module;
+      if (action != null && action != 'all') queryParams['action'] = action;
+
+      final response = await get('/api/admin/activity-logs', queryParams: queryParams);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final list = data['logs'] as List<dynamic>? ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getAdminActivityLogs: $e');
+      return [];
+    }
+  }
+
+  static Future<String?> exportReportCsv(String reportType) async {
+    try {
+      final response = await get('/api/admin/reports/export/$reportType');
+      if (response.statusCode == 200) {
+        return response.body;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error exportReportCsv: $e');
+      return null;
+    }
+  }
 }
+

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/local_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
@@ -276,6 +277,16 @@ class PushNotificationService {
   /// Legacy wrapper for backwards compatibility
   static Future<void> subscribeToRoleTopics(String role) async {
     await subscribeToRoleAndCourseTopics(role: role);
+  }
+
+  /// Send an instant local test notification on device
+  static Future<void> showTestNotification() async {
+    await LocalNotificationService.showNotification(
+      id: 99999,
+      title: '🔔 SRIMCA AI Test Notification',
+      body: 'Notifications are active and working on your Android device!',
+      priorityTag: 'high',
+    );
   }
 
   /// Get FCM token

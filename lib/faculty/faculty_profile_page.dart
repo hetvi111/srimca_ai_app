@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:srimca_ai/api_service.dart' show AuthService;
 import 'package:srimca_ai/edit_profile_page.dart';
-import 'package:srimca_ai/security_profile.dart';
+import 'package:srimca_ai/admin/security_profile.dart';
 import 'package:srimca_ai/help_page.dart';
 import 'package:srimca_ai/about_page.dart';
 import 'package:srimca_ai/main.dart';
@@ -13,28 +13,24 @@ const Color navyBlueLight = Color(0xFF1A237E);
 const Color accentBlue = Color(0xFF1E88E5);
 const Color lightGrey = Color(0xFFF5F5F5);
 
-class StudentProfilePage extends StatefulWidget {
+class FacultyProfilePage extends StatefulWidget {
   final String userId;
-  final String? enrollmentNumber;
-  final String? course;
-  final String? semester;
+  final String staffId;
   
-  const StudentProfilePage({
+  const FacultyProfilePage({
     super.key, 
     required this.userId,
-    this.enrollmentNumber,
-    this.course,
-    this.semester,
+    required this.staffId,
   });
 
   @override
-  State<StudentProfilePage> createState() => _StudentProfilePageState();
+  State<FacultyProfilePage> createState() => _FacultyProfilePageState();
 }
 
-class _StudentProfilePageState extends State<StudentProfilePage> {
+class _FacultyProfilePageState extends State<FacultyProfilePage> {
   Map<String, dynamic> profileData = {
-    'name': 'Student Name',
-    'email': 'student@srimca.com',
+    'name': 'Faculty Name',
+    'email': 'faculty@srimca.com',
   };
   bool notificationsEnabled = true;
   bool isDarkMode = false;
@@ -59,31 +55,28 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
           // Use backend profile data
           final profile = backendProfile['profile'] ?? {};
           profileData = {
-            'name': backendProfile['name'] ?? localUser?['name'] ?? 'Student Name',
-            'email': backendProfile['email'] ?? localUser?['email'] ?? 'student@srimca.com',
-            'enrollmentNumber': profile['enrollment_number'] ?? widget.enrollmentNumber ?? 'N/A',
-            'course': widget.course ?? 'BCA',
-            'semester': profile['semester'] ?? widget.semester ?? 'N/A',
+            'name': backendProfile['name'] ?? localUser?['name'] ?? 'Faculty Name',
+            'email': backendProfile['email'] ?? localUser?['email'] ?? 'faculty@srimca.com',
+            'department': profile['department'] ?? localUser?['department'] ?? 'Computer Science',
+            'designation': profile['designation'] ?? localUser?['designation'] ?? 'Professor',
             'phone': profile['phone'] ?? localUser?['phone'] ?? localUser?['mobile'] ?? '',
           };
         } else if (localUser != null && localUser.isNotEmpty) {
           // Fall back to local user data
           profileData = {
-            'name': localUser['name'] ?? 'Student Name',
-            'email': localUser['email'] ?? 'student@srimca.com',
-            'enrollmentNumber': widget.enrollmentNumber ?? localUser['enrollmentNumber'] ?? 'N/A',
-            'course': widget.course ?? localUser['course'] ?? 'BCA',
-            'semester': widget.semester ?? localUser['semester'] ?? 'N/A',
+            'name': localUser['name'] ?? 'Faculty Name',
+            'email': localUser['email'] ?? 'faculty@srimca.com',
+            'department': localUser['department'] ?? 'Computer Science',
+            'designation': localUser['designation'] ?? 'Professor',
             'phone': localUser['phone'] ?? localUser['mobile'] ?? '',
           };
         } else {
-          // Use widget parameters as fallback
+          // Use defaults
           profileData = {
-            'name': localUser?['name'] ?? 'Student Name',
-            'email': localUser?['email'] ?? 'student@srimca.com',
-            'enrollmentNumber': widget.enrollmentNumber ?? 'N/A',
-            'course': widget.course ?? 'BCA',
-            'semester': widget.semester ?? 'N/A',
+            'name': localUser?['name'] ?? 'Faculty Name',
+            'email': localUser?['email'] ?? 'faculty@srimca.com',
+            'department': 'Computer Science',
+            'designation': 'Professor',
             'phone': localUser?['phone'] ?? localUser?['mobile'] ?? '',
           };
         }
@@ -132,7 +125,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Student Profile"),
+        title: const Text("Faculty Profile"),
         backgroundColor: navyBlue,
         foregroundColor: Colors.white,
         elevation: 6,
@@ -165,7 +158,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        profileData['name'] ?? 'Student Name',
+                        profileData['name'] ?? 'Faculty Name',
                         style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -173,7 +166,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profileData['email'] ?? 'student@email.com',
+                        profileData['email'] ?? 'faculty@email.com',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
@@ -185,7 +178,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
                 const SizedBox(height: 20),
 
-                /// ================= STUDENT DETAILS =================
+                /// ================= FACULTY DETAILS =================
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -202,7 +195,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Student Details",
+                        "Faculty Details",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -210,9 +203,8 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                         ),
                       ),
                       const Divider(color: Colors.grey),
-                      _buildDetailRow(Icons.badge, "Enrollment Number", profileData['enrollmentNumber'] ?? 'N/A'),
-                      _buildDetailRow(Icons.school, "Course", profileData['course'] ?? 'N/A'),
-                      _buildDetailRow(Icons.calendar_today, "Semester", profileData['semester'] ?? 'N/A'),
+                      _buildDetailRow(Icons.badge, "Designation", profileData['designation'] ?? 'N/A'),
+                      _buildDetailRow(Icons.school, "Department", profileData['department'] ?? 'N/A'),
                       _buildDetailRow(Icons.phone, "Phone", profileData['phone'] ?? 'N/A'),
                       _buildDetailRow(Icons.email, "Email", profileData['email'] ?? 'N/A'),
                     ],
@@ -238,23 +230,23 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                   ],
                 ),
 
-                /// ================= STUDENT OPTIONS =================
+                /// ================= FACULTY OPTIONS =================
                 _settingsCard(
-                  title: "Student Options",
+                  title: "Faculty Options",
                   children: [
                     _settingsTile(
-                      icon: Icons.book,
-                      title: "My Assignments",
+                      icon: Icons.upload_file,
+                      title: "Upload Study Material",
                       onTap: () {},
                     ),
                     _settingsTile(
-                      icon: Icons.notifications_active,
-                      title: "My Notices",
+                      icon: Icons.analytics,
+                      title: "AI Query Monitoring",
                       onTap: () {},
                     ),
                     _settingsTile(
-                      icon: Icons.history,
-                      title: "Chat History",
+                      icon: Icons.assignment,
+                      title: "Manage Assignments",
                       onTap: () {},
                     ),
                   ],

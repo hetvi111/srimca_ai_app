@@ -35,6 +35,11 @@ def initialize_database_async():
     try:
         initialize_collections()
         initialize_indexes()
+        try:
+            from campus_navigation import seed_default_campus_locations
+            seed_default_campus_locations()
+        except Exception as seed_err:
+            print(f"Campus locations seed notice: {seed_err}")
         print("Database initialization completed")
     except Exception as e:
         # Keep the API process alive even if database init fails at startup.

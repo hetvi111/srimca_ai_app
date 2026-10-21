@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'package:srimca_ai/admin_password_reset_detail_page.dart';
+import 'package:srimca_ai/admin/admin_password_reset_detail_page.dart';
 
 /// ================= CONTENT ITEM MODEL =================
 class ContentItem {

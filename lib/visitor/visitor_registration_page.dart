@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
-import 'package:srimca_ai/visitor_auth_layout.dart';
-import 'package:srimca_ai/visitor_theme.dart';
+import 'package:srimca_ai/visitor/visitor_auth_layout.dart';
+import 'package:srimca_ai/visitor/visitor_theme.dart';
 
 class VisitorRegistrationPage extends StatefulWidget {
   const VisitorRegistrationPage({super.key});

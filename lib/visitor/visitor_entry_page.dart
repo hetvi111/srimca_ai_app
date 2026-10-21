@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/VisitorHomePage.dart';
+import 'package:srimca_ai/visitor/VisitorHomePage.dart';
 
 // Theme Colors
 const Color primaryNavy = Color(0xFF001F3F);

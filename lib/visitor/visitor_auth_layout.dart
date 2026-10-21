@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/visitor_theme.dart';
+import 'package:srimca_ai/visitor/visitor_theme.dart';
 
 /// Split navy/white auth layout for visitor login & register (web design).
 class VisitorAuthLayout extends StatelessWidget {

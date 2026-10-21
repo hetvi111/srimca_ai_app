@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/markdown_message_view.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -257,12 +258,12 @@ class _StudentChatHistoryPageState extends State<StudentChatHistoryPage> {
           // Answer
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Text(
-              answer,
-              style: const TextStyle(
+            child: MarkdownMessageView(
+              text: answer,
+              baseStyle: const TextStyle(
                 fontSize: 13,
                 color: Colors.black87,
-                height: 1.4,
+                height: 1.45,
               ),
             ),
           ),

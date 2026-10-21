@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'knowledge_page.dart';
-import 'ai_monitor_page.dart';
 import 'faculty_notice_management_page.dart';
 import 'faculty_visitor_inquiry_page.dart';
 import 'faculty_event_management_page.dart';
 import 'faculty_notifications_page.dart';
 import 'faculty_ai_assistant_page.dart';
-import 'package:srimca_ai/faculty_profile_page.dart';
+import 'package:srimca_ai/faculty/faculty_profile_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
 // Navy Blue Theme Colors

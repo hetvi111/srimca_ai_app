@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:srimca_ai/visitor_theme.dart';
+import 'package:srimca_ai/visitor/visitor_theme.dart';
 
 class VisitorPortalLayout extends StatefulWidget {
   final String userName;

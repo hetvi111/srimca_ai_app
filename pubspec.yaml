@@ -35,7 +35,7 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.1
-  firebase_messaging: ^15.1.6
+  firebase_messaging: ^15.2.10
   flutter_local_notifications: ^18.0.1
 
   # HTTP client for calling Python + MongoDB backend
@@ -55,6 +55,11 @@ dependencies:
   file_picker: ^10.3.10
   mobile_scanner: ^7.0.1
   qr_flutter: ^4.1.0
+
+  # OpenStreetMap mapping packages for campus navigation
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:

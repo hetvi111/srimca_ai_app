@@ -8,24 +8,26 @@ import 'package:srimca_ai/splash_screen.dart';
 import 'package:srimca_ai/first.dart';
 import 'package:srimca_ai/login_screen.dart';
 import 'package:srimca_ai/register_screen.dart';
-import 'package:srimca_ai/admin_main_dashboard.dart';
-import 'package:srimca_ai/user_management.dart';
-import 'package:srimca_ai/faculty_dashboard.dart';
-import 'package:srimca_ai/content_management_page.dart';
-import 'package:srimca_ai/ai_monitoring_page.dart';
-import 'package:srimca_ai/reports_analytics_page.dart';
-import 'package:srimca_ai/security_page.dart';
+import 'package:srimca_ai/admin/admin_main_dashboard.dart';
+import 'package:srimca_ai/admin/user_management.dart';
+import 'package:srimca_ai/faculty/faculty_dashboard.dart';
+import 'package:srimca_ai/admin/content_management_page.dart';
+import 'package:srimca_ai/admin/ai_monitoring_page.dart';
+import 'package:srimca_ai/admin/reports_analytics_page.dart';
+import 'package:srimca_ai/admin/security_page.dart';
 import 'package:srimca_ai/visitor/visitor_home_screen.dart';
 import 'package:srimca_ai/visitor/visitor_welcome_screen.dart';
-import 'package:srimca_ai/visitor_qr_page.dart';
-import 'package:srimca_ai/student_page.dart' as student;
-import 'package:srimca_ai/student_notifications_page.dart';
-import 'package:srimca_ai/student_chat_history_page.dart';
+import 'package:srimca_ai/visitor/visitor_qr_page.dart';
+import 'package:srimca_ai/student/student_page.dart' as student;
+import 'package:srimca_ai/student/student_notifications_page.dart';
+import 'package:srimca_ai/student/student_chat_history_page.dart';
 import 'package:srimca_ai/push_notification_service.dart';
 import 'package:srimca_ai/forgot_password_page.dart';
-import 'package:srimca_ai/admin_password_requests_page.dart';
+import 'package:srimca_ai/admin/admin_password_requests_page.dart';
 import 'package:srimca_ai/api_service.dart';
 
+
+import 'package:srimca_ai/local_notification_service.dart';
 
 // App Theme Colors
 class AppColors {
@@ -46,11 +48,9 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-    await PushNotificationService.initialize();
+    await LocalNotificationService.initialize();
   } catch (e) {
-    debugPrint('Firebase/Push notification initialization error: $e');
+    debugPrint('Initialization error: $e');
   }
 
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -77,8 +77,28 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('App resumed: checking for new notices via LocalNotificationService');
+      LocalNotificationService.checkAndNotifyNewNotices();
+    }
+  }
 
   void changeTheme(bool isDark) {
     setState(() {

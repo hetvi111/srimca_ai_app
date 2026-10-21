@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'chat_screen.dart';
+import 'package:srimca_ai/chat_screen.dart';
 import 'student_profile_page.dart';
 import 'student_notice_page.dart';
 import 'student_notifications_page.dart';
 import 'student_chat_history_page.dart';
 import 'package:srimca_ai/api_service.dart';
+import 'package:srimca_ai/local_notification_service.dart';
 
 // Navy Blue Theme Colors
 const Color navyBlue = Color(0xFF001F3F);
@@ -47,6 +48,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
   void initState() {
     super.initState();
     _loadDashboardData();
+    LocalNotificationService.startPolling(interval: const Duration(minutes: 3));
   }
 
   @override

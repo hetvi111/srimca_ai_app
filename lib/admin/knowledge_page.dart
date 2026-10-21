@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'upload_study_material_page.dart';
+import 'package:srimca_ai/faculty/upload_study_material_page.dart';
 import 'manage_knowledge_page.dart';
 
 class KnowledgePage extends StatelessWidget {
